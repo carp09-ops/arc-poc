@@ -14,11 +14,11 @@
   <link rel="stylesheet" href="v034.css" />
   <link rel="stylesheet" href="v04.css" />
   <link rel="stylesheet" href="v041.css" />
+  <link rel="stylesheet" href="v042.css" />
 </head>
 <body>
   <div id="app"></div>
   <script>
-    // Preserve the 0.3.3 first-run reset while allowing later layers to migrate existing local state safely.
     if(localStorage.arcVersion!=='0.3.3'){
       localStorage.removeItem('arcStarted');
       localStorage.removeItem('arcState');
@@ -40,5 +40,6 @@
   <script src="v034.js"></script>
   <script src="v04.js"></script>
   <script src="v041.js"></script>
+  <script src="v042.js"></script>
 </body>
 </html>
