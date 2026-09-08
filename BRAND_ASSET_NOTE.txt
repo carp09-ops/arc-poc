@@ -1,0 +1,1 @@
+Arc 0.5.4 transparent brand assets are being integrated via Git data.
