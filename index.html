@@ -3,9 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b1014" />
+  <meta name="theme-color" content="#050607" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Arc — Progress has a shape</title>
   <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/arc-app-icon.webp" />
+  <link rel="icon" href="assets/arc-app-icon.webp" />
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="v03.css" />
   <link rel="stylesheet" href="v031.css" />
@@ -20,6 +24,7 @@
   <link rel="stylesheet" href="v05.css" />
   <link rel="stylesheet" href="v051.css" />
   <link rel="stylesheet" href="v052.css" />
+  <link rel="stylesheet" href="v053.css" />
 </head>
 <body>
   <div id="app"></div>
@@ -29,25 +34,9 @@
       localStorage.removeItem('arcState');
       localStorage.arcVersion='0.3.3';
     }
-    try {
-      const state = JSON.parse(localStorage.getItem('arcState') || 'null');
-      if (state && state.profile && !state.profile.name) {
-        state.profile.name = 'Kimberly';
-        localStorage.setItem('arcState', JSON.stringify(state));
-      }
-    } catch (e) {}
+    try { const state=JSON.parse(localStorage.getItem('arcState')||'null'); if(state&&state.profile&&!state.profile.name){state.profile.name='Kimberly';localStorage.setItem('arcState',JSON.stringify(state));} } catch(e){}
   </script>
   <script src="app.js"></script>
-  <script src="v03.js"></script>
-  <script src="v031.js"></script>
-  <script src="v032.js"></script>
-  <script src="v033.js"></script>
-  <script src="v034.js"></script>
-  <script src="v04.js"></script>
-  <script src="v041.js"></script>
-  <script src="v042.js"></script>
-  <script src="v05.js"></script>
-  <script src="v051.js"></script>
-  <script src="v052.js"></script>
+  <script src="v03.js"></script><script src="v031.js"></script><script src="v032.js"></script><script src="v033.js"></script><script src="v034.js"></script><script src="v04.js"></script><script src="v041.js"></script><script src="v042.js"></script><script src="v05.js"></script><script src="v051.js"></script><script src="v052.js"></script><script src="v053.js"></script>
 </body>
 </html>

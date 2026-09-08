@@ -1,1 +1,9 @@
-{"name":"Arc POC","short_name":"Arc","start_url":"./","display":"standalone","background_color":"#f6f1e8","theme_color":"#f6f1e8","icons":[]}
+{
+  "name":"Arc — Progress has a shape",
+  "short_name":"Arc",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#050607",
+  "theme_color":"#050607",
+  "icons":[{"src":"assets/arc-app-icon.webp","sizes":"512x512","type":"image/webp","purpose":"any maskable"}]
+}
