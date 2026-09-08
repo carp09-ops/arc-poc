@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" role="img" aria-label="Arc — Progress Has a Shape">
+<defs>
+  <linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0bd"/><stop offset=".2" stop-color="#f5cc83"/><stop offset=".5" stop-color="#c88a38"/><stop offset=".75" stop-color="#f3bf68"/><stop offset="1" stop-color="#8a5520"/></linearGradient>
+  <filter id="s" x="-40%" y="-40%" width="180%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000" flood-opacity=".45"/><feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#e4a34d" flood-opacity=".18"/></filter>
+</defs>
+<g transform="translate(22 16) scale(.64)" filter="url(#s)">
+  <ellipse cx="256" cy="280" rx="204" ry="108" transform="rotate(-14 256 280)" fill="none" stroke="url(#g)" stroke-width="14" opacity=".7"/>
+  <path d="M72 425 L224 72 L267 113 L128 425 Z" fill="url(#g)" stroke="#f5d48b" stroke-width="2"/>
+  <path d="M224 72 L438 425 L383 425 L200 125 Z" fill="url(#g)" stroke="#e8b863" stroke-width="2"/>
+  <path d="M79 338 C151 407 321 395 442 260" fill="none" stroke="url(#g)" stroke-width="15" stroke-linecap="round"/>
+  <path d="M79 335 C151 404 322 391 441 257" fill="none" stroke="#fff0b2" stroke-width="2.2" opacity=".88"/>
+</g>
+<text x="395" y="196" fill="url(#g)" font-family="Georgia, 'Times New Roman', serif" font-size="172" letter-spacing="8">ARC</text>
+<text x="401" y="265" fill="#dfc18b" font-family="Arial, Helvetica, sans-serif" font-size="22" letter-spacing="18">PROGRESS HAS A SHAPE</text>
+</svg>
