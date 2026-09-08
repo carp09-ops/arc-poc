@@ -1,1 +1,45 @@
-/* placeholder */
+/* Arc 0.5.4 — transparent brand integration */
+:root{--arc-mark:url('assets/arc-monogram-transparent.svg');--arc-lockup:url('assets/arc-lockup-horizontal-transparent.svg')}
+
+/* Product rule: the brand floats on the surface. No sticker tiles in-app. */
+.arc-rail:before{background:var(--arc-mark) center/contain no-repeat!important;width:104px!important;height:104px!important;filter:drop-shadow(0 10px 26px rgba(225,181,109,.2))!important}
+.arc-mobile-nav:before{background:var(--arc-mark) center/contain no-repeat!important;border:0!important;border-radius:0!important;width:43px!important;height:43px!important;top:-24px!important;box-shadow:none!important;filter:drop-shadow(0 7px 15px rgba(0,0,0,.8)) drop-shadow(0 0 12px rgba(225,181,109,.16))}
+.welcome-v033 .intro-brand:before,.onboarding-shell .intro-brand:before,.chapter-rail:after,.reveal-primary:after,.dash-head:before,.page-kicker:before,.nutrition-head:before,.arc-page-head:before,.tool-top>div:before{background-image:var(--arc-mark)!important;background-color:transparent!important;border:0!important;box-shadow:none!important}
+.cinema-hero:before,.v05-arc-hero:after,.signal-report-hero:after{background-image:var(--arc-mark)!important;background-color:transparent!important}
+
+/* Welcome: photography remains cinematic; the lockup itself is truly transparent. */
+.welcome-v033 .intro-visual{position:relative!important;background:linear-gradient(180deg,rgba(4,5,6,.05),rgba(4,5,6,.55)),var(--arc-onboard-hero)!important;background-size:cover!important;background-position:center!important;overflow:hidden!important}
+.welcome-v033 .intro-visual:before{content:'';position:absolute;inset:14% 8% 19%;background:var(--arc-lockup) center/contain no-repeat;z-index:3;filter:drop-shadow(0 15px 28px rgba(0,0,0,.55)) drop-shadow(0 0 17px rgba(225,181,109,.12));pointer-events:none}
+.welcome-v033 .intro-visual:after{content:''!important;display:none!important}
+
+/* Onboarding carries the mark as a quiet signature instead of a framed picture. */
+.welcome-v033 .intro-brand:before,.onboarding-shell .intro-brand:before{width:50px!important;height:50px!important;filter:drop-shadow(0 5px 13px rgba(225,181,109,.16))}
+.chapter-rail:after{width:92px!important;height:92px!important;opacity:.28!important;right:10px!important;bottom:10px!important}
+.reveal-primary:after{width:126px!important;height:126px!important;opacity:.42!important;filter:drop-shadow(0 9px 22px rgba(225,181,109,.12))!important}
+
+/* Screen headers: mark only, no container or card. */
+.dash-head:before,.page-kicker:before,.nutrition-head:before,.arc-page-head:before{width:48px!important;height:48px!important;margin-bottom:12px!important;filter:drop-shadow(0 6px 15px rgba(225,181,109,.13))!important}
+.tool-top>div:before{width:29px!important;height:29px!important;margin-left:-39px!important;filter:drop-shadow(0 4px 10px rgba(225,181,109,.13))!important}
+.tool-top>div{margin-left:39px!important}
+
+/* Watermarks use the same cutout with low opacity so the surface stays editorial. */
+.cinema-hero:before{width:132px!important;height:132px!important;opacity:.09!important;right:19px!important;top:17px!important}
+.v05-arc-hero:after{width:260px!important;height:260px!important;opacity:.105!important;right:10px!important;top:-12px!important}
+.signal-report-hero:after{width:150px!important;height:150px!important;opacity:.085!important}
+
+/* Splash: full horizontal transparent lockup on the actual app background. */
+.arc-brand-splash{background:radial-gradient(circle at 50% 45%,rgba(204,143,61,.08),transparent 35%),#030405!important}
+.arc-brand-splash img{content:url('assets/arc-lockup-horizontal-transparent.svg')!important;width:min(82vw,760px)!important;max-height:58vh!important;object-fit:contain!important;filter:drop-shadow(0 20px 36px rgba(0,0,0,.6)) drop-shadow(0 0 20px rgba(225,181,109,.12))!important}
+
+/* Kill any visual framing accidentally inherited from earlier brand treatments. */
+.arc-brand-mark,.arc-brand-lockup img,[data-arc-brand]{background:transparent!important;border:0!important;box-shadow:none!important}
+
+@media(max-width:899px){
+ .welcome-v033 .intro-visual:before{inset:19% 4% 22%}
+ .arc-brand-splash img{width:94vw!important}
+ .dash-head:before,.page-kicker:before,.nutrition-head:before,.arc-page-head:before{width:39px!important;height:39px!important}
+ .v05-arc-hero:after{width:165px!important;height:165px!important;right:-7px!important;top:0!important}
+ .reveal-primary:after{width:84px!important;height:84px!important}
+ .tool-top>div:before{width:24px!important;height:24px!important;margin-left:-31px!important}
+ .tool-top>div{margin-left:31px!important}
+}
