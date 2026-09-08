@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#f6f1e8" />
+  <meta name="theme-color" content="#0b1014" />
   <title>Arc — Progress has a shape</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="v03.css" />
 </head>
 <body>
   <div id="app"></div>
@@ -16,7 +17,7 @@
       localStorage.removeItem('arcState');
       localStorage.arcVersion='0.2';
     }
-    // POC 0.2 test persona migration: Kimberly
+    // POC test persona migration: Kimberly
     try {
       const state = JSON.parse(localStorage.getItem('arcState') || 'null');
       if (state && state.profile) {
@@ -26,5 +27,6 @@
     } catch (e) {}
   </script>
   <script src="app.js"></script>
+  <script src="v03.js"></script>
 </body>
 </html>
