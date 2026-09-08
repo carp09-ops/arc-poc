@@ -10,6 +10,7 @@
 </head>
 <body>
   <div id="app"></div>
+  <script>if(localStorage.arcVersion!=='0.2'){localStorage.removeItem('arcStarted');localStorage.removeItem('arcState');localStorage.arcVersion='0.2'}</script>
   <script src="app.js"></script>
 </body>
 </html>
