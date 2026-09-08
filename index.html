@@ -12,11 +12,12 @@
   <link rel="stylesheet" href="v032.css" />
   <link rel="stylesheet" href="v033.css" />
   <link rel="stylesheet" href="v034.css" />
+  <link rel="stylesheet" href="v04.css" />
 </head>
 <body>
   <div id="app"></div>
   <script>
-    // Preserve the 0.3.3 first-run reset while allowing the 0.3.4 integrity layer to migrate existing local state safely.
+    // Preserve the 0.3.3 first-run reset while allowing later layers to migrate existing local state safely.
     if(localStorage.arcVersion!=='0.3.3'){
       localStorage.removeItem('arcStarted');
       localStorage.removeItem('arcState');
@@ -36,5 +37,6 @@
   <script src="v032.js"></script>
   <script src="v033.js"></script>
   <script src="v034.js"></script>
+  <script src="v04.js"></script>
 </body>
 </html>
