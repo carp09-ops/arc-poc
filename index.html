@@ -10,19 +10,21 @@
   <link rel="stylesheet" href="v03.css" />
   <link rel="stylesheet" href="v031.css" />
   <link rel="stylesheet" href="v032.css" />
+  <link rel="stylesheet" href="v033.css" />
 </head>
 <body>
   <div id="app"></div>
   <script>
-    if(localStorage.arcVersion!=='0.2'){
+    // 0.3.3 resets the local POC once so the complete first-run experience can be tested end to end.
+    if(localStorage.arcVersion!=='0.3.3'){
       localStorage.removeItem('arcStarted');
       localStorage.removeItem('arcState');
-      localStorage.arcVersion='0.2';
+      localStorage.arcVersion='0.3.3';
     }
     // POC test persona migration: Kimberly
     try {
       const state = JSON.parse(localStorage.getItem('arcState') || 'null');
-      if (state && state.profile) {
+      if (state && state.profile && !state.profile.name) {
         state.profile.name = 'Kimberly';
         localStorage.setItem('arcState', JSON.stringify(state));
       }
@@ -32,5 +34,6 @@
   <script src="v03.js"></script>
   <script src="v031.js"></script>
   <script src="v032.js"></script>
+  <script src="v033.js"></script>
 </body>
 </html>
