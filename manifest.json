@@ -1,9 +1,12 @@
 {
-  "name":"Arc — Progress has a shape",
+  "name":"Arc — Progress Has a Shape",
   "short_name":"Arc",
+  "description":"Body intelligence that connects what you do with how your body responds.",
   "start_url":"./",
   "display":"standalone",
   "background_color":"#050607",
   "theme_color":"#050607",
-  "icons":[{"src":"assets/arc-app-icon.webp","sizes":"512x512","type":"image/webp","purpose":"any maskable"}]
+  "icons":[
+    {"src":"assets/arc-app-icon.webp","sizes":"512x512","type":"image/webp","purpose":"any"}
+  ]
 }
