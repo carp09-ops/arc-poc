@@ -10,7 +10,21 @@
 </head>
 <body>
   <div id="app"></div>
-  <script>if(localStorage.arcVersion!=='0.2'){localStorage.removeItem('arcStarted');localStorage.removeItem('arcState');localStorage.arcVersion='0.2'}</script>
+  <script>
+    if(localStorage.arcVersion!=='0.2'){
+      localStorage.removeItem('arcStarted');
+      localStorage.removeItem('arcState');
+      localStorage.arcVersion='0.2';
+    }
+    // POC 0.2 test persona migration: Kimberly
+    try {
+      const state = JSON.parse(localStorage.getItem('arcState') || 'null');
+      if (state && state.profile) {
+        state.profile.name = 'Kimberly';
+        localStorage.setItem('arcState', JSON.stringify(state));
+      }
+    } catch (e) {}
+  </script>
   <script src="app.js"></script>
 </body>
 </html>
