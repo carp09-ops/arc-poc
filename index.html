@@ -8,35 +8,46 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Arc — Progress Has a Shape</title>
-  <link rel="manifest" href="manifest.json?v=073" />
+  <link rel="manifest" href="manifest.json?v=074" />
   <link rel="preload" as="image" href="assets/arc-lockup-horizontal-transparent.svg" />
   <link rel="preload" as="image" href="assets/arc-monogram-transparent.svg" />
   <link rel="apple-touch-icon" href="assets/arc-app-icon.webp" />
   <link rel="icon" type="image/webp" href="assets/arc-app-icon.webp" />
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="v03.css" />
-  <link rel="stylesheet" href="v031.css" />
-  <link rel="stylesheet" href="v032.css" />
-  <link rel="stylesheet" href="v033.css" />
-  <link rel="stylesheet" href="v034.css" />
-  <link rel="stylesheet" href="v04.css" />
-  <link rel="stylesheet" href="v041.css" />
-  <link rel="stylesheet" href="v042.css" />
-  <link rel="stylesheet" href="v043.css" />
-  <link rel="stylesheet" href="v044.css" />
-  <link rel="stylesheet" href="v05.css" />
-  <link rel="stylesheet" href="v051.css" />
-  <link rel="stylesheet" href="v052.css" />
-  <link rel="stylesheet" href="v053.css?b=2" />
-  <link rel="stylesheet" href="v054.css?b=1" />
-  <link rel="stylesheet" href="v06.css?b=1" />
-  <link rel="stylesheet" href="v061.css?b=1" />
-  <link rel="stylesheet" href="v07.css?b=1" />
-  <link rel="stylesheet" href="v071.css?b=1" />
-  <link rel="stylesheet" href="v072.css?b=1" />
-  <link rel="stylesheet" href="v073.css?b=1" />
+  <style>
+    html,body{margin:0;min-height:100%;background:#050607;color:#f2eadf;color-scheme:dark}
+    #arc-boot{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:radial-gradient(circle at 50% 38%,#15110d 0,#0a0c0d 34%,#050607 70%);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;transition:opacity .28s ease}
+    #arc-boot.hide{opacity:0;pointer-events:none}
+    .arc-boot-inner{text-align:center;padding:28px}.arc-boot-mark{width:64px;height:64px;margin:0 auto 18px;border:1px solid rgba(221,177,108,.28);border-radius:50%;display:grid;place-items:center;color:#ddb16c;font:31px Georgia,serif;box-shadow:0 0 45px rgba(221,177,108,.10)}
+    .arc-boot-title{font:32px Georgia,serif;letter-spacing:.12em;color:#efe3d1}.arc-boot-sub{margin-top:9px;font-size:9px;letter-spacing:.18em;color:#8d8171}.arc-boot-line{width:128px;height:2px;margin:22px auto 0;background:#1d2021;overflow:hidden;border-radius:10px}.arc-boot-line i{display:block;width:42%;height:100%;background:#d6a65f;animation:arcBoot 1.15s ease-in-out infinite}.arc-boot-status{margin-top:12px;min-height:18px;font-size:9px;color:#747b7c;max-width:280px}
+    @keyframes arcBoot{0%{transform:translateX(-110%)}100%{transform:translateX(350%)}}
+  </style>
+  <script>window.__arcStylesReady=0;window.__arcStyleLoaded=function(el){el.onload=null;el.rel='stylesheet';window.__arcStylesReady++;window.__arcBootCheck&&window.__arcBootCheck();};</script>
+  <link rel="preload" as="style" href="styles.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v03.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v031.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v032.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v033.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v034.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v04.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v041.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v042.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v043.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v044.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v05.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v051.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v052.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v053.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v054.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v06.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v061.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v07.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v071.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v072.css?v=074" onload="__arcStyleLoaded(this)" />
+  <link rel="preload" as="style" href="v073.css?v=074" onload="__arcStyleLoaded(this)" />
+  <noscript><link rel="stylesheet" href="styles.css" /></noscript>
 </head>
 <body>
+  <div id="arc-boot" role="status" aria-live="polite"><div class="arc-boot-inner"><div class="arc-boot-mark">A</div><div class="arc-boot-title">ARC</div><div class="arc-boot-sub">PROGRESS HAS A SHAPE</div><div class="arc-boot-line"><i></i></div><div id="arc-boot-status" class="arc-boot-status">Loading your Arc…</div></div></div>
   <div id="app"></div>
   <script>
     if(localStorage.arcVersion!=='0.3.3'){
@@ -45,9 +56,42 @@
       localStorage.arcVersion='0.3.3';
     }
     try { const state=JSON.parse(localStorage.getItem('arcState')||'null'); if(state&&state.profile&&!state.profile.name){state.profile.name='Kimberly';localStorage.setItem('arcState',JSON.stringify(state));} } catch(e){}
+    (function(){
+      const TOTAL_STYLES=22;
+      let scriptsDone=false;
+      const status=()=>document.getElementById('arc-boot-status');
+      const finish=()=>{const el=document.getElementById('arc-boot');if(!el||el.classList.contains('hide'))return;el.classList.add('hide');setTimeout(()=>el.remove(),320);};
+      window.__arcBootCheck=function(){
+        const appReady=!!document.querySelector('#app>*');
+        if(scriptsDone&&appReady&&window.__arcStylesReady>=TOTAL_STYLES)finish();
+      };
+      window.__arcScriptsDone=function(){scriptsDone=true;window.__arcBootCheck();};
+      setTimeout(()=>{const s=status();if(s)s.textContent='Still connecting securely…';},4500);
+      setTimeout(()=>{const s=status();if(s)s.textContent='This is taking longer than expected. If it stays here, refresh once.';},10000);
+      window.addEventListener('load',()=>setTimeout(()=>{scriptsDone=true;window.__arcBootCheck();},80),{once:true});
+    })();
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="app.js"></script>
-  <script src="v03.js"></script><script src="v031.js"></script><script src="v032.js"></script><script src="v033.js"></script><script src="v034.js"></script><script src="v04.js"></script><script src="v041.js"></script><script src="v042.js"></script><script src="v05.js"></script><script src="v051.js"></script><script src="v052.js"></script><script src="v053.js?b=2"></script><script src="v054.js?b=1"></script><script src="v06.js?b=1"></script><script src="v061.js?b=1"></script><script src="v07.js?b=1"></script><script src="v071.js?b=1"></script><script src="v072.js?b=1"></script><script src="v073.js?b=1"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="app.js?v=074"></script>
+  <script defer src="v03.js?v=074"></script>
+  <script defer src="v031.js?v=074"></script>
+  <script defer src="v032.js?v=074"></script>
+  <script defer src="v033.js?v=074"></script>
+  <script defer src="v034.js?v=074"></script>
+  <script defer src="v04.js?v=074"></script>
+  <script defer src="v041.js?v=074"></script>
+  <script defer src="v042.js?v=074"></script>
+  <script defer src="v05.js?v=074"></script>
+  <script defer src="v051.js?v=074"></script>
+  <script defer src="v052.js?v=074"></script>
+  <script defer src="v053.js?v=074"></script>
+  <script defer src="v054.js?v=074"></script>
+  <script defer src="v06.js?v=074"></script>
+  <script defer src="v061.js?v=074"></script>
+  <script defer src="v07.js?v=074"></script>
+  <script defer src="v071.js?v=074"></script>
+  <script defer src="v072.js?v=074"></script>
+  <script defer src="v073.js?v=074"></script>
+  <script defer src="data:text/javascript,window.__arcScriptsDone%26%26window.__arcScriptsDone()"></script>
 </body>
 </html>
