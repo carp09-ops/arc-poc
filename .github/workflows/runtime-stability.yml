@@ -4,9 +4,7 @@ on:
   push:
     branches:
       - runtime-stability-review-20260910
-      - main
-  pull_request:
-    branches:
+      - qa-sprint-1
       - main
 
 jobs:
@@ -58,7 +56,9 @@ jobs:
           if(index.indexOf('runtime/bootstrap.js')<index.indexOf('runtime/cloud.js'))fail('final bootstrap must be last in the stable chain');
           if(!/arcStateMigrationBackup/.test(fs.readFileSync('runtime/state-migrate.js','utf8')))fail('state migration must retain a pre-migration recovery backup');
           if(/removeItem\s*\(\s*["']arcState["']/.test(fs.readFileSync('runtime/state-migrate.js','utf8')))fail('state migration must never clear arcState');
-          if(!/localUpdatedAt/.test(fs.readFileSync('runtime/persistence.js','utf8')))fail('persistence guard must stamp local updates');
+          const persistence=fs.readFileSync('runtime/persistence.js','utf8');
+          if(!/localUpdatedAt/.test(persistence))fail('persistence guard must stamp local updates');
+          if(!/arcStateLastKnownGood/.test(persistence)||!/arcStatePreviousGood/.test(persistence))fail('persistence guard must keep rolling recovery snapshots');
           if(/supabase-js@2[^<]*><\/script>/.test(go))fail('go.html must not contain its own app/auth boot');
           if(/<script\s+src=["']https?:\/\//i.test(reset))fail('reset.html must dynamically load auth rather than block initial HTML');
           if(!/new URL\('\.\/'/.test(reset))fail('reset.html must return relative to the GitHub Pages project root');
