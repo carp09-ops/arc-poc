@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - runtime-stability-review-20260910
-      - qa-sprint-1
       - main
   pull_request:
     branches:
@@ -51,10 +50,10 @@ jobs:
             await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&document.querySelector('#app>*'),null,{timeout:10000});
             await page.waitForTimeout(500);
 
-            const first=await page.evaluate(()=>({app:!!document.querySelector('#app>*'),passive:document.querySelectorAll('.arc-passive-morning').length,balance:document.querySelectorAll('.arc8020-card').length,weekly:document.querySelectorAll('.v06-weekly-teaser').length,boot:!!document.querySelector('#arc-boot'),screen:S.screen,suppressed:window.__arcRuntime?.suppressedRenders||0,nutritionDays:!!S.nutritionV1?.days,target:S.nutritionV1?.targets?.calories,historyMeal:S.history?.nutrition?.[0]?.food,historyWorkout:S.history?.workouts?.[0]?.name,migrationBackup:!!localStorage.getItem('arcStateMigrationBackup')}));
+            const first=await page.evaluate(()=>({app:!!document.querySelector('#app>*'),passive:document.querySelectorAll('.arc-passive-morning').length,balance:document.querySelectorAll('.arc8020-card').length,weekly:document.querySelectorAll('.v06-weekly-teaser').length,boot:!!document.querySelector('#arc-boot'),screen:S.screen,suppressed:window.__arcRuntime?.suppressedRenders||0,nutritionDays:!!S.nutritionV1?.days,target:S.nutritionV1?.targets?.calories,historyMeal:S.history?.nutrition?.[0],historyWorkout:S.history?.workouts?.[0]?.name,migrationBackup:!!localStorage.getItem('arcStateMigrationBackup')}));
             console.log('initial',first);
             if(!first.app||first.screen!=='today'||first.passive!==1||first.balance!==1||first.weekly!==1||first.boot||first.suppressed<1||!first.nutritionDays)throw new Error('Initial ARC runtime assertions failed');
-            if(first.target!==1900||first.historyMeal!=='Saved Meal'||first.historyWorkout!=='Saved Workout'||!first.migrationBackup)throw new Error('State migration changed or failed to preserve existing user data');
+            if(first.target!==1900||first.historyMeal?.name!=='Saved Meal'||first.historyMeal?.calories!==777||first.historyMeal?.protein!==66||first.historyWorkout!=='Saved Workout'||!first.migrationBackup)throw new Error('State migration changed or failed to preserve existing user data');
 
             await page.evaluate(()=>{for(let i=0;i<6;i++)render()});await page.waitForTimeout(100);
             const repeat=await page.evaluate(()=>({passive:document.querySelectorAll('.arc-passive-morning').length,balance:document.querySelectorAll('.arc8020-card').length,weekly:document.querySelectorAll('.v06-weekly-teaser').length,app:!!document.querySelector('#app>*')}));
@@ -93,8 +92,8 @@ jobs:
             await page.evaluate(()=>{S.screen='today';save();render()});
             await page.goto(base+'diagnostics/webkit-control.html?webkit-away=1',{waitUntil:'domcontentloaded'});await page.goBack({waitUntil:'domcontentloaded'});
             await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&document.querySelector('#app>*'),null,{timeout:10000});
-            const back=await page.evaluate(()=>({app:!!document.querySelector('#app>*'),stamp:S.meta?.localUpdatedAt||'',historyMeal:S.history?.nutrition?.[0]?.food,historyWorkout:S.history?.workouts?.[0]?.name,target:S.nutritionV1?.targets?.calories}));
-            if(!back.app||!back.stamp||back.historyMeal!=='Saved Meal'||back.historyWorkout!=='Saved Workout'||back.target!==1900)throw new Error('Navigation restore lost ARC DOM or persisted user data');
+            const back=await page.evaluate(()=>({app:!!document.querySelector('#app>*'),stamp:S.meta?.localUpdatedAt||'',historyMeal:S.history?.nutrition?.[0],historyWorkout:S.history?.workouts?.[0]?.name,target:S.nutritionV1?.targets?.calories}));
+            if(!back.app||!back.stamp||back.historyMeal?.name!=='Saved Meal'||back.historyMeal?.calories!==777||back.historyMeal?.protein!==66||back.historyWorkout!=='Saved Workout'||back.target!==1900)throw new Error('Navigation restore lost ARC DOM or persisted user data');
 
             if(pageErrors.length)throw new Error('ARC page errors: '+pageErrors.join(' | '));
             await browser.close();console.log('ARC WebKit smoke: PASS');
