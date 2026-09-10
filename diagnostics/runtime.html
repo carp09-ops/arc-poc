@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ARC Runtime Probe</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#050607;color:#efe7dc;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.wrap{max-width:760px;margin:auto;padding:28px 18px 70px}.brand{font:34px Georgia,serif;letter-spacing:.14em}.sub{color:#988c7d;font-size:12px;letter-spacing:.08em;margin-top:5px}.card{background:#101314;border:1px solid #26292a;border-radius:16px;padding:16px;margin:14px 0}.row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid #202425}.row:last-child{border:0}.name{font-weight:650}.detail{font-size:11px;color:#8d9694;margin-top:3px;word-break:break-word}.pill{font-size:11px;font-weight:750;border-radius:999px;padding:6px 9px;background:#39302a;color:#e5c89e}.pass{background:#173326;color:#a9e0bb}.fail{background:#4a2222;color:#ffc0b8}.wait{background:#34302a;color:#d4c2aa}.warn{background:#473819;color:#f6d38d}button{width:100%;border:0;border-radius:999px;background:#d2a660;color:#10110f;padding:14px 18px;font-weight:750;font-size:15px;margin-top:14px}.note{font-size:12px;color:#9ea6a4;line-height:1.5}.hero{padding:14px 0 4px}h1{font:30px Georgia,serif;margin:12px 0 8px}code{font-size:11px}.html-proof{border-left:3px solid #d2a660;padding-left:10px;margin-top:18px;color:#d2a660;font-size:12px}.footer{margin-top:24px;font-size:11px;color:#697271}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="hero"><div class="brand">ARC</div><div class="sub">RUNTIME PROBE · GITHUB PAGES · 2026-09-10</div><h1>Clean-room startup test</h1><p class="note">This page does not sign you in, write ARC health data, or initialize the ARC app. It only tests the browser, GitHub-hosted files, and network dependencies.</p><div class="html-proof">HTML rendered successfully. If you can read this, the document itself loaded.</div></div>
+<div class="card" id="tests">
+<div class="row"><div><div class="name">Inline JavaScript</div><div class="detail" id="d-js">Waiting for script execution…</div></div><span id="p-js" class="pill wait">WAIT</span></div>
+<div class="row"><div><div class="name">DOM updates + timers</div><div class="detail" id="d-dom">Waiting…</div></div><span id="p-dom" class="pill wait">WAIT</span></div>
+<div class="row"><div><div class="name">localStorage read/write</div><div class="detail" id="d-storage">No ARC keys are modified.</div></div><span id="p-storage" class="pill wait">WAIT</span></div>
+<div class="row"><div><div class="name">ARC app.js delivery</div><div class="detail" id="d-app">Fetching ../app.js…</div></div><span id="p-app" class="pill wait">WAIT</span></div>
+<div class="row"><div><div class="name">ARC app.js syntax</div><div class="detail" id="d-syntax">Waiting for app.js…</div></div><span id="p-syntax" class="pill wait">WAIT</span></div>
+<div class="row"><div><div class="name">ARC enhancement files</div><div class="detail" id="d-assets">Checking the known-good 0.7.5 local script set…</div></div><span id="p-assets" class="pill wait">WAIT</span></div>
+<div class="row"><div><div class="name">Supabase JS CDN</div><div class="detail" id="d-cdn">Network test only; library is not executed.</div></div><span id="p-cdn" class="pill wait">WAIT</span></div>
+<div class="row"><div><div class="name">Supabase project endpoint</div><div class="detail" id="d-supa">Network reachability only; no user data requested.</div></div><span id="p-supa" class="pill wait">WAIT</span></div>
+</div>
+<div class="card"><div class="name">Browser</div><div class="detail" id="ua">Reading browser identity…</div><div class="name" style="margin-top:14px">Overall result</div><div class="detail" id="overall">Tests are running…</div><button id="copy">Copy Diagnostic Report</button></div>
+<p class="footer">Diagnostic build GH-DIAG-1 · No Netlify involved.</p>
+</div>
+<script>
+(function(){
+const results={};
+const set=(id,state,detail)=>{results[id]={state,detail};const p=document.getElementById('p-'+id),d=document.getElementById('d-'+id);if(p){p.textContent=state.toUpperCase();p.className='pill '+state}if(d)d.textContent=detail;renderOverall()};
+const renderOverall=()=>{const vals=Object.values(results);const el=document.getElementById('overall');if(!el)return;if(vals.some(x=>x.state==='fail'))el.textContent='At least one hard failure detected. Copy the report or send a screenshot.';else if(vals.length>=8&&vals.every(x=>x.state==='pass'||x.state==='warn'))el.textContent='Browser/runtime is healthy enough to move to the staged ARC core test.';else el.textContent='Tests are still running…'};
+document.getElementById('ua').textContent=navigator.userAgent+' | '+location.href;
+set('js','pass','Inline JavaScript executed successfully.');
+setTimeout(()=>set('dom','pass','DOM updates and timers are running.'),120);
+try{const k='arc_diag_probe';localStorage.setItem(k,'ok');const v=localStorage.getItem(k);localStorage.removeItem(k);if(v==='ok')set('storage','pass','Read/write/remove succeeded. Existing ARC keys were untouched.');else set('storage','fail','Storage write did not round-trip.');}catch(e){set('storage','fail',e.name+': '+e.message)}
+const fetchText=async(url,timeout=8000)=>{const c=new AbortController();const t=setTimeout(()=>c.abort(),timeout);try{const r=await fetch(url,{cache:'no-store',signal:c.signal});const text=await r.text();return{ok:r.ok,status:r.status,text}}finally{clearTimeout(t)}};
+(async()=>{
+try{const r=await fetchText('../app.js?ghdiag=1');if(!r.ok)throw new Error('HTTP '+r.status);set('app','pass','Fetched '+r.text.length.toLocaleString()+' characters from app.js.');try{new Function(r.text);set('syntax','pass','app.js parses successfully in this browser.');}catch(e){set('syntax','fail',e.name+': '+e.message)}}catch(e){set('app','fail',String(e));set('syntax','fail','Could not syntax-check because app.js was unavailable.');}
+const files=['v03.js','v031.js','v032.js','v033.js','v034.js','v04.js','v041.js','v042.js','v05.js','v051.js','v052.js','v053.js','v054.js','v06.js','v07.js','v071.js','v072.js','v075.js'];
+let bad=[];for(const f of files){try{const r=await fetchText('../'+f+'?ghdiag=1',5000);if(!r.ok)throw new Error('HTTP '+r.status);new Function(r.text);}catch(e){bad.push(f+': '+(e.message||e))}}
+if(bad.length)set('assets','fail',bad.join(' | '));else set('assets','pass',files.length+' product scripts fetched and parsed successfully. Auth/recovery scripts intentionally excluded.');
+try{const r=await fetchText('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',8000);if(!r.ok)throw new Error('HTTP '+r.status);set('cdn','pass','jsDelivr responded; '+r.text.length.toLocaleString()+' characters received.');}catch(e){set('cdn','fail',e.name+': '+e.message)}
+try{const c=new AbortController();const t=setTimeout(()=>c.abort(),8000);const r=await fetch('https://svxbzkjxihcwsbyheyxd.supabase.co/auth/v1/health',{cache:'no-store',signal:c.signal});clearTimeout(t);set('supa',r.status<500?'pass':'fail','Supabase endpoint responded with HTTP '+r.status+'.');}catch(e){set('supa','fail',e.name+': '+e.message)}
+})();
+document.getElementById('copy').addEventListener('click',async()=>{const lines=['ARC GitHub Runtime Probe','URL: '+location.href,'UA: '+navigator.userAgent,...Object.entries(results).map(([k,v])=>k.toUpperCase()+': '+v.state.toUpperCase()+' — '+v.detail)];const text=lines.join('\n');try{await navigator.clipboard.writeText(text);document.getElementById('copy').textContent='Copied ✓'}catch(e){document.getElementById('copy').textContent='Copy blocked — send screenshot instead'}});
+})();
+</script>
+</body>
+</html>
