@@ -1,6 +1,6 @@
 // Arc 0.7.3 — Password recovery + auth resilience
 (function(){
-  const REDIRECT='https://arc-poc.netlify.app/';
+  const REDIRECT='https://carp09-ops.github.io/arc-poc/';
   let recoveryOpen=false;
   const cloud=()=>window.ArcCloud;
   const client=()=>cloud()?.client;
