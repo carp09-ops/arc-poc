@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#050607" />
+  <title>Repair ARC</title>
+  <style>
+    html,body{margin:0;min-height:100%;background:#050607;color:#f2eadf;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{display:grid;place-items:center;padding:24px;text-align:center}
+    .card{max-width:360px;border:1px solid rgba(221,177,108,.28);border-radius:24px;padding:30px 24px;background:#0b0d0e;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+    .mark{width:58px;height:58px;margin:0 auto 18px;border:1px solid rgba(221,177,108,.35);border-radius:50%;display:grid;place-items:center;color:#ddb16c;font:29px Georgia,serif}
+    h1{font:30px Georgia,serif;margin:0 0 10px}p{color:#9ea2a1;line-height:1.5;font-size:14px}.small{font-size:12px;color:#777}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="mark">A</div>
+    <h1>Repairing ARC…</h1>
+    <p>Clearing only the local ARC app-state cache. Your account and cloud progress are not being changed.</p>
+    <p class="small" id="status">Preparing a clean restart…</p>
+  </div>
+  <script>
+    (function(){
+      try{
+        const prior=localStorage.getItem('arcState');
+        if(prior)sessionStorage.setItem('arcRepairBackup',prior);
+        localStorage.removeItem('arcState');
+        localStorage.removeItem('arcStarted');
+        sessionStorage.setItem('arcRepairRanAt',String(Date.now()));
+        document.getElementById('status').textContent='Local cache cleared. Restarting ARC…';
+      }catch(e){
+        document.getElementById('status').textContent='Restarting ARC…';
+      }
+      setTimeout(function(){location.replace('/?repair=20260910-'+Date.now());},350);
+    })();
+  </script>
+</body>
+</html>
