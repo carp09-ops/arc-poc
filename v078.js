@@ -118,3 +118,4 @@
 
   window.ArcSessionResilience={version:VERSION,reconcile:reconcileSession};
 })();
+// Netlify deploy trigger — ARC 0.7.8
