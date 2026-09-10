@@ -5,6 +5,7 @@ on:
     branches:
       - runtime-stability-review-20260910
       - qa-sprint-1
+      - focus-first-ui
       - main
 
 jobs:
@@ -22,7 +23,7 @@ jobs:
             app.js v03.js v031.js v032.js v033.js v034.js v04.js v041.js v042.js \
             v05.js v051.js v052.js v06.js v072.js \
             runtime/gate.js runtime/state-migrate.js runtime/persistence.js runtime/workout-qa.js runtime/nutrition-qa.js runtime/body-qa.js \
-            runtime/brand.js runtime/connected.js runtime/passive.js runtime/balance.js \
+            runtime/brand.js runtime/connected.js runtime/passive.js runtime/balance.js runtime/focus-ui.js \
             runtime/recovery.js runtime/cloud.js runtime/bootstrap.js
           do
             node --check "$f"
@@ -35,7 +36,7 @@ jobs:
           const index=fs.readFileSync('index.html','utf8');
           const go=fs.readFileSync('go.html','utf8');
           const reset=fs.readFileSync('reset.html','utf8');
-          const runtimeFiles=['runtime/gate.js','runtime/state-migrate.js','runtime/persistence.js','runtime/workout-qa.js','runtime/nutrition-qa.js','runtime/body-qa.js','runtime/brand.js','runtime/connected.js','runtime/passive.js','runtime/balance.js','runtime/recovery.js','runtime/cloud.js','runtime/bootstrap.js'];
+          const runtimeFiles=['runtime/gate.js','runtime/state-migrate.js','runtime/persistence.js','runtime/workout-qa.js','runtime/nutrition-qa.js','runtime/body-qa.js','runtime/brand.js','runtime/connected.js','runtime/passive.js','runtime/balance.js','runtime/focus-ui.js','runtime/recovery.js','runtime/cloud.js','runtime/bootstrap.js'];
           const runtime=runtimeFiles.map(f=>fs.readFileSync(f,'utf8')).join('\n');
           const retired=['v053.js','v054.js','v061.js','v07.js','v071.js','v073.js','v075.js'];
           for(const f of retired){if(new RegExp(`<script[^>]+src=["'][^"']*${f.replace('.','\\.')}["']`,'i').test(index))fail(`${f} must not be loaded by index.html`)}
@@ -46,6 +47,7 @@ jobs:
           if(/onAuthStateChange\s*\(\s*async/.test(runtime))fail('onAuthStateChange callback must remain synchronous');
           if(/location\.reload\s*\(\s*\)/.test(runtime.replace(/data-arc-boot-retry[\s\S]*?;/g,'')))fail('runtime must not use automatic location.reload fallbacks');
           if(!/runtime\/gate\.js/.test(index)||!/runtime\/state-migrate\.js/.test(index)||!/runtime\/bootstrap\.js/.test(index))fail('controlled render gate/migration/bootstrap missing');
+          if(!/runtime\/focus-ui\.js/.test(index)||!/runtime\/focus-ui\.css/.test(index))fail('focus-first presentation layer missing');
           if(index.indexOf('runtime/gate.js')<index.indexOf('app.js'))fail('runtime gate must load after app.js to capture base render');
           if(index.indexOf('runtime/state-migrate.js')<index.indexOf('runtime/gate.js'))fail('state migration must load after runtime gate');
           if(index.indexOf('runtime/persistence.js')<index.indexOf('runtime/state-migrate.js'))fail('persistence guard must load after state migration');
@@ -53,12 +55,19 @@ jobs:
           if(index.indexOf('runtime/workout-qa.js')<index.indexOf('v05.js')||index.indexOf('runtime/workout-qa.js')>index.indexOf('v051.js'))fail('workout QA boundary must load between v05 and v051');
           if(index.indexOf('runtime/body-qa.js')<index.indexOf('v052.js'))fail('body QA runtime must load after v052');
           if(index.indexOf('runtime/nutrition-qa.js')<index.indexOf('v072.js'))fail('nutrition QA normalization must load after v072');
+          if(index.indexOf('runtime/focus-ui.js')<index.indexOf('runtime/balance.js'))fail('focus UI must load after legacy presentation modules');
+          if(index.indexOf('runtime/focus-ui.js')>index.indexOf('runtime/cloud.js'))fail('focus UI must load before cloud/bootstrap finalization');
           if(index.indexOf('runtime/bootstrap.js')<index.indexOf('runtime/cloud.js'))fail('final bootstrap must be last in the stable chain');
           if(!/arcStateMigrationBackup/.test(fs.readFileSync('runtime/state-migrate.js','utf8')))fail('state migration must retain a pre-migration recovery backup');
           if(/removeItem\s*\(\s*["']arcState["']/.test(fs.readFileSync('runtime/state-migrate.js','utf8')))fail('state migration must never clear arcState');
           const persistence=fs.readFileSync('runtime/persistence.js','utf8');
           if(!/localUpdatedAt/.test(persistence))fail('persistence guard must stamp local updates');
           if(!/arcStateLastKnownGood/.test(persistence)||!/arcStatePreviousGood/.test(persistence))fail('persistence guard must keep rolling recovery snapshots');
+          const focus=fs.readFileSync('runtime/focus-ui.js','utf8');
+          if(!/One focus\. Real progress\./.test(focus))fail('focus-first Today premise missing');
+          if(!/80\/20 is a guide, not a grade/.test(focus))fail('canonical 80/20 definition missing');
+          if(!/data-focus-go="nutrition"/.test(focus)||!/data-focus-go="train"/.test(focus)||!/data-focus-go="body"/.test(focus))fail('focus navigation missing core destinations');
+          if(/removeItem\s*\(\s*["']arcState["']/.test(focus))fail('focus UI must not clear user state');
           if(/supabase-js@2[^<]*><\/script>/.test(go))fail('go.html must not contain its own app/auth boot');
           if(/<script\s+src=["']https?:\/\//i.test(reset))fail('reset.html must dynamically load auth rather than block initial HTML');
           if(!/new URL\('\.\/'/.test(reset))fail('reset.html must return relative to the GitHub Pages project root');
