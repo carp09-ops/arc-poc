@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ARC Staged Core Loader</title>
+<style>
+#diag-panel{position:fixed!important;z-index:2147483647!important;left:10px!important;right:10px!important;top:10px!important;max-height:42vh!important;overflow:auto!important;background:#080a0b!important;color:#eee5d9!important;border:1px solid #80663d!important;border-radius:14px!important;padding:12px!important;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;box-shadow:0 12px 50px #000b!important}#diag-panel *{box-sizing:border-box!important}#diag-title{font-weight:800!important;letter-spacing:.08em!important;font-size:13px!important;color:#deb36f!important}#diag-state{font-size:12px!important;margin-top:5px!important;color:#c4cbc9!important}#diag-log{font:11px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace!important;white-space:pre-wrap!important;margin:9px 0 0!important;color:#aab2b0!important}.diag-pass{color:#9adeb2!important}.diag-fail{color:#ffaaa0!important}.diag-warn{color:#f1cc84!important}#diag-hide{position:absolute!important;right:9px!important;top:8px!important;width:auto!important;padding:5px 8px!important;margin:0!important;border:1px solid #3a3d3d!important;border-radius:8px!important;background:#171a1b!important;color:#ddd!important;font-size:10px!important}#app{padding-top:46vh}
+</style>
+<link rel="stylesheet" href="../styles.css?stage=1">
+<link rel="stylesheet" href="../v03.css?stage=1"><link rel="stylesheet" href="../v031.css?stage=1"><link rel="stylesheet" href="../v032.css?stage=1"><link rel="stylesheet" href="../v033.css?stage=1"><link rel="stylesheet" href="../v034.css?stage=1"><link rel="stylesheet" href="../v04.css?stage=1"><link rel="stylesheet" href="../v041.css?stage=1"><link rel="stylesheet" href="../v042.css?stage=1"><link rel="stylesheet" href="../v043.css?stage=1"><link rel="stylesheet" href="../v044.css?stage=1"><link rel="stylesheet" href="../v05.css?stage=1"><link rel="stylesheet" href="../v051.css?stage=1"><link rel="stylesheet" href="../v052.css?stage=1"><link rel="stylesheet" href="../v053.css?stage=1"><link rel="stylesheet" href="../v054.css?stage=1"><link rel="stylesheet" href="../v06.css?stage=1"><link rel="stylesheet" href="../v07.css?stage=1"><link rel="stylesheet" href="../v071.css?stage=1"><link rel="stylesheet" href="../v072.css?stage=1"><link rel="stylesheet" href="../v075.css?stage=1">
+</head>
+<body>
+<div id="diag-panel"><button id="diag-hide">hide</button><div id="diag-title">ARC STAGED CORE · AUTH DISABLED</div><div id="diag-state">Starting with app.js…</div><pre id="diag-log">HTML: PASS\nInline JS: PASS</pre></div>
+<div id="app"></div>
+<script>
+(function(){
+const state=document.getElementById('diag-state'),log=document.getElementById('diag-log');let current='bootstrap',failed=false;
+const say=(s,cls='')=>{log.textContent+='\n'+s;log.className=cls};
+const fail=(msg)=>{if(failed)return;failed=true;state.textContent='STOPPED at '+current;state.className='diag-fail';say('FAIL: '+msg,'diag-fail')};
+window.addEventListener('error',e=>{if(failed)return;const src=(e.filename||'').split('/').pop().split('?')[0];fail((src||current)+': '+(e.message||'runtime error'))});
+window.addEventListener('unhandledrejection',e=>fail(current+': '+String(e.reason?.message||e.reason||'promise rejection')));
+document.getElementById('diag-hide').onclick=()=>{document.getElementById('diag-panel').style.display='none';document.getElementById('app').style.paddingTop='0'};
+const load=(file)=>new Promise((resolve,reject)=>{current=file;state.textContent='Loading '+file+'…';const s=document.createElement('script');s.src='../'+file+'?stage=gh-core-1';s.async=false;s.onload=()=>{say(file+': PASS');resolve()};s.onerror=()=>reject(new Error('network load failed'));document.body.appendChild(s)});
+(async()=>{
+try{
+await load('app.js');await new Promise(r=>setTimeout(r,120));if(!document.querySelector('#app>*'))throw new Error('app.js loaded but did not render #app');say('FIRST RENDER: PASS');
+const files=['v03.js','v031.js','v032.js','v033.js','v034.js','v04.js','v041.js','v042.js','v05.js','v051.js','v052.js','v053.js','v054.js','v06.js','v07.js','v071.js','v072.js','v075.js'];
+for(const f of files){await load(f);await new Promise(r=>setTimeout(r,35));if(!document.querySelector('#app>*'))throw new Error(f+' left #app empty')}
+current='complete';state.textContent='PASS — ARC product core loaded without auth';state.className='diag-pass';say('AUTH LAYER: intentionally NOT loaded','diag-pass');say('CORE RESULT: PASS through v075.js','diag-pass');
+}catch(e){fail(e.message||String(e))}
+})();
+})();
+</script>
+</body>
+</html>
