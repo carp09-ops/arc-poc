@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ARC v07 Isolation</title>
+<style>:root{color-scheme:dark}html,body{margin:0;min-height:100%;background:#050607;color:#eee5d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}*{box-sizing:border-box}#diag{position:relative;z-index:2147483647;margin:12px;padding:14px;border:1px solid #80663d;border-radius:14px;background:#080a0b;color:#eee5d9;box-shadow:0 12px 50px #000b}#title{font-weight:800;letter-spacing:.08em;font-size:13px;color:#deb36f}#state{font-size:13px;font-weight:800;margin:7px 0;color:#c4cbc9}#log{white-space:pre-wrap;font:11px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:#aab2b0}.pass{color:#9adeb2!important}.fail{color:#ffaaa0!important}.warn{color:#f1cc84!important}#app{margin:12px;min-height:180px;background:#fff;color:#111;padding:12px;border-radius:12px;overflow:auto}</style>
+</head>
+<body>
+<div id="diag"><div id="title">ARC v07 ISOLATION · v06 AUTO-RENDER OFF · NO v071 · AUTH OFF · CSS OFF</div><div id="state">Starting…</div><pre id="log">HTML: PASS</pre></div><div id="app"></div>
+<script>
+(function(){
+const pre=['app.js','v03.js','v031.js','v032.js','v033.js','v034.js','v04.js','v041.js','v042.js','v05.js','v051.js','v052.js','v053.js','v054.js','v06.js'];
+const state=document.getElementById('state'),log=document.getElementById('log');let current='bootstrap',stopped=false;
+function say(s,k){log.textContent+='\n'+s;if(k)log.className=k}function setState(s,k){state.textContent=s;state.className=k||''}function fail(m){if(stopped)return;stopped=true;setState('STOPPED at '+current,'fail');say('FAIL: '+m,'fail')}
+window.addEventListener('error',e=>{if(!stopped)fail((e.filename||current)+': '+(e.message||'runtime error'))});window.addEventListener('unhandledrejection',e=>{if(!stopped)fail(current+': '+String((e.reason&&e.reason.message)||e.reason||'promise rejection'))});
+function load(file){return new Promise((resolve,reject)=>{current=file;setState('Loading '+file+'…');let s=document.createElement('script'),done=false,t=setTimeout(()=>{if(done)return;done=true;reject(new Error(file+' timeout'))},8000);s.src='../'+file+'?v07-isolation=1';s.onload=()=>{if(done)return;done=true;clearTimeout(t);say(file+': loaded','pass');resolve()};s.onerror=()=>{if(done)return;done=true;clearTimeout(t);reject(new Error(file+' network error'))};document.body.appendChild(s)})}
+async function loadV06(){current='v06.js';const base=window.render||render;let calls=0;const blocker=()=>{calls++;say('v06 automatic render intercepted','warn')};try{window.render=blocker;render=blocker;await load('v06.js')}finally{window.render=base;render=base}say('v06: automatic render suppressed ('+calls+' intercepted)','pass')}
+(async()=>{try{for(const f of pre){if(f==='v06.js')await loadV06();else await load(f);await new Promise(r=>setTimeout(r,40))}current='v07.js';setState('Loading v07.js only…');await load('v07.js');current='ready';setState('PASS — v07.js loaded on top of the stable v06 control.','pass');say('v071.js: NOT LOADED','pass');say('AUTH: OFF','pass');say('ARC CSS: OFF','pass')}catch(e){fail(e&&e.message?e.message:String(e))}})();
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(()=>{if(!document.querySelector('#diag'))return;setState('RESUMED — diagnostic DOM still present','pass');say('Resume: DOM still present','pass')},250)});
+})();
+</script>
+</body></html>
