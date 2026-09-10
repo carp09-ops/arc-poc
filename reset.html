@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#050607" />
+  <meta name="color-scheme" content="dark" />
+  <title>Reset Password — ARC</title>
+  <style>
+    :root{color-scheme:dark;--bg:#050607;--panel:#0d0f10;--ink:#f2eadf;--muted:#8f8b84;--bronze:#d6a65f;--line:rgba(214,166,95,.18);--danger:#d88f7d}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 50% 24%,#17120d 0,#0a0c0d 32%,#050607 72%);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{min-height:100vh;min-height:100svh;display:grid;place-items:center;padding:24px;padding-top:max(24px,env(safe-area-inset-top));padding-bottom:max(24px,env(safe-area-inset-bottom))}
+    .card{width:min(100%,440px);background:linear-gradient(180deg,rgba(18,19,19,.97),rgba(8,9,10,.98));border:1px solid var(--line);border-radius:28px;padding:30px 24px;box-shadow:0 26px 90px rgba(0,0,0,.48)}
+    .mark{width:58px;height:58px;border:1px solid rgba(214,166,95,.32);border-radius:50%;display:grid;place-items:center;margin:0 auto 18px;color:var(--bronze);font:28px Georgia,serif;box-shadow:0 0 38px rgba(214,166,95,.08)}
+    .brand{text-align:center;margin-bottom:28px}.brand h1{font:32px Georgia,serif;letter-spacing:.12em;margin:0}.brand small{display:block;margin-top:7px;font-size:9px;letter-spacing:.18em;color:#8d8171}
+    .eyebrow{font-size:10px;letter-spacing:.16em;color:var(--bronze);font-weight:700}.copy h2{font:32px Georgia,serif;line-height:1.05;margin:8px 0 10px;font-weight:500}.copy p{margin:0 0 22px;color:#aaa49a;line-height:1.55;font-size:14px}
+    label{display:block;font-size:11px;letter-spacing:.08em;color:#b9b2a8;margin:14px 0 0}input{width:100%;margin-top:8px;border:1px solid rgba(255,255,255,.1);background:#080a0b;color:#fff;border-radius:14px;padding:15px 14px;font-size:16px;outline:none}input:focus{border-color:rgba(214,166,95,.55);box-shadow:0 0 0 3px rgba(214,166,95,.08)}
+    button{width:100%;margin-top:20px;border:0;border-radius:14px;padding:15px 16px;background:linear-gradient(180deg,#e0b66f,#c9954d);color:#16100a;font-weight:800;font-size:14px}button:disabled{opacity:.55}
+    .message{display:none;margin-top:14px;padding:12px 13px;border-radius:12px;background:rgba(214,166,95,.08);border:1px solid rgba(214,166,95,.16);color:#d9c8ad;font-size:13px;line-height:1.45}.message.show{display:block}.message.error{background:rgba(216,143,125,.08);border-color:rgba(216,143,125,.2);color:#e7b1a4}
+    .status{text-align:center;color:#9f9a91;font-size:13px;line-height:1.55}.spinner{width:28px;height:28px;border:2px solid rgba(214,166,95,.16);border-top-color:var(--bronze);border-radius:50%;margin:8px auto 16px;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+    .hidden{display:none!important}.back{display:inline-block;margin-top:18px;color:#b89a6b;text-decoration:none;font-size:12px}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand"><div class="mark">A</div><h1>ARC</h1><small>PROGRESS HAS A SHAPE</small></div>
+    <section id="loading" class="status"><div class="spinner"></div>Securing your recovery session…</section>
+    <section id="reset" class="hidden">
+      <div class="copy"><span class="eyebrow">SECURE ACCOUNT RECOVERY</span><h2>Choose a new password.</h2><p>Your recovery session is active. Set the password you want to use for ARC going forward.</p></div>
+      <label>New password<input id="password" type="password" autocomplete="new-password" placeholder="At least 6 characters"></label>
+      <label>Confirm password<input id="confirm" type="password" autocomplete="new-password" placeholder="Enter it again"></label>
+      <button id="save" type="button">Update Password →</button>
+      <div id="message" class="message"></div>
+    </section>
+    <section id="expired" class="hidden status"><p>This recovery session is no longer active. Return to ARC and request one new reset email.</p><a class="back" href="/">← Back to ARC</a></section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    (function(){
+      const SUPABASE_URL='https://svxbzkjxihcwsbyheyxd.supabase.co';
+      const SUPABASE_KEY='sb_publishable_zm65KCzkWFvVmlnv9dpWFg_15L0nUfc';
+      const loading=document.getElementById('loading'),reset=document.getElementById('reset'),expired=document.getElementById('expired'),msg=document.getElementById('message'),save=document.getElementById('save');
+      const show=(el)=>el.classList.remove('hidden'),hide=(el)=>el.classList.add('hidden');
+      const message=(text,error=false)=>{msg.textContent=text;msg.classList.add('show');msg.classList.toggle('error',error)};
+      if(!window.supabase?.createClient){loading.innerHTML='ARC could not load the secure sign-in service. Refresh once and try again.';return;}
+      const client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+      let ready=false;
+      async function inspect(){
+        const {data:{session}}=await client.auth.getSession();
+        if(session?.user){ready=true;hide(loading);hide(expired);show(reset);setTimeout(()=>document.getElementById('password')?.focus(),80);return true;}
+        return false;
+      }
+      client.auth.onAuthStateChange((event,session)=>{
+        if((event==='PASSWORD_RECOVERY'||event==='SIGNED_IN')&&session?.user){ready=true;hide(loading);hide(expired);show(reset);}
+      });
+      setTimeout(async()=>{if(await inspect())return;hide(loading);show(expired);},900);
+      save.addEventListener('click',async()=>{
+        const password=document.getElementById('password').value||'',confirm=document.getElementById('confirm').value||'';
+        if(password.length<6){message('Use a password with at least 6 characters.',true);return;}
+        if(password!==confirm){message('Those passwords do not match.',true);return;}
+        const {data:{session}}=await client.auth.getSession();
+        if(!session?.user){message('This recovery session has expired. Return to ARC and request a new reset email.',true);return;}
+        save.disabled=true;save.textContent='Updating…';
+        const {error}=await client.auth.updateUser({password});
+        if(error){save.disabled=false;save.textContent='Update Password →';message(error.message||'Could not update the password.',true);return;}
+        try{localStorage.removeItem('arcRecoveryPending')}catch(e){}
+        message('Password updated. Opening ARC…');
+        setTimeout(()=>location.replace('/'),700);
+      });
+    })();
+  </script>
+</body>
+</html>
