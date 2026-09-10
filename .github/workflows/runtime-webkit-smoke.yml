@@ -5,6 +5,7 @@ on:
     branches:
       - runtime-stability-review-20260910
       - qa-sprint-1
+      - focus-first-ui
       - main
 
 jobs:
@@ -37,73 +38,86 @@ jobs:
 
             await page.goto(base+'diagnostics/webkit-control.html?smoke-origin=1',{waitUntil:'domcontentloaded'});
             await page.evaluate(()=>{
-              const state={screen:'today',on:1,profile:{name:'Smoke',goals:['Improve overall health'],primary:'Improve overall health',why:'',weight:'165',waist:'35',life:'A mix of sitting and moving',sleep:'7',location:'Home',experience:'Know the basics',days:3,duration:30,nutrition:'Guided — calories + protein',activities:['Strength training','Walking'],equipment:['Dumbbells','Bodyweight']},logs:{workouts:2,bodyChecks:1,cal:777,protein:66,steps:0},history:{workouts:[{date:'2026-09-01',name:'Saved Workout'}],nutrition:[{date:'2026-09-01',food:'Saved Meal',calories:777,protein:66}],body:[{date:'2026-09-01',weight:165,waist:35,hips:40,chest:38,thigh:23,arm:12}],activity:[],sleep:[],signals:[],weight:[],context:[],measurements:[]},meta:{},nutritionV1:{targets:{calories:1900}},done:false};
+              const today=new Date();
+              const prior=new Date(today.getTime()-86400000*10).toISOString().slice(0,10);
+              const state={screen:'today',on:1,profile:{name:'Kimberly',goals:['Improve overall health'],primary:'Improve overall health',why:'',weight:'165',waist:'35',life:'A mix of sitting and moving',sleep:'7',location:'Home + Gym',experience:'Know the basics',days:3,duration:30,nutrition:'Guided — calories + protein',activities:['Strength training','Walking'],equipment:['Dumbbells','Bodyweight']},logs:{workouts:2,bodyChecks:1,cal:777,protein:66,steps:5821},history:{workouts:[{date:prior,name:'Saved Workout',completed:true}],nutrition:[{date:prior,food:'Saved Meal',calories:777,protein:66}],body:[{date:prior,weight:165,waist:35,hips:40,chest:38,thigh:23,arm:12}],activity:[],sleep:[],signals:[],weight:[],context:[],measurements:[]},meta:{},nutritionV1:{targets:{calories:1900}},done:false};
               localStorage.setItem('arcState',JSON.stringify(state));localStorage.setItem('arcStarted','1');
             });
             pageErrors.length=0;
 
-            await page.goto(base+'?webkit-smoke=1',{waitUntil:'domcontentloaded'});
-            await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&document.querySelector('#app>*'),null,{timeout:10000});
-            await page.waitForTimeout(500);
+            await page.goto(base+'?focus-smoke=1',{waitUntil:'domcontentloaded'});
+            await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&document.querySelector('.focus-today'),null,{timeout:10000});
+            await page.waitForTimeout(250);
 
-            const first=await page.evaluate(()=>({app:!!document.querySelector('#app>*'),passive:document.querySelectorAll('.arc-passive-morning').length,balance:document.querySelectorAll('.arc8020-card').length,weekly:document.querySelectorAll('.v06-weekly-teaser').length,boot:!!document.querySelector('#arc-boot'),screen:S.screen,suppressed:window.__arcRuntime?.suppressedRenders||0,nutritionDays:!!S.nutritionV1?.days,target:S.nutritionV1?.targets?.calories,historyMeal:S.history?.nutrition?.[0],historyWorkout:S.history?.workouts?.[0]?.name,migrationBackup:!!localStorage.getItem('arcStateMigrationBackup'),lastGood:!!localStorage.getItem('arcStateLastKnownGood')}));
-            console.log('initial',first);
-            if(!first.app||first.screen!=='today'||first.passive!==1||first.balance!==1||first.weekly!==1||first.boot||first.suppressed<1||!first.nutritionDays)throw new Error('Initial ARC runtime assertions failed');
-            if(first.target!==1900||first.historyMeal?.name!=='Saved Meal'||first.historyMeal?.calories!==777||first.historyMeal?.protein!==66||first.historyWorkout!=='Saved Workout'||!first.migrationBackup||!first.lastGood)throw new Error('State migration or recovery backup failed to preserve existing user data');
+            const first=await page.evaluate(()=>({
+              app:!!document.querySelector('#app>*'),screen:S.screen,boot:!!document.querySelector('#arc-boot'),suppressed:window.__arcRuntime?.suppressedRenders||0,
+              focus:!!document.querySelector('.focus-primary-card'),why:!!document.querySelector('.focus-why'),glance:document.querySelectorAll('.focus-glance>button').length,
+              nav:[...document.querySelectorAll('.focus-nav button')].map(x=>x.textContent.trim()),legacyBalance:getComputedStyle(document.querySelector('.arc8020-card')||document.body).display,
+              target:S.nutritionV1?.targets?.calories,historyMeal:S.history?.nutrition?.[0],historyWorkout:S.history?.workouts?.[0]?.name,
+              migrationBackup:!!localStorage.getItem('arcStateMigrationBackup'),lastGood:!!localStorage.getItem('arcStateLastKnownGood')
+            }));
+            console.log('focus-initial',first);
+            if(!first.app||first.screen!=='today'||first.boot||first.suppressed<1||!first.focus||!first.why||first.glance!==3)throw new Error('Focus-first Today failed to mount');
+            if(first.nav.join('|')!=='Today|Nutrition|Train|Body|More')throw new Error('Approved five-item focus navigation is not present');
+            if(first.target!==1900||first.historyMeal?.name!=='Saved Meal'||first.historyMeal?.calories!==777||first.historyMeal?.protein!==66||first.historyWorkout!=='Saved Workout'||!first.migrationBackup||!first.lastGood)throw new Error('Existing user data was not preserved');
 
-            await page.evaluate(()=>{for(let i=0;i<6;i++)render()});await page.waitForTimeout(100);
-            const repeat=await page.evaluate(()=>({passive:document.querySelectorAll('.arc-passive-morning').length,balance:document.querySelectorAll('.arc8020-card').length,weekly:document.querySelectorAll('.v06-weekly-teaser').length,app:!!document.querySelector('#app>*'),definition:document.querySelector('.arc8020-definition')?.textContent||'',arcBeforePassive:(()=>{const a=document.querySelector('.arc8020-card'),p=document.querySelector('.arc-passive-morning');return !!a&&!!p&&!!(a.compareDocumentPosition(p)&Node.DOCUMENT_POSITION_FOLLOWING)})()}));
-            if(!repeat.app||repeat.passive!==1||repeat.balance!==1||repeat.weekly!==1)throw new Error('Repeated render duplicated or lost Today modules');
-            if(!repeat.definition.includes('guide, not a grade')||!repeat.arcBeforePassive)throw new Error('80/20 premise is not prominent or clearly defined');
+            await page.evaluate(()=>document.querySelector('[data-focus-go="arc"]')?.click());
+            await page.waitForSelector('.focus-arc',{timeout:2000});
+            const arc=await page.evaluate(()=>({screen:S.screen,title:document.querySelector('.focus-arc>h1')?.textContent||'',gauge:!!document.querySelector('.focus-gauge'),info:document.querySelector('[data-focus-8020]')?.textContent||''}));
+            if(arc.screen!=='arc'||!arc.gauge||!arc.info.includes('What is 80/20'))throw new Error('Arc balance screen failed');
+            await page.evaluate(()=>document.querySelector('[data-focus-8020]')?.click());
+            await page.waitForSelector('.focus-modal',{timeout:1500});
+            const modal=await page.evaluate(()=>{const r=document.querySelector('.focus-modal').getBoundingClientRect();return{text:document.querySelector('.focus-modal')?.textContent||'',center:Math.abs((r.left+r.width/2)-innerWidth/2),inside:r.top>=0&&r.bottom<=innerHeight};});
+            if(!modal.text.includes('guide, not a grade')||!modal.text.includes('Build a strong foundation')||modal.center>3||!modal.inside)throw new Error('80/20 definition/centering failed');
+            await page.evaluate(()=>document.querySelector('[data-focus-close]')?.click());
 
-            await page.evaluate(()=>document.querySelector('[data-arc8020-details]')?.click());
-            await page.waitForSelector('.arc8020-sheet',{timeout:2000});
-            const explainer=await page.evaluate(()=>{const r=document.querySelector('.arc8020-sheet').getBoundingClientRect();return{text:document.querySelector('.arc8020-explainer')?.textContent||'',centerDelta:Math.abs((r.left+r.width/2)-innerWidth/2),top:r.top,bottom:innerHeight-r.bottom}});
-            if(!explainer.text.includes('80/20 is a guide, not a grade')||explainer.centerDelta>3||explainer.top<0||explainer.bottom<0)throw new Error('80/20 explainer definition or centering failed');
-            await page.evaluate(()=>document.querySelector('[data-arc8020-close]')?.click());
+            await page.evaluate(()=>document.querySelector('[data-focus-go="nutrition"]')?.click());
+            await page.waitForSelector('.focus-nutrition',{timeout:2000});
+            const nutrition=await page.evaluate(()=>({screen:S.screen,active:document.querySelector('.focus-nav button.active')?.textContent.trim(),tabs:[...document.querySelectorAll('[data-focus-nut-tab]')].map(x=>x.textContent.trim()),meals:document.querySelectorAll('[data-focus-meal]').length,days:!!S.nutritionV1?.days,target:S.nutritionV1?.targets?.calories}));
+            console.log('nutrition-focus',nutrition);
+            if(nutrition.screen!=='nutrition'||nutrition.active!=='Nutrition'||nutrition.tabs.join('|')!=='Today|Plan|Recipes|Log'||nutrition.meals<3||!nutrition.days||nutrition.target!==1900)throw new Error('Focus Nutrition route failed');
+            await page.evaluate(()=>document.querySelector('[data-focus-meal]')?.click());await page.waitForTimeout(100);
+            const mealSaved=await page.evaluate(()=>({logged:Object.values(S.nutritionV1.days[Object.keys(S.nutritionV1.days).sort().at(-1)]?.meals||{}).some(x=>x.logged),stamp:S.meta?.localUpdatedAt||'',cal:S.logs?.cal||0}));
+            if(!mealSaved.logged||!mealSaved.stamp||mealSaved.cal<=0)throw new Error('Nutrition completion did not persist');
+            await page.evaluate(()=>document.querySelector('[data-focus-view-plan]')?.click());
+            await page.waitForSelector('.focus-plan-view',{timeout:1500});
 
-            await page.evaluate(()=>document.querySelector('[data-go="nutrition"]')?.click());
-            await page.waitForSelector('.arc-nutrition-today',{timeout:3000});
-            const nutrition=await page.evaluate(()=>({screen:S.screen,active:[...document.querySelectorAll('.arc-nav button.active,.arc-mobile-nav button.active')].map(x=>x.dataset.go),plan:!!document.querySelector('.arc-nutrition-today'),days:!!S.nutritionV1?.days,target:S.nutritionV1?.targets?.calories}));
-            console.log('nutrition',nutrition);
-            if(nutrition.screen!=='nutrition'||!nutrition.plan||!nutrition.active.includes('nutrition')||!nutrition.days||nutrition.target!==1900)throw new Error('Nutrition route/state failed');
-
-            await page.evaluate(()=>{S.screen='workout';delete S.activeWorkout;save();render()});
+            await page.evaluate(()=>document.querySelector('[data-focus-go="train"]')?.click());
+            await page.waitForSelector('.focus-train',{timeout:2000});
+            const train=await page.evaluate(()=>({active:document.querySelector('.focus-nav button.active')?.textContent.trim(),hero:!!document.querySelector('.focus-train-hero'),rows:document.querySelectorAll('.focus-exercise-list>button').length}));
+            if(train.active!=='Train'||!train.hero||train.rows<3)throw new Error('Focus Train screen failed');
+            await page.evaluate(()=>document.querySelector('[data-focus-start-workout]')?.click());
             await page.waitForSelector('[data-052-done="0"]',{timeout:3000});
-            const initialWorkout=await page.evaluate(()=>({name:document.querySelector('.exercise-copy h1')?.textContent,checks:[...document.querySelectorAll('[data-052-done]')].map(x=>x.textContent.trim()),keys:Object.keys(S.activeWorkout?.sets||{}),maxScroll:document.documentElement.scrollHeight-innerHeight}));
-            console.log('workout-start',initialWorkout);
-            if(initialWorkout.checks.some(x=>x!=='○')||!initialWorkout.name||initialWorkout.keys.includes('undefined'))throw new Error('Fresh workout state is invalid');
-            if(initialWorkout.maxScroll<80)throw new Error('Workout smoke viewport is not scrollable enough to validate retention');
-
+            const workout=await page.evaluate(()=>({checks:[...document.querySelectorAll('[data-052-done]')].map(x=>x.textContent.trim()),maxScroll:document.documentElement.scrollHeight-innerHeight,name:document.querySelector('.exercise-copy h1')?.textContent||''}));
+            if(workout.checks.some(x=>x!=='○')||workout.maxScroll<80||!workout.name)throw new Error('Fresh workout state invalid');
             await page.evaluate(()=>window.scrollTo(0,Math.min(320,document.documentElement.scrollHeight-innerHeight)));
-            const y0=await page.evaluate(()=>scrollY);
-            if(y0<50)throw new Error('Workout smoke failed to establish a meaningful scroll position');
+            const y0=await page.evaluate(()=>scrollY);if(y0<50)throw new Error('Could not establish workout scroll position');
             await page.evaluate(()=>document.querySelector('[data-052-done="0"]')?.click());await page.waitForTimeout(80);
             const afterOne=await page.evaluate(()=>({y:scrollY,checks:[...document.querySelectorAll('[data-052-done]')].map(x=>x.textContent.trim()),stamp:S.meta?.localUpdatedAt||''}));
-            console.log('after-one-set',afterOne);
-            if(Math.abs(afterOne.y-y0)>2||afterOne.checks.join('')!=='✓○○'||!afterOne.stamp)throw new Error('Set completion, scroll stability, or local persistence failed');
-
+            if(Math.abs(afterOne.y-y0)>2||afterOne.checks.join('')!=='✓○○'||!afterOne.stamp)throw new Error('Workout scroll/state persistence regressed');
             await page.evaluate(()=>{document.querySelector('[data-052-done="1"]')?.click();document.querySelector('[data-052-done="2"]')?.click()});await page.waitForTimeout(80);
-            const ready=await page.evaluate(()=>({disabled:!!document.querySelector('[data-052-next]')?.disabled,name:document.querySelector('.exercise-copy h1')?.textContent}));
-            if(ready.disabled)throw new Error('Next exercise did not unlock');
+            const priorName=await page.evaluate(()=>document.querySelector('.exercise-copy h1')?.textContent||'');
             await page.evaluate(()=>document.querySelector('[data-052-next]')?.click());await page.waitForTimeout(100);
-            const secondWorkout=await page.evaluate(()=>({name:document.querySelector('.exercise-copy h1')?.textContent,checks:[...document.querySelectorAll('[data-052-done]')].map(x=>x.textContent.trim()),keys:Object.keys(S.activeWorkout?.sets||{})}));
-            console.log('workout-next',secondWorkout);
-            if(secondWorkout.name===ready.name||secondWorkout.checks.some(x=>x!=='○')||secondWorkout.keys.includes('undefined'))throw new Error('Next exercise inherited prior set state');
+            const nextEx=await page.evaluate(()=>({name:document.querySelector('.exercise-copy h1')?.textContent||'',checks:[...document.querySelectorAll('[data-052-done]')].map(x=>x.textContent.trim())}));
+            if(nextEx.name===priorName||nextEx.checks.some(x=>x!=='○'))throw new Error('Next exercise inherited checked state');
 
             await page.evaluate(()=>{S.screen='body';save();render()});
-            await page.waitForSelector('.arc-body-map-upgraded .arc-body-anatomy',{timeout:3000});
-            const body=await page.evaluate(()=>({screen:S.screen,figure:!!document.querySelector('.arc-body-anatomy'),bands:document.querySelectorAll('.arc-body-band').length,points:document.querySelectorAll('.arc-body-point').length,text:document.querySelector('.arc-body-map-upgraded')?.textContent||''}));
-            console.log('body-map',body);
-            if(body.screen!=='body'||!body.figure||body.bands<8||body.points<8||!body.text.includes('165 lb')||!body.text.includes('WAIST')||!body.text.includes('THIGH')||!body.text.includes('CALF'))throw new Error('Full-body measurement map failed');
+            await page.waitForSelector('.focus-body-map',{timeout:2000});
+            const body=await page.evaluate(()=>({screen:S.screen,labels:[...document.querySelectorAll('.focus-body-lines b')].map(x=>x.textContent),update:!!document.querySelector('[data-body-checkin-052]')}));
+            if(body.screen!=='body'||body.labels.join('|')!=='Neck|Shoulders|Chest|Arms|Waist|Hips|Thighs|Calves'||!body.update)throw new Error('Full-body mockup screen failed');
+
+            await page.evaluate(()=>document.querySelector('[data-focus-go="community"]')?.click());
+            await page.waitForSelector('.focus-more',{timeout:1500});
+            const more=await page.evaluate(()=>({active:document.querySelector('.focus-nav button.active')?.textContent.trim(),items:document.querySelectorAll('.focus-more-list>button').length,promo:!!document.querySelector('.focus-more-promo')}));
+            if(more.active!=='More'||more.items<5||!more.promo)throw new Error('More/Explore screen failed');
 
             await page.evaluate(()=>{S.screen='today';save();render()});
             await page.goto(base+'diagnostics/webkit-control.html?webkit-away=1',{waitUntil:'domcontentloaded'});await page.goBack({waitUntil:'domcontentloaded'});
-            await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&document.querySelector('#app>*'),null,{timeout:10000});
-            const back=await page.evaluate(()=>({app:!!document.querySelector('#app>*'),stamp:S.meta?.localUpdatedAt||'',historyMeal:S.history?.nutrition?.[0],historyWorkout:S.history?.workouts?.[0]?.name,target:S.nutritionV1?.targets?.calories,lastGood:!!localStorage.getItem('arcStateLastKnownGood')}));
-            if(!back.app||!back.stamp||back.historyMeal?.name!=='Saved Meal'||back.historyMeal?.calories!==777||back.historyMeal?.protein!==66||back.historyWorkout!=='Saved Workout'||back.target!==1900||!back.lastGood)throw new Error('Navigation restore lost ARC DOM or persisted user data');
+            await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&document.querySelector('.focus-today'),null,{timeout:10000});
+            const back=await page.evaluate(()=>({app:!!document.querySelector('.focus-today'),stamp:S.meta?.localUpdatedAt||'',historyMeal:S.history?.nutrition?.[0],historyWorkout:S.history?.workouts?.[0]?.name,target:S.nutritionV1?.targets?.calories,lastGood:!!localStorage.getItem('arcStateLastKnownGood')}));
+            if(!back.app||!back.stamp||back.historyMeal?.name!=='Saved Meal'||back.historyMeal?.calories!==777||back.historyMeal?.protein!==66||back.historyWorkout!=='Saved Workout'||back.target!==1900||!back.lastGood)throw new Error('Lifecycle restore lost UI or saved data');
 
             if(pageErrors.length)throw new Error('ARC page errors: '+pageErrors.join(' | '));
-            await browser.close();console.log('ARC WebKit smoke: PASS');
+            await browser.close();console.log('ARC Focus UI WebKit smoke: PASS');
           })().catch(e=>{console.error(e);process.exit(1)});
           NODE
