@@ -2,7 +2,7 @@
 // Captures state changes before legacy handlers can stop propagation and protects newer local data from stale cloud hydration.
 (function(){
   if(typeof S==='undefined')return;
-  const STATE_KEY='arcState';
+  const STATE_KEY='arcState',BACKUP_KEY='arcStateLastKnownGood',PREVIOUS_KEY='arcStatePreviousGood';
   let lastRaw='';
   let shadow=null;
   let shadowStamp='';
@@ -11,8 +11,17 @@
 
   function parse(raw){try{const x=JSON.parse(raw||'null');return x&&typeof x==='object'?x:null}catch(e){return null}}
   function stampOf(x){return String(x?.meta?.localUpdatedAt||'')}
+  function backup(raw){
+    if(!raw||!parse(raw))return;
+    try{
+      const current=localStorage.getItem(BACKUP_KEY)||'';
+      if(current&&current!==raw&&parse(current))localStorage.setItem(PREVIOUS_KEY,current);
+      if(current!==raw)localStorage.setItem(BACKUP_KEY,raw);
+    }catch(e){}
+  }
   function load(){
     const raw=localStorage.getItem(STATE_KEY)||'';
+    backup(raw);
     lastRaw=raw;
     shadow=parse(raw);
     shadowStamp=stampOf(shadow);
@@ -29,10 +38,11 @@
     const raw=localStorage.getItem(STATE_KEY)||'';
     if(!raw||raw===lastRaw)return;
     const state=parse(raw);if(!state){lastRaw=raw;return}
+    backup(lastRaw);
     state.meta=state.meta&&typeof state.meta==='object'?state.meta:{};
     state.meta.localUpdatedAt=new Date().toISOString();
     const stamped=JSON.stringify(state);
-    try{localStorage.setItem(STATE_KEY,stamped);S=state}catch(e){return}
+    try{localStorage.setItem(STATE_KEY,stamped);S=state;backup(stamped)}catch(e){return}
     lastRaw=stamped;shadow=state;shadowStamp=state.meta.localUpdatedAt;dirty=true;dispatch();queueCloud();
   }
   function afterEvent(){setTimeout(markIfChanged,0)}
@@ -41,20 +51,19 @@
   for(const type of ['click','input','change'])document.addEventListener(type,afterEvent,true);
   window.addEventListener('arc:state-dirty',()=>{markIfChanged();queueCloud()});
 
-  // hydrateFromCloud currently replaces local state. If the device has a newer stamped copy,
-  // restore it immediately after cloud activation and push it back to Arc Cloud.
+  // If cloud activation returns an older copy, immediately restore the newer device snapshot.
   window.addEventListener('arc:cloud-ready',()=>{
-    const current=parse(localStorage.getItem(STATE_KEY)||''),currentStamp=stampOf(current);
+    const currentRaw=localStorage.getItem(STATE_KEY)||'',current=parse(currentRaw),currentStamp=stampOf(current);
     if(shadow&&shadowStamp&&(!currentStamp||shadowStamp>currentStamp)){
-      try{S=shadow;localStorage.setItem(STATE_KEY,JSON.stringify(shadow));lastRaw=JSON.stringify(shadow);if(typeof render==='function')render()}catch(e){}
+      try{backup(currentRaw);S=shadow;const restored=JSON.stringify(shadow);localStorage.setItem(STATE_KEY,restored);backup(restored);lastRaw=restored;if(typeof render==='function')render()}catch(e){}
       dirty=true;queueCloud(150);
     }else{
-      shadow=current;shadowStamp=currentStamp;lastRaw=localStorage.getItem(STATE_KEY)||'';if(dirty)queueCloud(150);
+      backup(currentRaw);shadow=current;shadowStamp=currentStamp;lastRaw=currentRaw;if(dirty)queueCloud(150);
     }
   });
   document.addEventListener('visibilitychange',()=>{if(document.hidden){markIfChanged();queueCloud(0)}});
-  window.addEventListener('pagehide',()=>{markIfChanged();if(window.ArcCloud?.ready)try{window.ArcCloud.sync()}catch(e){}});
+  window.addEventListener('pagehide',()=>{markIfChanged();backup(localStorage.getItem(STATE_KEY)||'');if(window.ArcCloud?.ready)try{window.ArcCloud.sync()}catch(e){}});
 
   load();
-  window.ArcPersistence={get dirty(){return dirty},get localUpdatedAt(){return shadowStamp},flush(){markIfChanged();queueCloud(0)},version:'1.0'};
+  window.ArcPersistence={get dirty(){return dirty},get localUpdatedAt(){return shadowStamp},flush(){markIfChanged();backup(localStorage.getItem(STATE_KEY)||'');queueCloud(0)},version:'1.1'};
 })();
