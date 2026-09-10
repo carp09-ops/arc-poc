@@ -33,14 +33,16 @@ jobs:
           const {webkit}=require('playwright');
           (async()=>{
             const browser=await webkit.launch();
-            const context=await browser.newContext({viewport:{width:820,height:1180},userAgent:'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.1 Safari/605.1.15'});
+            const context=await browser.newContext({viewport:{width:430,height:760},userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 26_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1'});
             const page=await context.newPage();
             const pageErrors=[];page.on('pageerror',e=>pageErrors.push(String(e)));
             const base='http://127.0.0.1:4173/';
 
             await page.goto(base+'diagnostics/webkit-control.html?smoke-origin=1',{waitUntil:'domcontentloaded'});
             await page.evaluate(()=>{
-              const state={screen:'today',on:1,profile:{name:'Smoke',goals:['Improve overall health'],primary:'Improve overall health',why:'',weight:'165',waist:'35',life:'A mix of sitting and moving',sleep:'7',location:'Home',experience:'Know the basics',days:3,duration:30,nutrition:'Guided — calories + protein',activities:['Strength training','Walking'],equipment:['Dumbbells','Bodyweight']},logs:{workouts:0,bodyChecks:0,cal:0,protein:0,steps:0},history:{workouts:[],nutrition:[],body:[],activity:[],sleep:[],signals:[],weight:[],context:[],measurements:[]},meta:{},nutritionV1:{targets:{calories:1900}},done:false};
+              // Deliberately seed an older-but-valid user shape: nutritionV1 exists but has no days.
+              // The migration layer must add missing structure without resetting any existing values.
+              const state={screen:'today',on:1,profile:{name:'Smoke',goals:['Improve overall health'],primary:'Improve overall health',why:'',weight:'165',waist:'35',life:'A mix of sitting and moving',sleep:'7',location:'Home',experience:'Know the basics',days:3,duration:30,nutrition:'Guided — calories + protein',activities:['Strength training','Walking'],equipment:['Dumbbells','Bodyweight']},logs:{workouts:2,bodyChecks:1,cal:777,protein:66,steps:0},history:{workouts:[{date:'2026-09-01',name:'Saved Workout'}],nutrition:[{date:'2026-09-01',food:'Saved Meal',calories:777,protein:66}],body:[{date:'2026-09-01',weight:165}],activity:[],sleep:[],signals:[],weight:[],context:[],measurements:[]},meta:{},nutritionV1:{targets:{calories:1900}},done:false};
               localStorage.setItem('arcState',JSON.stringify(state));localStorage.setItem('arcStarted','1');
             });
             pageErrors.length=0;
@@ -49,9 +51,10 @@ jobs:
             await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&document.querySelector('#app>*'),null,{timeout:10000});
             await page.waitForTimeout(500);
 
-            const first=await page.evaluate(()=>({app:!!document.querySelector('#app>*'),passive:document.querySelectorAll('.arc-passive-morning').length,balance:document.querySelectorAll('.arc8020-card').length,weekly:document.querySelectorAll('.v06-weekly-teaser').length,boot:!!document.querySelector('#arc-boot'),screen:S.screen,suppressed:window.__arcRuntime?.suppressedRenders||0,nutritionDays:!!S.nutritionV1?.days}));
+            const first=await page.evaluate(()=>({app:!!document.querySelector('#app>*'),passive:document.querySelectorAll('.arc-passive-morning').length,balance:document.querySelectorAll('.arc8020-card').length,weekly:document.querySelectorAll('.v06-weekly-teaser').length,boot:!!document.querySelector('#arc-boot'),screen:S.screen,suppressed:window.__arcRuntime?.suppressedRenders||0,nutritionDays:!!S.nutritionV1?.days,target:S.nutritionV1?.targets?.calories,historyMeal:S.history?.nutrition?.[0]?.food,historyWorkout:S.history?.workouts?.[0]?.name,migrationBackup:!!localStorage.getItem('arcStateMigrationBackup')}));
             console.log('initial',first);
             if(!first.app||first.screen!=='today'||first.passive!==1||first.balance!==1||first.weekly!==1||first.boot||first.suppressed<1||!first.nutritionDays)throw new Error('Initial ARC runtime assertions failed');
+            if(first.target!==1900||first.historyMeal!=='Saved Meal'||first.historyWorkout!=='Saved Workout'||!first.migrationBackup)throw new Error('State migration changed or failed to preserve existing user data');
 
             await page.evaluate(()=>{for(let i=0;i<6;i++)render()});await page.waitForTimeout(100);
             const repeat=await page.evaluate(()=>({passive:document.querySelectorAll('.arc-passive-morning').length,balance:document.querySelectorAll('.arc8020-card').length,weekly:document.querySelectorAll('.v06-weekly-teaser').length,app:!!document.querySelector('#app>*')}));
@@ -59,19 +62,21 @@ jobs:
 
             await page.evaluate(()=>document.querySelector('[data-go="nutrition"]')?.click());
             await page.waitForSelector('.arc-nutrition-today',{timeout:3000});
-            const nutrition=await page.evaluate(()=>({screen:S.screen,active:[...document.querySelectorAll('.arc-nav button.active,.arc-mobile-nav button.active')].map(x=>x.dataset.go),plan:!!document.querySelector('.arc-nutrition-today'),days:!!S.nutritionV1?.days}));
+            const nutrition=await page.evaluate(()=>({screen:S.screen,active:[...document.querySelectorAll('.arc-nav button.active,.arc-mobile-nav button.active')].map(x=>x.dataset.go),plan:!!document.querySelector('.arc-nutrition-today'),days:!!S.nutritionV1?.days,target:S.nutritionV1?.targets?.calories}));
             console.log('nutrition',nutrition);
-            if(nutrition.screen!=='nutrition'||!nutrition.plan||!nutrition.active.includes('nutrition')||!nutrition.days)throw new Error('Nutrition route/state failed');
+            if(nutrition.screen!=='nutrition'||!nutrition.plan||!nutrition.active.includes('nutrition')||!nutrition.days||nutrition.target!==1900)throw new Error('Nutrition route/state failed');
 
             // v052 is the active workout surface. Test that exact DOM/state path.
             await page.evaluate(()=>{S.screen='workout';delete S.activeWorkout;save();render()});
             await page.waitForSelector('[data-052-done="0"]',{timeout:3000});
-            const initialWorkout=await page.evaluate(()=>({name:document.querySelector('.exercise-copy h1')?.textContent,checks:[...document.querySelectorAll('[data-052-done]')].map(x=>x.textContent.trim()),keys:Object.keys(S.activeWorkout?.sets||{})}));
+            const initialWorkout=await page.evaluate(()=>({name:document.querySelector('.exercise-copy h1')?.textContent,checks:[...document.querySelectorAll('[data-052-done]')].map(x=>x.textContent.trim()),keys:Object.keys(S.activeWorkout?.sets||{}),maxScroll:document.documentElement.scrollHeight-innerHeight}));
             console.log('workout-start',initialWorkout);
             if(initialWorkout.checks.some(x=>x!=='○')||!initialWorkout.name||initialWorkout.keys.includes('undefined'))throw new Error('Fresh workout state is invalid');
+            if(initialWorkout.maxScroll<80)throw new Error('Workout smoke viewport is not scrollable enough to validate retention');
 
-            await page.evaluate(()=>window.scrollTo(0,Math.min(450,document.documentElement.scrollHeight-innerHeight)));
+            await page.evaluate(()=>window.scrollTo(0,Math.min(320,document.documentElement.scrollHeight-innerHeight)));
             const y0=await page.evaluate(()=>scrollY);
+            if(y0<50)throw new Error('Workout smoke failed to establish a meaningful scroll position');
             await page.evaluate(()=>document.querySelector('[data-052-done="0"]')?.click());await page.waitForTimeout(80);
             const afterOne=await page.evaluate(()=>({y:scrollY,checks:[...document.querySelectorAll('[data-052-done]')].map(x=>x.textContent.trim()),stamp:S.meta?.localUpdatedAt||''}));
             console.log('after-one-set',afterOne);
@@ -88,8 +93,8 @@ jobs:
             await page.evaluate(()=>{S.screen='today';save();render()});
             await page.goto(base+'diagnostics/webkit-control.html?webkit-away=1',{waitUntil:'domcontentloaded'});await page.goBack({waitUntil:'domcontentloaded'});
             await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&document.querySelector('#app>*'),null,{timeout:10000});
-            const back=await page.evaluate(()=>({app:!!document.querySelector('#app>*'),stamp:S.meta?.localUpdatedAt||''}));
-            if(!back.app||!back.stamp)throw new Error('Navigation restore lost ARC DOM or persisted state');
+            const back=await page.evaluate(()=>({app:!!document.querySelector('#app>*'),stamp:S.meta?.localUpdatedAt||'',historyMeal:S.history?.nutrition?.[0]?.food,historyWorkout:S.history?.workouts?.[0]?.name,target:S.nutritionV1?.targets?.calories}));
+            if(!back.app||!back.stamp||back.historyMeal!=='Saved Meal'||back.historyWorkout!=='Saved Workout'||back.target!==1900)throw new Error('Navigation restore lost ARC DOM or persisted user data');
 
             if(pageErrors.length)throw new Error('ARC page errors: '+pageErrors.join(' | '));
             await browser.close();console.log('ARC WebKit smoke: PASS');
