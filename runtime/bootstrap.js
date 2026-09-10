@@ -7,7 +7,7 @@
   function release(reason='ready'){
     if(finished)return;finished=true;
     try{document.documentElement.classList.add('arc-runtime-ready')}catch(e){}
-    if(boot){boot.dataset.reason=reason;boot.classList.add('hide');setTimeout(()=>boot.remove(),300)}
+    if(boot){boot.dataset.reason=reason;boot.remove()}
   }
   function fatal(err){
     console.error('ARC bootstrap',err);
@@ -26,6 +26,8 @@
     if(typeof window.__arcFinishBootstrap!=='function')throw new Error('runtime gate unavailable');
     window.__arcFinishBootstrap();
     if(!document.querySelector('#app>*'))throw new Error('final render produced no app DOM');
-    requestAnimationFrame(()=>requestAnimationFrame(()=>release('ready')));
+    // Do not depend on requestAnimationFrame or a timer here. Safari can throttle both
+    // during lifecycle transitions. Once the final DOM exists, release immediately.
+    release('ready');
   }catch(e){fatal(e)}
 })();
