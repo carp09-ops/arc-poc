@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ARC v06 Auto-Render Probe</title>
+<style>
+:root{color-scheme:dark}html,body{margin:0;min-height:100%;background:#050607;color:#eee5d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}*{box-sizing:border-box}#diag{position:relative;z-index:2147483647;margin:12px;padding:14px;border:1px solid #80663d;border-radius:14px;background:#080a0b;color:#eee5d9}#title{font-weight:800;letter-spacing:.08em;font-size:13px;color:#deb36f}#state{font-size:13px;font-weight:800;margin:7px 0}.pass{color:#9adeb2}.fail{color:#ffaaa0}.warn{color:#f1cc84}#log{white-space:pre-wrap;font:11px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:#aab2b0}#app{margin:12px;min-height:180px;background:#fff;color:#111;padding:12px;border-radius:12px;overflow:auto}button{border:1px solid #80663d;background:#171a1b;color:#eee5d9;border-radius:9px;padding:9px 12px;font-weight:700;margin-top:10px}
+</style>
+</head>
+<body>
+<div id="diag"><div id="title">ARC v06 AUTO-RENDER PROBE · AUTH OFF · CSS OFF</div><div id="state">Starting…</div><pre id="log">HTML: PASS</pre><button id="trigger" hidden>Trigger one manual render()</button></div>
+<div id="app"></div>
+<script>
+(function(){
+  var base=['app.js','v03.js','v031.js','v032.js','v033.js','v034.js','v04.js','v041.js','v042.js','v05.js','v051.js','v052.js','v053.js','v054.js'];
+  var state=document.getElementById('state'),log=document.getElementById('log'),btn=document.getElementById('trigger');
+  var stopped=false,current='bootstrap',savedRender=null,suppressed=0;
+  function say(s,k){log.textContent+='\n'+s;if(k)log.className=k}
+  function setState(s,k){state.textContent=s;state.className=k||''}
+  function fail(msg){if(stopped)return;stopped=true;setState('STOPPED at '+current,'fail');say('FAIL: '+msg,'fail')}
+  window.addEventListener('error',function(e){if(!stopped)fail((e.filename||current)+': '+(e.message||'runtime error'))});
+  window.addEventListener('unhandledrejection',function(e){if(!stopped)fail(current+': '+String((e.reason&&e.reason.message)||e.reason||'promise rejection'))});
+  function load(file){return new Promise(function(resolve,reject){current=file;setState('Loading '+file+'…');var s=document.createElement('script');var done=false;var t=setTimeout(function(){if(done)return;done=true;reject(new Error(file+' timeout'))},8000);s.src='../'+file+'?v06-probe=1';s.async=false;s.onload=function(){if(done)return;done=true;clearTimeout(t);say(file+': loaded','pass');resolve()};s.onerror=function(){if(done)return;done=true;clearTimeout(t);reject(new Error(file+' network error'))};document.body.appendChild(s)})}
+  document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')setTimeout(function(){var ok=!!document.querySelector('#diag')&&!!document.querySelector('#app>*');setState(ok?'RESUMED — DOM still present':'RESUMED — DOM missing',ok?'pass':'fail');say('Resume check: '+(ok?'DOM present':'DOM missing'),ok?'pass':'fail')},250)});
+  btn.onclick=function(){try{btn.disabled=true;setState('Triggering one manual render()…','warn');render();setTimeout(function(){var ok=!!document.querySelector('#app>*');setState(ok?'MANUAL RENDER: PASS — now background Safari':'MANUAL RENDER left #app empty',ok?'pass':'fail');say('Manual render: '+(ok?'PASS':'FAIL'),ok?'pass':'fail')},150)}catch(e){fail('manual render: '+(e.message||e))}};
+  (async function(){try{
+    for(var i=0;i<base.length;i++)await load(base[i]);
+    say('BASELINE through v054: PASS','pass');
+    say('S.screen before v06: '+String(window.S&&S.screen||'unavailable'));
+    savedRender=render;
+    render=function(){suppressed++;say('Suppressed v06 automatic render() call #'+suppressed,'warn')};
+    await load('v06.js');
+    render=savedRender;
+    current='ready';
+    setState('PASS — v06 loaded with only its automatic render suppressed. Background Safari now.','pass');
+    say('v06 wrappers installed; automatic load-time render was suppressed','pass');
+    btn.hidden=false;
+  }catch(e){try{if(savedRender)render=savedRender}catch(_){} fail(e&&e.message?e.message:String(e))}})();
+})();
+</script>
+</body>
+</html>
