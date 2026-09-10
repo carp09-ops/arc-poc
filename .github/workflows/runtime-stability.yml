@@ -66,7 +66,7 @@ jobs:
           const focus=fs.readFileSync('runtime/focus-ui.js','utf8');
           if(!/One focus\. Real progress\./.test(focus))fail('focus-first Today premise missing');
           if(!/80\/20 is a guide, not a grade/.test(focus))fail('canonical 80/20 definition missing');
-          if(!/data-focus-go="nutrition"/.test(focus)||!/data-focus-go="train"/.test(focus)||!/data-focus-go="body"/.test(focus))fail('focus navigation missing core destinations');
+          for(const label of ['Today','Nutrition','Train','Body','More']){if(!focus.includes(`'${label}'`))fail(`focus navigation missing ${label}`)}
           if(/removeItem\s*\(\s*["']arcState["']/.test(focus))fail('focus UI must not clear user state');
           if(/supabase-js@2[^<]*><\/script>/.test(go))fail('go.html must not contain its own app/auth boot');
           if(/<script\s+src=["']https?:\/\//i.test(reset))fail('reset.html must dynamically load auth rather than block initial HTML');
