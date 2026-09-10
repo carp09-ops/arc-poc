@@ -1,11 +1,12 @@
-// ARC 0.7.6 — resilient auth recovery handoff
+// ARC 0.7.7 — dedicated auth recovery handoff
 (function(){
-  const BUILD='0.7.6';
+  const BUILD='0.7.7';
   const RECOVERY_KEY='arcRecoveryPending';
   let recoveryOpen=false;
   const cloud=()=>window.ArcCloud;
   const client=()=>cloud()?.client;
-  const appUrl=()=>`${location.origin}${location.pathname}`;
+  const appUrl=()=>`${location.origin}/`;
+  const resetUrl=()=>`${location.origin}/reset.html`;
 
   function authMessage(msg,error=false){
     const el=document.querySelector('[data-auth-message]');
@@ -54,10 +55,14 @@
     const btn=document.querySelector('[data-arc-forgot-password]');
     if(btn){btn.disabled=true;btn.textContent='Sending reset email…';}
     markRecovery();
-    const {error}=await c.auth.resetPasswordForEmail(email,{redirectTo:appUrl()});
+    const {error}=await c.auth.resetPasswordForEmail(email,{redirectTo:resetUrl()});
     if(btn){btn.disabled=false;btn.textContent='Forgot password?';}
-    if(error){clearRecovery();authMessage(error.message||'Could not send the reset email. Please try again.',true);return;}
-    authMessage('Password reset email sent. Open the newest ARC email and tap the reset link. ARC will open directly to Choose a new password.');
+    if(error){clearRecovery();
+      const raw=(error.message||'').toLowerCase();
+      const friendly=raw.includes('rate limit')?'Too many reset emails have been requested. Wait a little while, then try once more.':(error.message||'Could not send the reset email. Please try again.');
+      authMessage(friendly,true);return;
+    }
+    authMessage('Password reset email sent. Open the newest ARC email and tap the reset link. You’ll go straight to ARC’s password reset page.');
   }
 
   function showRecovery(){
