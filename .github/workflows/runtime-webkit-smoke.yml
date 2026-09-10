@@ -39,9 +39,7 @@ jobs:
 
             await page.goto(base+'diagnostics/webkit-control.html?smoke-origin=1',{waitUntil:'domcontentloaded'});
             await page.evaluate(()=>{
-              // Deliberately seed an older-but-valid user shape: nutritionV1 exists but has no days.
-              // The migration layer must add missing structure without resetting any existing values.
-              const state={screen:'today',on:1,profile:{name:'Smoke',goals:['Improve overall health'],primary:'Improve overall health',why:'',weight:'165',waist:'35',life:'A mix of sitting and moving',sleep:'7',location:'Home',experience:'Know the basics',days:3,duration:30,nutrition:'Guided — calories + protein',activities:['Strength training','Walking'],equipment:['Dumbbells','Bodyweight']},logs:{workouts:2,bodyChecks:1,cal:777,protein:66,steps:0},history:{workouts:[{date:'2026-09-01',name:'Saved Workout'}],nutrition:[{date:'2026-09-01',food:'Saved Meal',calories:777,protein:66}],body:[{date:'2026-09-01',weight:165}],activity:[],sleep:[],signals:[],weight:[],context:[],measurements:[]},meta:{},nutritionV1:{targets:{calories:1900}},done:false};
+              const state={screen:'today',on:1,profile:{name:'Smoke',goals:['Improve overall health'],primary:'Improve overall health',why:'',weight:'165',waist:'35',life:'A mix of sitting and moving',sleep:'7',location:'Home',experience:'Know the basics',days:3,duration:30,nutrition:'Guided — calories + protein',activities:['Strength training','Walking'],equipment:['Dumbbells','Bodyweight']},logs:{workouts:2,bodyChecks:1,cal:777,protein:66,steps:0},history:{workouts:[{date:'2026-09-01',name:'Saved Workout'}],nutrition:[{date:'2026-09-01',food:'Saved Meal',calories:777,protein:66}],body:[{date:'2026-09-01',weight:165,waist:35,hips:40,chest:38,thigh:23,arm:12}],activity:[],sleep:[],signals:[],weight:[],context:[],measurements:[]},meta:{},nutritionV1:{targets:{calories:1900}},done:false};
               localStorage.setItem('arcState',JSON.stringify(state));localStorage.setItem('arcStarted','1');
             });
             pageErrors.length=0;
@@ -56,8 +54,15 @@ jobs:
             if(first.target!==1900||first.historyMeal?.name!=='Saved Meal'||first.historyMeal?.calories!==777||first.historyMeal?.protein!==66||first.historyWorkout!=='Saved Workout'||!first.migrationBackup)throw new Error('State migration changed or failed to preserve existing user data');
 
             await page.evaluate(()=>{for(let i=0;i<6;i++)render()});await page.waitForTimeout(100);
-            const repeat=await page.evaluate(()=>({passive:document.querySelectorAll('.arc-passive-morning').length,balance:document.querySelectorAll('.arc8020-card').length,weekly:document.querySelectorAll('.v06-weekly-teaser').length,app:!!document.querySelector('#app>*')}));
+            const repeat=await page.evaluate(()=>({passive:document.querySelectorAll('.arc-passive-morning').length,balance:document.querySelectorAll('.arc8020-card').length,weekly:document.querySelectorAll('.v06-weekly-teaser').length,app:!!document.querySelector('#app>*'),definition:document.querySelector('.arc8020-definition')?.textContent||'',arcBeforePassive:(()=>{const a=document.querySelector('.arc8020-card'),p=document.querySelector('.arc-passive-morning');return !!a&&!!p&&!!(a.compareDocumentPosition(p)&Node.DOCUMENT_POSITION_FOLLOWING)})()}));
             if(!repeat.app||repeat.passive!==1||repeat.balance!==1||repeat.weekly!==1)throw new Error('Repeated render duplicated or lost Today modules');
+            if(!repeat.definition.includes('guide, not a grade')||!repeat.arcBeforePassive)throw new Error('80/20 premise is not prominent or clearly defined');
+
+            await page.evaluate(()=>document.querySelector('[data-arc8020-details]')?.click());
+            await page.waitForSelector('.arc8020-sheet',{timeout:2000});
+            const explainer=await page.evaluate(()=>{const r=document.querySelector('.arc8020-sheet').getBoundingClientRect();return{text:document.querySelector('.arc8020-explainer')?.textContent||'',centerDelta:Math.abs((r.left+r.width/2)-innerWidth/2),top:r.top,bottom:innerHeight-r.bottom}});
+            if(!explainer.text.includes('80/20 is a guide, not a grade')||explainer.centerDelta>3||explainer.top<0||explainer.bottom<0)throw new Error('80/20 explainer definition or centering failed');
+            await page.evaluate(()=>document.querySelector('[data-arc8020-close]')?.click());
 
             await page.evaluate(()=>document.querySelector('[data-go="nutrition"]')?.click());
             await page.waitForSelector('.arc-nutrition-today',{timeout:3000});
@@ -65,7 +70,6 @@ jobs:
             console.log('nutrition',nutrition);
             if(nutrition.screen!=='nutrition'||!nutrition.plan||!nutrition.active.includes('nutrition')||!nutrition.days||nutrition.target!==1900)throw new Error('Nutrition route/state failed');
 
-            // v052 is the active workout surface. Test that exact DOM/state path.
             await page.evaluate(()=>{S.screen='workout';delete S.activeWorkout;save();render()});
             await page.waitForSelector('[data-052-done="0"]',{timeout:3000});
             const initialWorkout=await page.evaluate(()=>({name:document.querySelector('.exercise-copy h1')?.textContent,checks:[...document.querySelectorAll('[data-052-done]')].map(x=>x.textContent.trim()),keys:Object.keys(S.activeWorkout?.sets||{}),maxScroll:document.documentElement.scrollHeight-innerHeight}));
@@ -88,6 +92,12 @@ jobs:
             const secondWorkout=await page.evaluate(()=>({name:document.querySelector('.exercise-copy h1')?.textContent,checks:[...document.querySelectorAll('[data-052-done]')].map(x=>x.textContent.trim()),keys:Object.keys(S.activeWorkout?.sets||{})}));
             console.log('workout-next',secondWorkout);
             if(secondWorkout.name===ready.name||secondWorkout.checks.some(x=>x!=='○')||secondWorkout.keys.includes('undefined'))throw new Error('Next exercise inherited prior set state');
+
+            await page.evaluate(()=>{S.screen='body';save();render()});
+            await page.waitForSelector('.arc-body-map-upgraded .arc-body-anatomy',{timeout:3000});
+            const body=await page.evaluate(()=>({screen:S.screen,figure:!!document.querySelector('.arc-body-anatomy'),bands:document.querySelectorAll('.arc-body-band').length,points:document.querySelectorAll('.arc-body-point').length,text:document.querySelector('.arc-body-map-upgraded')?.textContent||''}));
+            console.log('body-map',body);
+            if(body.screen!=='body'||!body.figure||body.bands<8||body.points<8||!body.text.includes('165 lb')||!body.text.includes('WAIST')||!body.text.includes('THIGH')||!body.text.includes('CALF'))throw new Error('Full-body measurement map failed');
 
             await page.evaluate(()=>{S.screen='today';save();render()});
             await page.goto(base+'diagnostics/webkit-control.html?webkit-away=1',{waitUntil:'domcontentloaded'});await page.goBack({waitUntil:'domcontentloaded'});
