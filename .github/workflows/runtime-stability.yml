@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - runtime-stability-review-20260910
+      - qa-sprint-1
       - main
   pull_request:
     branches:
@@ -23,8 +24,9 @@ jobs:
           for f in \
             app.js v03.js v031.js v032.js v033.js v034.js v04.js v041.js v042.js \
             v05.js v051.js v052.js v06.js v072.js \
-            runtime/gate.js runtime/brand.js runtime/connected.js runtime/passive.js \
-            runtime/balance.js runtime/recovery.js runtime/cloud.js runtime/bootstrap.js
+            runtime/gate.js runtime/persistence.js runtime/workout-qa.js runtime/nutrition-qa.js \
+            runtime/brand.js runtime/connected.js runtime/passive.js runtime/balance.js \
+            runtime/recovery.js runtime/cloud.js runtime/bootstrap.js
           do
             node --check "$f"
           done
@@ -36,7 +38,7 @@ jobs:
           const index=fs.readFileSync('index.html','utf8');
           const go=fs.readFileSync('go.html','utf8');
           const reset=fs.readFileSync('reset.html','utf8');
-          const runtimeFiles=['runtime/gate.js','runtime/brand.js','runtime/connected.js','runtime/passive.js','runtime/balance.js','runtime/recovery.js','runtime/cloud.js','runtime/bootstrap.js'];
+          const runtimeFiles=['runtime/gate.js','runtime/persistence.js','runtime/workout-qa.js','runtime/nutrition-qa.js','runtime/brand.js','runtime/connected.js','runtime/passive.js','runtime/balance.js','runtime/recovery.js','runtime/cloud.js','runtime/bootstrap.js'];
           const runtime=runtimeFiles.map(f=>fs.readFileSync(f,'utf8')).join('\n');
           const retired=['v053.js','v054.js','v061.js','v07.js','v071.js','v073.js','v075.js'];
           for(const f of retired){if(new RegExp(`<script[^>]+src=["'][^"']*${f.replace('.','\\.')}["']`,'i').test(index))fail(`${f} must not be loaded by index.html`)}
@@ -46,9 +48,13 @@ jobs:
           if(/new\s+MutationObserver/.test(runtime))fail('stable runtime must not use document mutation observers');
           if(/onAuthStateChange\s*\(\s*async/.test(runtime))fail('onAuthStateChange callback must remain synchronous');
           if(/location\.reload\s*\(\s*\)/.test(runtime.replace(/data-arc-boot-retry[\s\S]*?;/g,'')))fail('runtime must not use automatic location.reload fallbacks');
-          if(!/runtime\/gate\.js/.test(index)||! /runtime\/bootstrap\.js/.test(index))fail('controlled render gate/bootstrap missing');
+          if(!/runtime\/gate\.js/.test(index)||!/runtime\/bootstrap\.js/.test(index))fail('controlled render gate/bootstrap missing');
           if(index.indexOf('runtime/gate.js')<index.indexOf('app.js'))fail('runtime gate must load after app.js to capture base render');
+          if(index.indexOf('runtime/persistence.js')<index.indexOf('runtime/gate.js'))fail('persistence guard must load after runtime gate');
+          if(index.indexOf('runtime/workout-qa.js')<index.indexOf('v05.js')||index.indexOf('runtime/workout-qa.js')>index.indexOf('v051.js'))fail('workout QA boundary must load between v05 and v051');
+          if(index.indexOf('runtime/nutrition-qa.js')<index.indexOf('v072.js'))fail('nutrition QA normalization must load after v072');
           if(index.indexOf('runtime/bootstrap.js')<index.indexOf('runtime/cloud.js'))fail('final bootstrap must be last in the stable chain');
+          if(!/localUpdatedAt/.test(fs.readFileSync('runtime/persistence.js','utf8')))fail('persistence guard must stamp local updates');
           if(/supabase-js@2[^<]*><\/script>/.test(go))fail('go.html must not contain its own app/auth boot');
           if(/<script\s+src=["']https?:\/\//i.test(reset))fail('reset.html must dynamically load auth rather than block initial HTML');
           if(!/new URL\('\.\/'/.test(reset))fail('reset.html must return relative to the GitHub Pages project root');
