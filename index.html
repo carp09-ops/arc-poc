@@ -45,25 +45,23 @@
   <link rel="stylesheet" href="v075.css?v=runtime-stable" />
   <script>
     window.__ARC_BOOTSTRAPPING=true;
-    // Preserve valid ARC state. If JSON is malformed, retain an exact backup before giving app.js a safe null state.
     try{
       const raw=localStorage.getItem('arcState');
       if(raw)JSON.parse(raw);
     }catch(e){
       try{localStorage.setItem('arcStateRecoveryBackup',localStorage.getItem('arcState')||'');localStorage.setItem('arcState','null')}catch(ignore){}
     }
-    try{localStorage.setItem('arcVersion','0.7.5-runtime-stable')}catch(e){}
+    try{localStorage.setItem('arcVersion','0.7.5-runtime-stable-qa1')}catch(e){}
   </script>
 </head>
 <body>
   <div id="arc-boot" role="status" aria-live="polite"><div class="arc-boot-inner"><div class="arc-boot-mark">A</div><div class="arc-boot-title">ARC</div><div class="arc-boot-sub">PROGRESS HAS A SHAPE</div><div class="arc-boot-line"><i></i></div><div id="arc-boot-status" class="arc-boot-status">Loading your Arc…</div></div></div>
   <div id="app"></div>
 
-  <!-- Base runtime. app.js performs one legacy render behind the boot screen; the gate suppresses all later historical load-time renders. -->
   <script defer src="app.js?v=runtime-stable"></script>
   <script defer src="runtime/gate.js?v=1"></script>
+  <script defer src="runtime/persistence.js?v=1"></script>
 
-  <!-- Historical product layers retained for feature behavior. Their load-time render calls are suppressed until the final bootstrap. -->
   <script defer src="v03.js?v=runtime-stable"></script>
   <script defer src="v031.js?v=runtime-stable"></script>
   <script defer src="v032.js?v=runtime-stable"></script>
@@ -73,20 +71,20 @@
   <script defer src="v041.js?v=runtime-stable"></script>
   <script defer src="v042.js?v=runtime-stable"></script>
   <script defer src="v05.js?v=runtime-stable"></script>
+  <script defer src="runtime/workout-qa.js?v=1"></script>
   <script defer src="v051.js?v=runtime-stable"></script>
   <script defer src="v052.js?v=runtime-stable"></script>
 
-  <!-- Stability replacements for observer-heavy historical layers. -->
   <script defer src="runtime/brand.js?v=1"></script>
   <script defer src="v06.js?v=runtime-stable"></script>
   <script defer src="v072.js?v=runtime-stable"></script>
+  <script defer src="runtime/nutrition-qa.js?v=1"></script>
   <script defer src="runtime/connected.js?v=1"></script>
   <script defer src="runtime/passive.js?v=1"></script>
   <script defer src="runtime/balance.js?v=1"></script>
   <script defer src="runtime/recovery.js?v=1"></script>
   <script defer src="runtime/cloud.js?v=1"></script>
 
-  <!-- One controlled final product render. -->
   <script defer src="runtime/bootstrap.js?v=1"></script>
 </body>
 </html>
