@@ -57,31 +57,31 @@ jobs:
             const repeat=await page.evaluate(()=>({passive:document.querySelectorAll('.arc-passive-morning').length,balance:document.querySelectorAll('.arc8020-card').length,weekly:document.querySelectorAll('.v06-weekly-teaser').length,app:!!document.querySelector('#app>*')}));
             if(!repeat.app||repeat.passive!==1||repeat.balance!==1||repeat.weekly!==1)throw new Error('Repeated render duplicated or lost Today modules');
 
-            // DOM click avoids auth-overlay actionability; auth itself is covered separately.
             await page.evaluate(()=>document.querySelector('[data-go="nutrition"]')?.click());
             await page.waitForSelector('.arc-nutrition-today',{timeout:3000});
             const nutrition=await page.evaluate(()=>({screen:S.screen,active:[...document.querySelectorAll('.arc-nav button.active,.arc-mobile-nav button.active')].map(x=>x.dataset.go),plan:!!document.querySelector('.arc-nutrition-today'),days:!!S.nutritionV1?.days}));
             console.log('nutrition',nutrition);
             if(nutrition.screen!=='nutrition'||!nutrition.plan||!nutrition.active.includes('nutrition')||!nutrition.days)throw new Error('Nutrition route/state failed');
 
+            // v052 is the active workout surface. Test that exact DOM/state path.
             await page.evaluate(()=>{S.screen='workout';delete S.activeWorkout;save();render()});
-            await page.waitForSelector('[data-deep-done="0"]',{timeout:3000});
-            const initialWorkout=await page.evaluate(()=>({name:document.querySelector('.exercise-copy h1')?.textContent,checks:[...document.querySelectorAll('[data-deep-done]')].map(x=>x.textContent.trim()),keys:Object.keys(S.activeWorkout?.sets||{})}));
+            await page.waitForSelector('[data-052-done="0"]',{timeout:3000});
+            const initialWorkout=await page.evaluate(()=>({name:document.querySelector('.exercise-copy h1')?.textContent,checks:[...document.querySelectorAll('[data-052-done]')].map(x=>x.textContent.trim()),keys:Object.keys(S.activeWorkout?.sets||{})}));
             console.log('workout-start',initialWorkout);
             if(initialWorkout.checks.some(x=>x!=='○')||!initialWorkout.name||initialWorkout.keys.includes('undefined'))throw new Error('Fresh workout state is invalid');
 
             await page.evaluate(()=>window.scrollTo(0,Math.min(450,document.documentElement.scrollHeight-innerHeight)));
             const y0=await page.evaluate(()=>scrollY);
-            await page.evaluate(()=>document.querySelector('[data-deep-done="0"]')?.click());await page.waitForTimeout(80);
-            const afterOne=await page.evaluate(()=>({y:scrollY,checks:[...document.querySelectorAll('[data-deep-done]')].map(x=>x.textContent.trim()),stamp:S.meta?.localUpdatedAt||''}));
+            await page.evaluate(()=>document.querySelector('[data-052-done="0"]')?.click());await page.waitForTimeout(80);
+            const afterOne=await page.evaluate(()=>({y:scrollY,checks:[...document.querySelectorAll('[data-052-done]')].map(x=>x.textContent.trim()),stamp:S.meta?.localUpdatedAt||''}));
             console.log('after-one-set',afterOne);
             if(Math.abs(afterOne.y-y0)>2||afterOne.checks.join('')!=='✓○○'||!afterOne.stamp)throw new Error('Set completion, scroll stability, or local persistence failed');
 
-            await page.evaluate(()=>{document.querySelector('[data-deep-done="1"]')?.click();document.querySelector('[data-deep-done="2"]')?.click()});await page.waitForTimeout(80);
-            const ready=await page.evaluate(()=>({disabled:!!document.querySelector('[data-deep-next]')?.disabled,name:document.querySelector('.exercise-copy h1')?.textContent}));
+            await page.evaluate(()=>{document.querySelector('[data-052-done="1"]')?.click();document.querySelector('[data-052-done="2"]')?.click()});await page.waitForTimeout(80);
+            const ready=await page.evaluate(()=>({disabled:!!document.querySelector('[data-052-next]')?.disabled,name:document.querySelector('.exercise-copy h1')?.textContent}));
             if(ready.disabled)throw new Error('Next exercise did not unlock');
-            await page.evaluate(()=>document.querySelector('[data-deep-next]')?.click());await page.waitForTimeout(100);
-            const secondWorkout=await page.evaluate(()=>({name:document.querySelector('.exercise-copy h1')?.textContent,checks:[...document.querySelectorAll('[data-deep-done]')].map(x=>x.textContent.trim()),keys:Object.keys(S.activeWorkout?.sets||{})}));
+            await page.evaluate(()=>document.querySelector('[data-052-next]')?.click());await page.waitForTimeout(100);
+            const secondWorkout=await page.evaluate(()=>({name:document.querySelector('.exercise-copy h1')?.textContent,checks:[...document.querySelectorAll('[data-052-done]')].map(x=>x.textContent.trim()),keys:Object.keys(S.activeWorkout?.sets||{})}));
             console.log('workout-next',secondWorkout);
             if(secondWorkout.name===ready.name||secondWorkout.checks.some(x=>x!=='○')||secondWorkout.keys.includes('undefined'))throw new Error('Next exercise inherited prior set state');
 
