@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#f4f1ea" />
+  <meta name="theme-color" content="#f4efe6" />
   <meta name="color-scheme" content="light" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>Arc — Progress Has a Shape</title>
   <link rel="manifest" href="manifest.json?v=runtime-stable" />
+  <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
   <link rel="preload" as="image" href="assets/arc-lockup-horizontal-transparent.svg" />
   <link rel="preload" as="image" href="assets/arc-monogram-transparent.svg" />
   <link rel="apple-touch-icon" href="assets/arc-app-icon.webp" />
@@ -45,6 +46,7 @@
   <link rel="stylesheet" href="v073.css?v=runtime-stable" />
   <link rel="stylesheet" href="v075.css?v=runtime-stable" />
   <link rel="stylesheet" href="runtime/focus-ui.css?v=1" />
+  <link rel="stylesheet" href="runtime/premium-ui.css?v=1" />
   <script>
     window.__ARC_BOOTSTRAPPING=true;
     try{
@@ -53,7 +55,7 @@
     }catch(e){
       try{localStorage.setItem('arcStateRecoveryBackup',localStorage.getItem('arcState')||'');localStorage.setItem('arcState','null')}catch(ignore){}
     }
-    try{localStorage.setItem('arcVersion','focus-first-1.0')}catch(e){}
+    try{localStorage.setItem('arcVersion','premium-focus-1.0')}catch(e){}
   </script>
 </head>
 <body>
@@ -87,6 +89,7 @@
   <script defer src="runtime/passive.js?v=1"></script>
   <script defer src="runtime/balance.js?v=1"></script>
   <script defer src="runtime/focus-ui.js?v=1"></script>
+  <script defer src="runtime/premium-ui.js?v=1"></script>
   <script defer src="runtime/recovery.js?v=1"></script>
   <script defer src="runtime/cloud.js?v=1"></script>
 
