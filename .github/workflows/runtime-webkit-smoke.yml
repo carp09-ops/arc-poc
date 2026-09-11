@@ -7,6 +7,7 @@ on:
       - qa-sprint-1
       - focus-first-ui
       - arc-insights-v1
+      - signature-eclipse-body
       - main
 
 jobs:
@@ -47,8 +48,7 @@ jobs:
             pageErrors.length=0;
 
             await page.goto(base+'?focus-smoke=1',{waitUntil:'domcontentloaded'});
-            await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&document.querySelector('.focus-today'),null,{timeout:10000});
-            await page.waitForSelector('.arc-insights-hero',{state:'visible',timeout:3000});
+            await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&window.__ARC_SIGNATURE_VISUALS===true&&document.querySelector('.focus-today')&&document.querySelector('.arc-eclipse-lock[data-signature-eclipse="1"]'),null,{timeout:10000});
             await page.waitForTimeout(250);
 
             const first=await page.evaluate(()=>({
@@ -58,7 +58,7 @@ jobs:
               target:S.nutritionV1?.targets?.calories,historyMeal:S.history?.nutrition?.[0],historyWorkout:S.history?.workouts?.[0]?.name,
               migrationBackup:!!localStorage.getItem('arcStateMigrationBackup'),lastGood:!!localStorage.getItem('arcStateLastKnownGood'),
               arcHero:!!document.querySelector('.arc-insights-hero'),arcInsight:document.querySelector('.arc-insight-card')?.textContent||'',periodButtons:document.querySelectorAll('[data-arc-period]').length,
-              targetMarker:!!document.querySelector('.arc-target-marker'),nextMove:document.querySelector('[data-arc-next]')?.textContent||'',
+              eclipse:!!document.querySelector('.arc-insights-hero [data-signature-eclipse="1"]'),eclipseTitle:document.querySelector('.arc-eclipse-center h3')?.textContent||'',corona:!!document.querySelector('.arc-eclipse-corona-soft'),nextMove:document.querySelector('[data-arc-next]')?.textContent||'',
               hierarchy:(()=>{const a=document.querySelector('.arc-insights-hero')?.getBoundingClientRect(),f=document.querySelector('.focus-primary-card')?.getBoundingClientRect();return a&&f?a.top<f.top:false})(),
               snapshot:typeof window.__arcSnapshot==='function'?window.__arcSnapshot():null
             }));
@@ -66,13 +66,13 @@ jobs:
             if(!first.app||first.screen!=='today'||first.boot||first.suppressed<1||!first.focus||!first.why||first.glance!==3)throw new Error('Focus-first Today failed to mount');
             if(first.nav.join('|')!=='Today|Nutrition|Train|Body|More')throw new Error('Approved five-item focus navigation is not present');
             if(first.target!==1900||first.historyMeal?.name!=='Saved Meal'||first.historyMeal?.calories!==777||first.historyMeal?.protein!==66||first.historyWorkout!=='Saved Workout'||!first.migrationBackup||!first.lastGood)throw new Error('Existing user data was not preserved');
-            if(!first.arcHero||!first.arcInsight.includes('ARC INSIGHT')||first.periodButtons!==2||!first.targetMarker||!first.nextMove.includes('BEST NEXT MOVE')||!first.hierarchy||!first.snapshot)throw new Error('Arc Insights is not the Today focal point');
+            if(!first.arcHero||!first.arcInsight.includes('ARC INSIGHT')||first.periodButtons!==2||!first.eclipse||first.eclipseTitle!=='Your Arc'||!first.corona||!first.nextMove.includes('BEST NEXT MOVE')||!first.hierarchy||!first.snapshot)throw new Error('Solar-eclipse Arc Insights is not the Today focal point');
             if(!Number.isFinite(first.snapshot.foundation)||!Number.isFinite(first.snapshot.flex)||Math.abs(first.snapshot.foundation+first.snapshot.flex-100)>.01)throw new Error('Arc 80/20 snapshot is invalid');
 
             const beforePeriod=await page.evaluate(()=>({target:S.nutritionV1?.targets?.calories,meal:S.history?.nutrition?.[0]?.name,workout:S.history?.workouts?.[0]?.name}));
-            await page.evaluate(()=>document.querySelector('[data-arc-period="week"]')?.click());await page.waitForTimeout(100);
-            const weekArc=await page.evaluate(()=>({period:document.querySelector('.arc-insights-hero')?.dataset.arcPeriodActive,active:document.querySelector('[data-arc-period].active')?.textContent.trim(),label:document.querySelector('.arc-insights-state>span')?.textContent.trim(),snapshot:window.__arcSnapshot?.('week')}));
-            if(weekArc.period!=='week'||weekArc.active!=='This Week'||weekArc.label!=='THIS WEEK'||weekArc.snapshot?.period!=='week')throw new Error('Arc Today/Week toggle failed');
+            await page.evaluate(()=>document.querySelector('[data-arc-period="week"]')?.click());await page.waitForTimeout(140);
+            const weekArc=await page.evaluate(()=>({period:document.querySelector('.arc-insights-hero')?.dataset.arcPeriodActive,active:document.querySelector('[data-arc-period].active')?.textContent.trim(),signature:!!document.querySelector('.arc-insights-hero [data-signature-eclipse="1"]'),snapshot:window.__arcSnapshot?.('week')}));
+            if(weekArc.period!=='week'||weekArc.active!=='This Week'||!weekArc.signature||weekArc.snapshot?.period!=='week')throw new Error('Arc Today/Week eclipse toggle failed');
             await page.evaluate(()=>document.querySelector('[data-arc-evidence]')?.click());await page.waitForTimeout(50);
             const evidence=await page.evaluate(()=>({open:document.querySelector('[data-arc-evidence]')?.getAttribute('aria-expanded'),visible:getComputedStyle(document.querySelector('.arc-insight-evidence')).display,text:document.querySelector('.arc-insight-evidence')?.textContent||''}));
             if(evidence.open!=='true'||evidence.visible==='none'||!evidence.text.includes('WHAT\'S SHAPING IT'))throw new Error('Arc insight evidence layer failed');
@@ -80,9 +80,9 @@ jobs:
             if(JSON.stringify(beforePeriod)!==JSON.stringify(afterPeriod))throw new Error('Arc period/evidence interaction altered saved user data');
 
             await page.evaluate(()=>document.querySelector('[data-focus-go="arc"]')?.click());
-            await page.waitForSelector('.focus-arc',{timeout:2000});
-            const arc=await page.evaluate(()=>({screen:S.screen,title:document.querySelector('.focus-arc>h1')?.textContent||'',gauge:!!document.querySelector('.focus-gauge'),info:document.querySelector('[data-focus-8020]')?.textContent||''}));
-            if(arc.screen!=='arc'||!arc.gauge||!arc.info.includes('What is 80/20'))throw new Error('Arc balance screen failed');
+            await page.waitForSelector('.focus-arc',{timeout:2000});await page.waitForTimeout(100);
+            const arc=await page.evaluate(()=>({screen:S.screen,title:document.querySelector('.focus-arc>h1')?.textContent||'',gauge:!!document.querySelector('.focus-gauge'),signature:!!document.querySelector('.focus-gauge [data-signature-eclipse="1"]'),info:document.querySelector('[data-focus-8020]')?.textContent||''}));
+            if(arc.screen!=='arc'||!arc.gauge||!arc.signature||!arc.info.includes('What is 80/20'))throw new Error('Arc eclipse detail screen failed');
             await page.evaluate(()=>document.querySelector('[data-focus-8020]')?.click());
             await page.waitForSelector('.focus-modal',{timeout:1500});
             const modal=await page.evaluate(()=>{const r=document.querySelector('.focus-modal').getBoundingClientRect();return{text:document.querySelector('.focus-modal')?.textContent||'',center:Math.abs((r.left+r.width/2)-innerWidth/2),inside:r.top>=0&&r.bottom<=innerHeight};});
@@ -120,9 +120,9 @@ jobs:
             if(nextEx.name===priorName||nextEx.checks.some(x=>x!=='○'))throw new Error('Next exercise inherited checked state');
 
             await page.evaluate(()=>{S.screen='body';save();render()});
-            await page.waitForSelector('.focus-body-map',{timeout:2000});
-            const body=await page.evaluate(()=>({screen:S.screen,labels:[...document.querySelectorAll('.focus-body-lines b')].map(x=>x.textContent),update:!!document.querySelector('[data-body-checkin-052]')}));
-            if(body.screen!=='body'||body.labels.join('|')!=='Neck|Shoulders|Chest|Arms|Waist|Hips|Thighs|Calves'||!body.update)throw new Error('Full-body mockup screen failed');
+            await page.waitForSelector('.focus-body-map[data-signature-body="locked"]',{timeout:2500});
+            const body=await page.evaluate(()=>({screen:S.screen,labels:[...document.querySelectorAll('.focus-body-lines b')].map(x=>x.textContent),signature:document.querySelector('.focus-body-map')?.dataset.signatureBody,art:getComputedStyle(document.querySelector('.focus-body-map'),'::before').backgroundImage,update:!!document.querySelector('[data-body-checkin-052]')}));
+            if(body.screen!=='body'||body.labels.join('|')!=='Neck|Shoulders|Chest|Arms|Waist|Hips|Thighs|Calves'||body.signature!=='locked'||!body.art.includes('data:image/webp;base64')||!body.update)throw new Error('Locked editorial Body map failed');
 
             await page.evaluate(()=>document.querySelector('[data-focus-go="community"]')?.click());
             await page.waitForSelector('.focus-more',{timeout:1500});
@@ -131,12 +131,11 @@ jobs:
 
             await page.evaluate(()=>{S.screen='today';save();render()});
             await page.goto(base+'diagnostics/webkit-control.html?webkit-away=1',{waitUntil:'domcontentloaded'});await page.goBack({waitUntil:'domcontentloaded'});
-            await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&document.querySelector('.focus-today'),null,{timeout:10000});
-            await page.waitForSelector('.arc-insights-hero',{state:'visible',timeout:3000});
-            const back=await page.evaluate(()=>({app:!!document.querySelector('.focus-today'),arc:!!document.querySelector('.arc-insights-hero'),stamp:S.meta?.localUpdatedAt||'',historyMeal:S.history?.nutrition?.[0],historyWorkout:S.history?.workouts?.[0]?.name,target:S.nutritionV1?.targets?.calories,lastGood:!!localStorage.getItem('arcStateLastKnownGood')}));
-            if(!back.app||!back.arc||!back.stamp||back.historyMeal?.name!=='Saved Meal'||back.historyMeal?.calories!==777||back.historyMeal?.protein!==66||back.historyWorkout!=='Saved Workout'||back.target!==1900||!back.lastGood)throw new Error('Lifecycle restore lost UI, Arc Insights, or saved data');
+            await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&document.querySelector('.focus-today')&&document.querySelector('.arc-eclipse-lock[data-signature-eclipse="1"]'),null,{timeout:10000});
+            const back=await page.evaluate(()=>({app:!!document.querySelector('.focus-today'),arc:!!document.querySelector('.arc-insights-hero [data-signature-eclipse="1"]'),stamp:S.meta?.localUpdatedAt||'',historyMeal:S.history?.nutrition?.[0],historyWorkout:S.history?.workouts?.[0]?.name,target:S.nutritionV1?.targets?.calories,lastGood:!!localStorage.getItem('arcStateLastKnownGood')}));
+            if(!back.app||!back.arc||!back.stamp||back.historyMeal?.name!=='Saved Meal'||back.historyMeal?.calories!==777||back.historyMeal?.protein!==66||back.historyWorkout!=='Saved Workout'||back.target!==1900||!back.lastGood)throw new Error('Lifecycle restore lost UI, eclipse Arc Insights, or saved data');
 
             if(pageErrors.length)throw new Error('ARC page errors: '+pageErrors.join(' | '));
-            await browser.close();console.log('ARC Focus UI WebKit smoke: PASS');
+            await browser.close();console.log('ARC signature WebKit smoke: PASS');
           })().catch(e=>{console.error(e);process.exit(1)});
           NODE
