@@ -67,10 +67,16 @@
     enhanceGauge();
     enhanceBody();
   }
+  function scheduleEnhance(){
+    requestAnimationFrame(()=>{enhance();requestAnimationFrame(enhance)});
+  }
 
   preload();
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>requestAnimationFrame(enhance),{once:true});
-  else requestAnimationFrame(enhance);
-  document.addEventListener('arc:rendered',()=>requestAnimationFrame(enhance));
-  document.addEventListener('arc:auth-rendered',()=>requestAnimationFrame(enhance));
+  window.__arcPremiumEnhance=enhance;
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',scheduleEnhance,{once:true});
+  else scheduleEnhance();
+  // Stable runtime dispatches lifecycle events on window, not document.
+  window.addEventListener('arc:rendered',scheduleEnhance);
+  window.addEventListener('arc:auth-rendered',scheduleEnhance);
+  window.addEventListener('arc:boot-complete',scheduleEnhance);
 })();
