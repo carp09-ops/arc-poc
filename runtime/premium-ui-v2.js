@@ -85,6 +85,22 @@
     }
   }
 
+  function decorateMethod(){
+    const glance=document.querySelector('.focus-today .focus-glance');
+    if(glance&&!document.querySelector('.arc-philosophy-strip')){
+      const strip=document.createElement('button');
+      strip.type='button';strip.className='arc-philosophy-strip';strip.setAttribute('data-focus-go','arc');
+      strip.innerHTML='<span>THE ARC METHOD</span><strong>80/20 is the philosophy.<br>The Arc is how you see it.</strong><small>Build a strong foundation. Leave room for real life.</small><em>See your Arc →</em>';
+      glance.insertAdjacentElement('afterend',strip);
+      const mantra=document.querySelector('.focus-mantra');if(mantra)mantra.textContent='Track less. Understand more.';
+    }
+    const bar=document.querySelector('.focus-nutrition .focus-8020-bar');
+    if(bar&&!bar.querySelector('.arc-8020-explain')){
+      const button=document.createElement('button');button.type='button';button.className='arc-8020-explain';button.setAttribute('data-focus-8020','');button.innerHTML='<span>80/20 is a guide, not a grade.</span><b>What it means →</b>';
+      bar.appendChild(button);
+    }
+  }
+
   function hardenNutrition(){
     const n=document.querySelector('.focus-nutrition');if(!n)return;
     n.dataset.arcPremiumV2='1';
@@ -102,6 +118,7 @@
     decorateExercises();
     decorateBody();
     decorateArc();
+    decorateMethod();
   }
   function schedule(){requestAnimationFrame(()=>{enhance();requestAnimationFrame(enhance)})}
 
