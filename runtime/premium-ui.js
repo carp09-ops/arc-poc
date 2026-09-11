@@ -33,20 +33,17 @@
         </linearGradient>
         <linearGradient id="arcPremiumFlexGradient" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stop-color="#8da4a2"/><stop offset="1" stop-color="#becbc7"/>
-        </linearGradient>
-        <filter id="arcPremiumGlow" x="-30%" y="-60%" width="170%" height="220%">
-          <feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>`;
+        </linearGradient>`;
       svg.insertBefore(defs,svg.firstChild);
     }
 
     // A rising, continuous trajectory is the signature Arc. It intentionally avoids a speedometer shape.
+    // Keep the SVG itself compositing-simple for iPhone WebKit; depth comes from the surrounding surface.
     const shape='M24 139 C76 158 88 71 145 64 C202 57 221 88 244 63 C258 48 270 36 296 35';
-    [track,foundation,flex].forEach(path=>{if(path){path.setAttribute('d',shape);path.setAttribute('pathLength','100')}});
+    [track,foundation,flex].forEach(path=>{if(path){path.setAttribute('d',shape);path.setAttribute('pathLength','100');path.removeAttribute('filter')}});
     if(track){track.setAttribute('stroke','#dfe3dc')}
     if(foundation){
       foundation.setAttribute('stroke','url(#arcPremiumFoundationGradient)');
-      foundation.setAttribute('filter','url(#arcPremiumGlow)');
       foundation.setAttribute('stroke-dasharray',`${Math.max(0,foundationPct-1)} ${Math.min(100,101-foundationPct)}`);
       foundation.removeAttribute('stroke-dashoffset');
     }
