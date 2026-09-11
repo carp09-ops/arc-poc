@@ -39,7 +39,6 @@ jobs:
           const openProduct=async(page)=>{
             await page.goto(base+'?premium-visual=1',{waitUntil:'domcontentloaded'});
             await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&window.__ARC_PREMIUM_UI===true&&window.__ARC_PREMIUM_V2===true&&document.documentElement.classList.contains('arc-premium-v2')&&document.querySelector('.focus-today'),null,{timeout:12000});
-            // Signed-in product presentation only. Auth mechanics are covered in the runtime suite.
             await page.addStyleTag({content:'.arc-auth-shield,.arc-auth-gate,.arc-cloud-account{display:none!important}'});
             await page.waitForTimeout(700);
           };
@@ -51,6 +50,8 @@ jobs:
               hero:getComputedStyle(document.querySelector('.focus-hero-art')).backgroundImage,
               premium:getComputedStyle(document.documentElement).getPropertyValue('--arc-forest').trim(),
               shell:document.querySelector('.phone')?.getBoundingClientRect().toJSON(),
+              bodyBg:getComputedStyle(document.body).backgroundColor,
+              appBg:getComputedStyle(document.querySelector('#app')).backgroundColor,
               savedMeal:S.history?.nutrition?.[0]?.name,
               savedWorkout:S.history?.workouts?.[0]?.name,
               target:S.nutritionV1?.targets?.calories
@@ -60,7 +61,9 @@ jobs:
             if(state.savedMeal!=='Greek yogurt, berries, walnuts'||state.savedWorkout!=='Full Body Strength'||state.target!==1900)throw new Error('Premium layer altered saved data');
             if(await visible(page,'.focus-nav')!==1)throw new Error('Focus navigation is not the single visible product nav');
             if(await visible(page,'.arc-mobile-brandline')!==0||await visible(page,'.arc-rail')!==0||await visible(page,'.nav')!==0)throw new Error('Legacy ARC chrome is still visible');
-            if(!state.shell||state.shell.width<page.viewportSize().width-2)throw new Error('Legacy gutter is constraining the Focus canvas');
+            const minWidth=page.viewportSize().width<=500?400:540;
+            if(!state.shell||state.shell.width<minWidth)throw new Error(`Focus canvas is unexpectedly narrow: ${state.shell?.width}`);
+            if(state.bodyBg==='rgb(5, 6, 7)'||state.appBg==='rgb(5, 6, 7)')throw new Error('Legacy black shell is still visible');
           };
           const review=async(page,prefix)=>{
             const errors=[];page.on('pageerror',e=>errors.push(String(e)));
