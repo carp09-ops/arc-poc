@@ -120,7 +120,14 @@
     decorateArc();
     decorateMethod();
   }
-  function schedule(){requestAnimationFrame(()=>{enhance();requestAnimationFrame(enhance)})}
+  function safeEnhance(){try{enhance()}catch(e){console.warn('ARC premium enhancement skipped',e)}}
+  function schedule(){
+    // Run once now for lifecycle events that fire after a completed render, then again after
+    // the current interaction frame for Focus actions that replace the screen synchronously.
+    safeEnhance();
+    setTimeout(safeEnhance,0);
+    requestAnimationFrame(()=>{safeEnhance();requestAnimationFrame(safeEnhance)});
+  }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
   window.addEventListener('arc:rendered',schedule);
