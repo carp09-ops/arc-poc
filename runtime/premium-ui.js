@@ -15,25 +15,47 @@
   }
 
   function enhanceGauge(){
-    const svg=document.querySelector('.focus-gauge svg');
-    if(!svg||svg.dataset.premium==='1')return;
-    svg.dataset.premium='1';
-    const defs=document.createElementNS(NS,'defs');
-    defs.innerHTML=`
-      <linearGradient id="arcPremiumFoundationGradient" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="#2f6d55"/><stop offset=".48" stop-color="#4f9273"/><stop offset="1" stop-color="#79ad90"/>
-      </linearGradient>
-      <linearGradient id="arcPremiumFlexGradient" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0" stop-color="#83999a"/><stop offset="1" stop-color="#b4c2bf"/>
-      </linearGradient>
-      <filter id="arcPremiumGlow" x="-30%" y="-30%" width="160%" height="160%">
-        <feGaussianBlur stdDeviation="2.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>`;
-    svg.insertBefore(defs,svg.firstChild);
+    const gauge=document.querySelector('.focus-gauge');
+    const svg=gauge?.querySelector('svg');
+    if(!gauge||!svg)return;
     const foundation=svg.querySelector('.gauge-foundation');
     const flex=svg.querySelector('.gauge-flex');
-    if(foundation){foundation.setAttribute('stroke','url(#arcPremiumFoundationGradient)');foundation.setAttribute('filter','url(#arcPremiumGlow)')}
-    if(flex)flex.setAttribute('stroke','url(#arcPremiumFlexGradient)');
+    const track=svg.querySelector('.gauge-track');
+    const foundationPct=Math.max(0,Math.min(100,parseFloat(gauge.style.getPropertyValue('--foundation'))||80));
+    const flexPct=Math.max(0,100-foundationPct);
+
+    if(svg.dataset.premium!=='1'){
+      svg.dataset.premium='1';
+      const defs=document.createElementNS(NS,'defs');
+      defs.innerHTML=`
+        <linearGradient id="arcPremiumFoundationGradient" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#2d6a52"/><stop offset=".52" stop-color="#4f9273"/><stop offset="1" stop-color="#79ad90"/>
+        </linearGradient>
+        <linearGradient id="arcPremiumFlexGradient" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#8da4a2"/><stop offset="1" stop-color="#becbc7"/>
+        </linearGradient>
+        <filter id="arcPremiumGlow" x="-30%" y="-60%" width="170%" height="220%">
+          <feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>`;
+      svg.insertBefore(defs,svg.firstChild);
+    }
+
+    // A rising, continuous trajectory is the signature Arc. It intentionally avoids a speedometer shape.
+    const shape='M24 139 C76 158 88 71 145 64 C202 57 221 88 244 63 C258 48 270 36 296 35';
+    [track,foundation,flex].forEach(path=>{if(path){path.setAttribute('d',shape);path.setAttribute('pathLength','100')}});
+    if(track){track.setAttribute('stroke','#dfe3dc')}
+    if(foundation){
+      foundation.setAttribute('stroke','url(#arcPremiumFoundationGradient)');
+      foundation.setAttribute('filter','url(#arcPremiumGlow)');
+      foundation.setAttribute('stroke-dasharray',`${Math.max(0,foundationPct-1)} ${Math.min(100,101-foundationPct)}`);
+      foundation.removeAttribute('stroke-dashoffset');
+    }
+    if(flex){
+      flex.setAttribute('stroke','url(#arcPremiumFlexGradient)');
+      flex.setAttribute('stroke-dasharray',`${Math.max(0,flexPct-1)} ${Math.min(100,foundationPct+1)}`);
+      flex.setAttribute('stroke-dashoffset',`-${Math.min(100,foundationPct+1)}`);
+    }
+    svg.setAttribute('aria-label',`Your Arc: ${Math.round(foundationPct)} percent Foundation and ${Math.round(flexPct)} percent Flex`);
   }
 
   function enhanceBody(){
@@ -57,8 +79,9 @@
         <ellipse cx="120" cy="43" rx="22.5" ry="26" fill="url(#arcBodyFill)"/>
         <path d="M108 69c-1 7-5 10-13 14-16 8-23 23-25 43l-10 84c-2 17 12 22 18 7l14-65 2 88c1 22-4 40-8 64-4 24-4 51-5 78l-3 78c-1 20 16 25 22 6l17-139h6l17 139c6 19 23 14 22-6l-3-78c-1-27-1-54-5-78-4-24-9-42-8-64l2-88 14 65c6 15 20 10 18-7l-10-84c-2-20-9-35-25-43-8-4-12-7-13-14-7 5-17 8-24 8s-17-3-24-8Z" fill="url(#arcBodyFill)"/>
         <path d="M95 84c7 8 16 12 25 12s18-4 25-12" fill="none" opacity=".55"/>
-        <path d="M120 96v136M100 145c13 5 27 5 40 0M96 225c15 8 33 8 48 0M86 303c9 7 19 10 31 10M123 313c12 0 22-3 31-10" fill="none" opacity=".18"/>
-        <path d="M82 462c7 5 14 7 21 4M137 466c7 3 14 1 21-4" fill="none" opacity=".35"/>
+        <path d="M89 114c20 5 42 5 62 0M91 161c19 6 39 6 58 0M92 248c18 7 38 7 56 0M88 292c21 8 43 8 64 0" fill="none" opacity=".28"/>
+        <path d="M101 357c8 4 15 5 23 5M116 362c8 0 15-1 23-5M84 431c8 4 15 5 22 4M134 435c7 1 14 0 22-4" fill="none" opacity=".22"/>
+        <path d="M120 96v136" fill="none" opacity=".12"/>
       </g>`;
   }
 
@@ -67,15 +90,12 @@
     enhanceGauge();
     enhanceBody();
   }
-  function scheduleEnhance(){
-    requestAnimationFrame(()=>{enhance();requestAnimationFrame(enhance)});
-  }
+  function scheduleEnhance(){requestAnimationFrame(()=>{enhance();requestAnimationFrame(enhance)});}
 
   preload();
   window.__arcPremiumEnhance=enhance;
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',scheduleEnhance,{once:true});
   else scheduleEnhance();
-  // Stable runtime dispatches lifecycle events on window, not document.
   window.addEventListener('arc:rendered',scheduleEnhance);
   window.addEventListener('arc:auth-rendered',scheduleEnhance);
   window.addEventListener('arc:boot-complete',scheduleEnhance);
