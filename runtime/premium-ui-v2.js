@@ -3,7 +3,10 @@
 (function(){
   if(window.__ARC_PREMIUM_V2)return;
   window.__ARC_PREMIUM_V2=true;
-  const escText=v=>String(v??'');
+
+  function stateRef(){
+    try{return typeof S!=='undefined'?S:null}catch(e){return null}
+  }
 
   function movementIcon(name){
     const n=String(name||'').toLowerCase();
@@ -21,36 +24,37 @@
   function decorateExercises(){
     document.querySelectorAll('.focus-exercise-list>button').forEach(row=>{
       const thumb=row.querySelector('.focus-ex-thumb');
-      if(!thumb||thumb.dataset.arcPremiumV2==='1')return;
-      const label=row.querySelector('span>b')?.textContent||'';
+      if(!thumb)return;
+      const label=row.children?.[1]?.querySelector?.('b')?.textContent||row.textContent||'';
+      if(!thumb.querySelector('svg'))thumb.innerHTML=movementIcon(label.replace(/^\s*\d+\.\s*/,''));
       thumb.dataset.arcPremiumV2='1';
-      thumb.innerHTML=movementIcon(label.replace(/^\s*\d+\.\s*/,''));
     });
   }
 
   function latestMeasurement(){
-    const h=window.S?.history||{};
+    const s=stateRef(),h=s?.history||{};
     const rows=[...(Array.isArray(h.measurements)?h.measurements:[]),...(Array.isArray(h.body)?h.body:[])].filter(Boolean).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
-    return rows.at(-1)||window.S?.profile||{};
+    return rows.at(-1)||s?.profile||{};
   }
 
   function decorateBody(){
     const map=document.querySelector('.focus-body-map');
-    if(!map||map.dataset.arcPremiumV2==='1')return;
-    map.dataset.arcPremiumV2='1';
+    if(!map)return;
     const m=latestMeasurement();
     const keys=['neck','shoulders','chest','arm','waist','hips','thigh','calf'];
     map.querySelectorAll('.focus-body-lines span').forEach((row,i)=>{
       const b=row.querySelector('b');if(!b)return;
+      b.querySelector('.arc-map-value')?.remove();
       const v=m?.[keys[i]];
       if(v!==''&&v!=null&&Number.isFinite(+v)){
         const s=document.createElement('small');s.className='arc-map-value';s.textContent=`${Number(v).toFixed(Number(v)%1?1:0)} in`;b.appendChild(s);
       }
     });
+    map.dataset.arcPremiumV2='1';
   }
 
   function recentRhythmPoints(){
-    const h=window.S?.history||{};
+    const s=stateRef(),h=s?.history||{};
     const rows=Array.isArray(h.workouts)?h.workouts:[];
     const now=new Date();
     const buckets=Array.from({length:7},(_,i)=>({start:new Date(now.getFullYear(),now.getMonth(),now.getDate()-(6-i)*4),count:0}));
@@ -72,7 +76,7 @@
     if(!arc)return;
     document.querySelectorAll('.focus-nav button.active').forEach(x=>x.classList.remove('active'));
     if(!arc.querySelector('.focus-arc-back')){
-      const back=document.createElement('button');back.type='button';back.className='focus-arc-back';back.setAttribute('aria-label','Back to Today');back.textContent='‹';back.addEventListener('click',()=>{if(typeof S!=='undefined'){S.screen='today';try{save()}catch(e){}try{render()}catch(e){}}});arc.prepend(back);
+      const back=document.createElement('button');back.type='button';back.className='focus-arc-back';back.setAttribute('aria-label','Back to Today');back.textContent='‹';back.addEventListener('click',()=>{const s=stateRef();if(s){s.screen='today';try{save()}catch(e){}try{render()}catch(e){}}});arc.prepend(back);
     }
     if(!arc.querySelector('.focus-arc-story')){
       const vals=recentRhythmPoints(),pts=sparkPath(vals),box=document.createElement('section');box.className='focus-arc-story';
@@ -100,9 +104,15 @@
     decorateArc();
   }
   function schedule(){requestAnimationFrame(()=>{enhance();requestAnimationFrame(enhance)})}
+
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
   window.addEventListener('arc:rendered',schedule);
   window.addEventListener('arc:auth-rendered',schedule);
   window.addEventListener('arc:boot-complete',schedule);
+  // Focus tab handlers render synchronously without always calling the global render wrapper.
+  // Schedule after those interactions from the window capture phase so decorative upgrades never lag behind.
+  window.addEventListener('click',e=>{
+    if(e.target?.closest?.('[data-focus-go],[data-focus-train-tab],[data-focus-body-tab],[data-focus-nut-tab],[data-focus-view-plan],[data-focus-meal],[data-focus-save-food],[data-focus-modal-save]'))schedule();
+  },true);
   window.__arcPremiumV2Enhance=enhance;
 })();
