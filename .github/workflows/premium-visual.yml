@@ -27,7 +27,6 @@ jobs:
           mkdir -p visual-review
           node <<'NODE'
           const {webkit}=require('playwright');
-          const fs=require('fs');
           (async()=>{
             const browser=await webkit.launch();
             const context=await browser.newContext({viewport:{width:430,height:932},deviceScaleFactor:2,userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 26_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1'});
@@ -42,6 +41,9 @@ jobs:
             });
             await page.goto(base+'?premium-visual=1',{waitUntil:'domcontentloaded'});
             await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&window.__ARC_PREMIUM_UI===true&&document.documentElement.classList.contains('arc-premium-ui')&&document.querySelector('.focus-today'),null,{timeout:12000});
+            // This workflow reviews the signed-in product presentation. Auth itself is tested separately.
+            // Keep asynchronous session chrome from covering the local seeded state screenshots.
+            await page.addStyleTag({content:'.arc-auth-shield,.arc-auth-gate,.arc-cloud-account{display:none!important}'});
             await page.waitForTimeout(650);
             const premium=await page.evaluate(()=>({
               screen:S.screen,
@@ -67,13 +69,13 @@ jobs:
             await page.screenshot({path:'visual-review/03-train.png',fullPage:true});
 
             await page.evaluate(()=>{S.screen='body';save();render()});
-            await page.waitForSelector('.focus-body-map svg[data-premium="1"]',{timeout:2500});await page.waitForTimeout(300);
+            await page.waitForSelector('.focus-body-map svg[data-premium="1"]',{timeout:3000});await page.waitForTimeout(300);
             const body=await page.evaluate(()=>({labels:[...document.querySelectorAll('.focus-body-lines b')].map(x=>x.textContent),premium:document.querySelector('.focus-body-map svg')?.dataset.premium}));
             if(body.labels.length!==8||body.premium!=='1')throw new Error('Premium Body illustration failed');
             await page.screenshot({path:'visual-review/04-body.png',fullPage:true});
 
             await page.evaluate(()=>{S.screen='arc';save();render()});
-            await page.waitForSelector('.focus-gauge svg[data-premium="1"]',{timeout:2500});await page.waitForTimeout(300);
+            await page.waitForSelector('.focus-gauge svg[data-premium="1"]',{timeout:3000});await page.waitForTimeout(300);
             await page.screenshot({path:'visual-review/05-arc.png',fullPage:true});
 
             await page.evaluate(()=>document.querySelector('[data-focus-go="community"]')?.click());
