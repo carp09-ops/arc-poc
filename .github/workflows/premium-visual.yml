@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - premium-ux-pass
+      - arc-insights-v1
 
 jobs:
   premium-visual:
@@ -39,6 +40,7 @@ jobs:
           const openProduct=async(page)=>{
             await page.goto(base+'?premium-visual=1',{waitUntil:'domcontentloaded'});
             await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&window.__ARC_PREMIUM_UI===true&&window.__ARC_PREMIUM_V2===true&&document.documentElement.classList.contains('arc-premium-v2')&&document.querySelector('.focus-today'),null,{timeout:12000});
+            await page.waitForSelector('.arc-insights-hero',{state:'visible',timeout:3000});
             await page.addStyleTag({content:'.arc-auth-shield,.arc-auth-gate,.arc-cloud-account{display:none!important}'});
             await page.waitForTimeout(700);
           };
@@ -54,11 +56,14 @@ jobs:
               appBg:getComputedStyle(document.querySelector('#app')).backgroundColor,
               savedMeal:S.history?.nutrition?.[0]?.name,
               savedWorkout:S.history?.workouts?.[0]?.name,
-              target:S.nutritionV1?.targets?.calories
+              target:S.nutritionV1?.targets?.calories,
+              arcHero:!!document.querySelector('.arc-insights-hero'),
+              arcSnapshot:typeof window.__arcSnapshot==='function'?window.__arcSnapshot():null
             }));
             if(state.screen!=='today'||state.nav.join('|')!=='Today|Nutrition|Train|Body|More')throw new Error('Premium Today structure failed');
             if(!state.hero.includes('images.unsplash.com')||!state.premium)throw new Error('Editorial premium visual layer failed to load');
             if(state.savedMeal!=='Greek yogurt, berries, walnuts'||state.savedWorkout!=='Full Body Strength'||state.target!==1900)throw new Error('Premium layer altered saved data');
+            if(!state.arcHero||!state.arcSnapshot)throw new Error('Arc Insights focal layer failed to load');
             if(await visible(page,'.focus-nav')!==1)throw new Error('Focus navigation is not the single visible product nav');
             if(await visible(page,'.arc-mobile-brandline')!==0||await visible(page,'.arc-rail')!==0||await visible(page,'.nav')!==0)throw new Error('Legacy ARC chrome is still visible');
             const minWidth=page.viewportSize().width<=500?400:540;
@@ -68,9 +73,18 @@ jobs:
           const review=async(page,prefix)=>{
             const errors=[];page.on('pageerror',e=>errors.push(String(e)));
             await seed(page);await openProduct(page);await assertBaseChrome(page);
-            const today=await page.evaluate(()=>({heroH:document.querySelector('.focus-primary-card')?.getBoundingClientRect().height||0,why:document.querySelector('.focus-why')?.textContent||''}));
+            const today=await page.evaluate(()=>{
+              const arc=document.querySelector('.arc-insights-hero')?.getBoundingClientRect(),focus=document.querySelector('.focus-primary-card')?.getBoundingClientRect();
+              return{heroH:focus?.height||0,why:document.querySelector('.focus-why')?.textContent||'',arcH:arc?.height||0,arcW:arc?.width||0,arcBeforeFocus:!!(arc&&focus&&arc.top<focus.top),insight:document.querySelector('.arc-insight-card')?.textContent||'',periods:[...document.querySelectorAll('[data-arc-period]')].map(x=>x.textContent.trim()),targetMarker:!!document.querySelector('.arc-target-marker'),secondary:document.querySelector('.arc-secondary-label')?.textContent||''};
+            });
             if(today.heroH<220||!today.why.includes('WHY ARC CHOSE THIS'))throw new Error('Today no longer matches Focus-first hierarchy');
+            if(today.arcH<430||today.arcW<360||!today.arcBeforeFocus||!today.insight.includes('ARC INSIGHT')||today.periods.join('|')!=='Today|This Week'||!today.targetMarker||!today.secondary.includes("TODAY'S FOCUS"))throw new Error('Arc Insights is not visually dominant on Today');
             await page.screenshot({path:`visual-review/${prefix}-today.png`,fullPage:true});
+
+            await page.evaluate(()=>document.querySelector('[data-arc-period="week"]')?.click());await page.waitForTimeout(220);
+            const weekly=await page.evaluate(()=>({period:document.querySelector('.arc-insights-hero')?.dataset.arcPeriodActive,label:document.querySelector('.arc-insights-state>span')?.textContent||'',overflow:document.documentElement.scrollWidth-innerWidth}));
+            if(weekly.period!=='week'||!weekly.label.includes('THIS WEEK')||weekly.overflow>2)throw new Error('Weekly Arc visual state or responsive width failed');
+            await page.screenshot({path:`visual-review/${prefix}-arc-week.png`,fullPage:true});
 
             await page.evaluate(()=>document.querySelector('[data-focus-go="nutrition"]')?.click());
             await page.waitForSelector('.focus-nutrition',{state:'visible',timeout:3500});await page.waitForTimeout(350);
