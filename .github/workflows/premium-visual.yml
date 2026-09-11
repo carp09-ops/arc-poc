@@ -1,0 +1,95 @@
+name: ARC premium visual QA
+
+on:
+  push:
+    branches:
+      - premium-ux-pass
+
+jobs:
+  premium-visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Serve ARC
+        run: |
+          python3 -m http.server 4173 >/tmp/arc-premium-http.log 2>&1 &
+          echo $! > /tmp/arc-premium-http.pid
+      - name: Run premium UX review
+        run: |
+          mkdir -p visual-review
+          node <<'NODE'
+          const {webkit}=require('playwright');
+          const fs=require('fs');
+          (async()=>{
+            const browser=await webkit.launch();
+            const context=await browser.newContext({viewport:{width:430,height:932},deviceScaleFactor:2,userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 26_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1'});
+            const page=await context.newPage();
+            const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+            const base='http://127.0.0.1:4173/';
+            await page.goto(base+'diagnostics/webkit-control.html?premium-seed=1',{waitUntil:'domcontentloaded'});
+            await page.evaluate(()=>{
+              const d=new Date();const key=d.toISOString().slice(0,10);const prior=new Date(d.getTime()-86400000*12).toISOString().slice(0,10);
+              const state={screen:'today',on:1,profile:{name:'Kimberly',goals:['Improve overall health'],primary:'Improve overall health',why:'Feel strong and confident',weight:'165',waist:'35',life:'A mix of sitting and moving',sleep:'7',location:'Home + Gym',experience:'Know the basics',days:3,duration:30,nutrition:'Guided — calories + protein',activities:['Strength training','Walking'],equipment:['Dumbbells','Bodyweight']},logs:{workouts:2,bodyChecks:1,cal:1280,protein:92,steps:5821},history:{workouts:[{date:prior,name:'Full Body Strength',completed:true}],nutrition:[{date:prior,name:'Greek yogurt, berries, walnuts',calories:380,protein:28}],body:[{date:prior,weight:165,waist:35,hips:40,chest:38,thigh:23,arm:12}],activity:[],sleep:[],signals:[],weight:[],context:[],measurements:[]},meta:{},nutritionV1:{targets:{calories:1900,protein:140},days:{[key]:{meals:{breakfast:{logged:true,portion:1}},custom:[{id:'visual-flex',name:'Dark chocolate',calories:120,protein:2,balance:'flex'}]}}},done:false};
+              localStorage.setItem('arcState',JSON.stringify(state));localStorage.setItem('arcStarted','1');
+            });
+            await page.goto(base+'?premium-visual=1',{waitUntil:'domcontentloaded'});
+            await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&window.__ARC_PREMIUM_UI===true&&document.documentElement.classList.contains('arc-premium-ui')&&document.querySelector('.focus-today'),null,{timeout:12000});
+            await page.waitForTimeout(650);
+            const premium=await page.evaluate(()=>({
+              screen:S.screen,
+              focus:!!document.querySelector('.focus-primary-card'),
+              nav:[...document.querySelectorAll('.focus-nav button')].map(x=>x.textContent.trim()),
+              hero:getComputedStyle(document.querySelector('.focus-hero-art')).backgroundImage,
+              premium:getComputedStyle(document.documentElement).getPropertyValue('--arc-forest').trim(),
+              savedMeal:S.history?.nutrition?.[0]?.name,
+              savedWorkout:S.history?.workouts?.[0]?.name,
+              target:S.nutritionV1?.targets?.calories
+            }));
+            if(premium.screen!=='today'||!premium.focus||premium.nav.join('|')!=='Today|Nutrition|Train|Body|More')throw new Error('Premium Today structure failed');
+            if(!premium.hero.includes('images.unsplash.com')||!premium.premium)throw new Error('Editorial premium visual layer failed to load');
+            if(premium.savedMeal!=='Greek yogurt, berries, walnuts'||premium.savedWorkout!=='Full Body Strength'||premium.target!==1900)throw new Error('Premium layer altered saved data');
+            await page.screenshot({path:'visual-review/01-today.png',fullPage:true});
+
+            await page.evaluate(()=>document.querySelector('[data-focus-go="nutrition"]')?.click());
+            await page.waitForSelector('.focus-nutrition',{timeout:2500});await page.waitForTimeout(300);
+            await page.screenshot({path:'visual-review/02-nutrition.png',fullPage:true});
+
+            await page.evaluate(()=>document.querySelector('[data-focus-go="train"]')?.click());
+            await page.waitForSelector('.focus-train',{timeout:2500});await page.waitForTimeout(300);
+            await page.screenshot({path:'visual-review/03-train.png',fullPage:true});
+
+            await page.evaluate(()=>{S.screen='body';save();render()});
+            await page.waitForSelector('.focus-body-map svg[data-premium="1"]',{timeout:2500});await page.waitForTimeout(300);
+            const body=await page.evaluate(()=>({labels:[...document.querySelectorAll('.focus-body-lines b')].map(x=>x.textContent),premium:document.querySelector('.focus-body-map svg')?.dataset.premium}));
+            if(body.labels.length!==8||body.premium!=='1')throw new Error('Premium Body illustration failed');
+            await page.screenshot({path:'visual-review/04-body.png',fullPage:true});
+
+            await page.evaluate(()=>{S.screen='arc';save();render()});
+            await page.waitForSelector('.focus-gauge svg[data-premium="1"]',{timeout:2500});await page.waitForTimeout(300);
+            await page.screenshot({path:'visual-review/05-arc.png',fullPage:true});
+
+            await page.evaluate(()=>document.querySelector('[data-focus-go="community"]')?.click());
+            await page.waitForSelector('.focus-more',{timeout:2500});await page.waitForTimeout(300);
+            await page.screenshot({path:'visual-review/06-more.png',fullPage:true});
+
+            if(errors.length)throw new Error('Page errors: '+errors.join(' | '));
+            await browser.close();
+            console.log('ARC premium visual QA: PASS');
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+      - name: Upload visual review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc-premium-visual-review
+          path: visual-review
+          if-no-files-found: warn
+          retention-days: 7
