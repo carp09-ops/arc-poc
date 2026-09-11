@@ -44,10 +44,16 @@
     const keys=['neck','shoulders','chest','arm','waist','hips','thigh','calf'];
     map.querySelectorAll('.focus-body-lines span').forEach((row,i)=>{
       const b=row.querySelector('b');if(!b)return;
-      b.querySelector('.arc-map-value')?.remove();
+      // Keep the semantic body-part label pure. The measurement is a sibling so screen readers,
+      // tests and future interaction logic can reliably read "Neck", "Waist", etc. by itself.
+      row.querySelector('.arc-map-value')?.remove();
       const v=m?.[keys[i]];
       if(v!==''&&v!=null&&Number.isFinite(+v)){
-        const s=document.createElement('small');s.className='arc-map-value';s.textContent=`${Number(v).toFixed(Number(v)%1?1:0)} in`;b.appendChild(s);
+        const value=document.createElement('small');
+        value.className='arc-map-value';
+        value.textContent=`${Number(v).toFixed(Number(v)%1?1:0)} in`;
+        value.setAttribute('aria-label',`${b.textContent.trim()} ${value.textContent}`);
+        b.insertAdjacentElement('afterend',value);
       }
     });
     map.dataset.arcPremiumV2='1';
