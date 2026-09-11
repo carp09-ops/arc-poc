@@ -49,7 +49,7 @@ jobs:
               nav:[...document.querySelectorAll('.focus-nav button')].map(x=>x.textContent.trim()),
               hero:getComputedStyle(document.querySelector('.focus-hero-art')).backgroundImage,
               premium:getComputedStyle(document.documentElement).getPropertyValue('--arc-forest').trim(),
-              shell:(()=>{const r=document.querySelector('.phone')?.getBoundingClientRect();return r?{width:r.width,left:r.left,right:r.right}:null})(),
+              shell:(()=>{const r=document.querySelector('.focus-app')?.getBoundingClientRect();return r?{width:Number(r.width),left:Number(r.left),right:Number(r.right)}:null})(),
               bodyBg:getComputedStyle(document.body).backgroundColor,
               appBg:getComputedStyle(document.querySelector('#app')).backgroundColor,
               savedMeal:S.history?.nutrition?.[0]?.name,
