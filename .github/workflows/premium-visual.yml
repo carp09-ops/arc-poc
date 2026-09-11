@@ -27,62 +27,89 @@ jobs:
           mkdir -p visual-review
           node <<'NODE'
           const {webkit}=require('playwright');
-          (async()=>{
-            const browser=await webkit.launch();
-            const context=await browser.newContext({viewport:{width:430,height:932},deviceScaleFactor:2,userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 26_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1'});
-            const page=await context.newPage();
-            const errors=[];page.on('pageerror',e=>errors.push(String(e)));
-            const base='http://127.0.0.1:4173/';
+          const base='http://127.0.0.1:4173/';
+          const seed=async(page)=>{
             await page.goto(base+'diagnostics/webkit-control.html?premium-seed=1',{waitUntil:'domcontentloaded'});
             await page.evaluate(()=>{
               const d=new Date();const key=d.toISOString().slice(0,10);const prior=new Date(d.getTime()-86400000*12).toISOString().slice(0,10);
-              const state={screen:'today',on:1,profile:{name:'Kimberly',goals:['Improve overall health'],primary:'Improve overall health',why:'Feel strong and confident',weight:'165',waist:'35',life:'A mix of sitting and moving',sleep:'7',location:'Home + Gym',experience:'Know the basics',days:3,duration:30,nutrition:'Guided — calories + protein',activities:['Strength training','Walking'],equipment:['Dumbbells','Bodyweight']},logs:{workouts:2,bodyChecks:1,cal:1280,protein:92,steps:5821},history:{workouts:[{date:prior,name:'Full Body Strength',completed:true}],nutrition:[{date:prior,name:'Greek yogurt, berries, walnuts',calories:380,protein:28}],body:[{date:prior,weight:165,waist:35,hips:40,chest:38,thigh:23,arm:12}],activity:[],sleep:[],signals:[],weight:[],context:[],measurements:[]},meta:{},nutritionV1:{targets:{calories:1900,protein:140},days:{[key]:{meals:{breakfast:{logged:true,portion:1}},custom:[{id:'visual-flex',name:'Dark chocolate',calories:120,protein:2,balance:'flex'}]}}},done:false};
+              const state={screen:'today',on:1,profile:{name:'Kimberly',goals:['Improve overall health'],primary:'Improve overall health',why:'Feel strong and confident',weight:'165',waist:'35',life:'A mix of sitting and moving',sleep:'7',location:'Home + Gym',experience:'Know the basics',days:3,duration:30,nutrition:'Guided — calories + protein',activities:['Strength training','Walking'],equipment:['Dumbbells','Bodyweight']},logs:{workouts:2,bodyChecks:1,cal:1280,protein:92,steps:5821},history:{workouts:[{date:prior,name:'Full Body Strength',completed:true}],nutrition:[{date:prior,name:'Greek yogurt, berries, walnuts',calories:380,protein:28}],body:[{date:prior,weight:165,neck:13.5,shoulders:42,chest:38,arm:12.5,waist:35,hips:40,thigh:23,calf:14.5}],activity:[],sleep:[],signals:[],weight:[],context:[],measurements:[]},meta:{},nutritionV1:{targets:{calories:1900,protein:140},days:{[key]:{meals:{breakfast:{logged:true,portion:1}},custom:[{id:'visual-flex',name:'Dark chocolate',calories:120,protein:2,balance:'flex'}]}}},done:false};
               localStorage.setItem('arcState',JSON.stringify(state));localStorage.setItem('arcStarted','1');
             });
+          };
+          const openProduct=async(page)=>{
             await page.goto(base+'?premium-visual=1',{waitUntil:'domcontentloaded'});
-            await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&window.__ARC_PREMIUM_UI===true&&document.documentElement.classList.contains('arc-premium-ui')&&document.querySelector('.focus-today'),null,{timeout:12000});
-            // This workflow reviews the signed-in product presentation. Auth itself is tested separately.
-            // Keep asynchronous session chrome from covering the local seeded state screenshots.
+            await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&window.__ARC_PREMIUM_UI===true&&window.__ARC_PREMIUM_V2===true&&document.documentElement.classList.contains('arc-premium-v2')&&document.querySelector('.focus-today'),null,{timeout:12000});
+            // Signed-in product presentation only. Auth mechanics are covered in the runtime suite.
             await page.addStyleTag({content:'.arc-auth-shield,.arc-auth-gate,.arc-cloud-account{display:none!important}'});
-            await page.waitForTimeout(650);
-            const premium=await page.evaluate(()=>({
+            await page.waitForTimeout(700);
+          };
+          const visible=async(page,selector)=>page.locator(selector).evaluateAll(nodes=>nodes.filter(el=>{const s=getComputedStyle(el),r=el.getBoundingClientRect();return s.display!=='none'&&s.visibility!=='hidden'&&+s.opacity!==0&&r.width>0&&r.height>0}).length);
+          const assertBaseChrome=async(page)=>{
+            const state=await page.evaluate(()=>({
               screen:S.screen,
-              focus:!!document.querySelector('.focus-primary-card'),
               nav:[...document.querySelectorAll('.focus-nav button')].map(x=>x.textContent.trim()),
               hero:getComputedStyle(document.querySelector('.focus-hero-art')).backgroundImage,
               premium:getComputedStyle(document.documentElement).getPropertyValue('--arc-forest').trim(),
+              shell:document.querySelector('.phone')?.getBoundingClientRect().toJSON(),
               savedMeal:S.history?.nutrition?.[0]?.name,
               savedWorkout:S.history?.workouts?.[0]?.name,
               target:S.nutritionV1?.targets?.calories
             }));
-            if(premium.screen!=='today'||!premium.focus||premium.nav.join('|')!=='Today|Nutrition|Train|Body|More')throw new Error('Premium Today structure failed');
-            if(!premium.hero.includes('images.unsplash.com')||!premium.premium)throw new Error('Editorial premium visual layer failed to load');
-            if(premium.savedMeal!=='Greek yogurt, berries, walnuts'||premium.savedWorkout!=='Full Body Strength'||premium.target!==1900)throw new Error('Premium layer altered saved data');
-            await page.screenshot({path:'visual-review/01-today.png',fullPage:true});
+            if(state.screen!=='today'||state.nav.join('|')!=='Today|Nutrition|Train|Body|More')throw new Error('Premium Today structure failed');
+            if(!state.hero.includes('images.unsplash.com')||!state.premium)throw new Error('Editorial premium visual layer failed to load');
+            if(state.savedMeal!=='Greek yogurt, berries, walnuts'||state.savedWorkout!=='Full Body Strength'||state.target!==1900)throw new Error('Premium layer altered saved data');
+            if(await visible(page,'.focus-nav')!==1)throw new Error('Focus navigation is not the single visible product nav');
+            if(await visible(page,'.arc-mobile-brandline')!==0||await visible(page,'.arc-rail')!==0||await visible(page,'.nav')!==0)throw new Error('Legacy ARC chrome is still visible');
+            if(!state.shell||state.shell.width<page.viewportSize().width-2)throw new Error('Legacy gutter is constraining the Focus canvas');
+          };
+          const review=async(page,prefix)=>{
+            const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+            await seed(page);await openProduct(page);await assertBaseChrome(page);
+            const today=await page.evaluate(()=>({heroH:document.querySelector('.focus-primary-card')?.getBoundingClientRect().height||0,why:document.querySelector('.focus-why')?.textContent||''}));
+            if(today.heroH<220||!today.why.includes('WHY ARC CHOSE THIS'))throw new Error('Today no longer matches Focus-first hierarchy');
+            await page.screenshot({path:`visual-review/${prefix}-today.png`,fullPage:true});
 
             await page.evaluate(()=>document.querySelector('[data-focus-go="nutrition"]')?.click());
-            await page.waitForSelector('.focus-nutrition',{timeout:2500});await page.waitForTimeout(300);
-            await page.screenshot({path:'visual-review/02-nutrition.png',fullPage:true});
+            await page.waitForSelector('.focus-nutrition',{state:'visible',timeout:3500});await page.waitForTimeout(350);
+            const nutrition=await page.evaluate(()=>{const n=document.querySelector('.focus-nutrition'),h=document.querySelector('.focus-nut-hero'),t=document.querySelector('.focus-tabs');const ns=n&&getComputedStyle(n),hs=h&&getComputedStyle(h);return{display:ns?.display,visibility:ns?.visibility,opacity:ns?.opacity,height:n?.getBoundingClientRect().height||0,heroH:h?.getBoundingClientRect().height||0,hero:hs?.backgroundImage||'',text:n?.textContent||'',tabs:t&&getComputedStyle(t).display}});
+            if(nutrition.display==='none'||nutrition.visibility==='hidden'||+nutrition.opacity===0||nutrition.height<420||nutrition.heroH<180||!nutrition.text.includes('Eat for Your Goals')||nutrition.tabs!=='grid')throw new Error('Nutrition is present in DOM but not visibly rendered');
+            if(!nutrition.hero.includes('images.unsplash.com'))throw new Error('Nutrition editorial image is missing');
+            await page.screenshot({path:`visual-review/${prefix}-nutrition.png`,fullPage:true});
 
             await page.evaluate(()=>document.querySelector('[data-focus-go="train"]')?.click());
-            await page.waitForSelector('.focus-train',{timeout:2500});await page.waitForTimeout(300);
-            await page.screenshot({path:'visual-review/03-train.png',fullPage:true});
+            await page.waitForSelector('.focus-train',{state:'visible',timeout:3000});await page.waitForTimeout(350);
+            const train=await page.evaluate(()=>({rows:document.querySelectorAll('.focus-exercise-list>button').length,svgs:document.querySelectorAll('.focus-ex-thumb svg').length,photoThumbs:[...document.querySelectorAll('.focus-ex-thumb')].filter(x=>getComputedStyle(x).backgroundImage.includes('url(')).length,hero:getComputedStyle(document.querySelector('.focus-train-hero .focus-hero-art')).backgroundImage}));
+            if(train.rows<3||train.svgs!==train.rows||train.photoThumbs!==0||!train.hero.includes('images.unsplash.com'))throw new Error('Train visual hierarchy / movement diagrams failed');
+            await page.screenshot({path:`visual-review/${prefix}-train.png`,fullPage:true});
 
             await page.evaluate(()=>{S.screen='body';save();render()});
-            await page.waitForSelector('.focus-body-map svg[data-premium="1"]',{timeout:3000});await page.waitForTimeout(300);
-            const body=await page.evaluate(()=>({labels:[...document.querySelectorAll('.focus-body-lines b')].map(x=>x.textContent),premium:document.querySelector('.focus-body-map svg')?.dataset.premium}));
-            if(body.labels.length!==8||body.premium!=='1')throw new Error('Premium Body illustration failed');
-            await page.screenshot({path:'visual-review/04-body.png',fullPage:true});
+            await page.waitForSelector('.focus-body-map svg[data-premium="1"]',{state:'visible',timeout:3500});await page.waitForTimeout(350);
+            const body=await page.evaluate(()=>({labels:[...document.querySelectorAll('.focus-body-lines b')].map(x=>x.textContent),premium:document.querySelector('.focus-body-map svg')?.dataset.premium,values:document.querySelectorAll('.arc-map-value').length,h:document.querySelector('.focus-body-visual')?.getBoundingClientRect().height||0}));
+            if(body.labels.length!==8||body.premium!=='1'||body.values<5||body.h<450)throw new Error('Premium Body measurement instrument failed');
+            await page.screenshot({path:`visual-review/${prefix}-body.png`,fullPage:true});
 
             await page.evaluate(()=>{S.screen='arc';save();render()});
-            await page.waitForSelector('.focus-gauge svg[data-premium="1"]',{timeout:3000});await page.waitForTimeout(300);
-            await page.screenshot({path:'visual-review/05-arc.png',fullPage:true});
+            await page.waitForSelector('.focus-gauge svg[data-premium="1"]',{state:'visible',timeout:3500});await page.waitForSelector('.focus-arc-story',{state:'visible',timeout:3000});await page.waitForTimeout(350);
+            const arc=await page.evaluate(()=>({back:!!document.querySelector('.focus-arc-back'),story:!!document.querySelector('.focus-arc-story'),activeNav:document.querySelectorAll('.focus-nav button.active').length,quote:document.querySelector('.focus-arc blockquote')?.textContent||''}));
+            if(!arc.back||!arc.story||arc.activeNav!==0||!arc.quote.includes('Consistency creates progress'))throw new Error('Arc detail visual/story treatment failed');
+            await page.screenshot({path:`visual-review/${prefix}-arc.png`,fullPage:true});
 
             await page.evaluate(()=>document.querySelector('[data-focus-go="community"]')?.click());
-            await page.waitForSelector('.focus-more',{timeout:2500});await page.waitForTimeout(300);
-            await page.screenshot({path:'visual-review/06-more.png',fullPage:true});
+            await page.waitForSelector('.focus-more',{state:'visible',timeout:3000});await page.waitForTimeout(350);
+            if(await visible(page,'.arc-mobile-brandline')!==0||await visible(page,'.arc-rail')!==0)throw new Error('Legacy chrome returned on More');
+            await page.screenshot({path:`visual-review/${prefix}-more.png`,fullPage:true});
 
+            const preserved=await page.evaluate(()=>({meal:S.history?.nutrition?.[0]?.name,workout:S.history?.workouts?.[0]?.name,target:S.nutritionV1?.targets?.calories,body:S.history?.body?.[0]?.waist}));
+            if(preserved.meal!=='Greek yogurt, berries, walnuts'||preserved.workout!=='Full Body Strength'||preserved.target!==1900||preserved.body!==35)throw new Error('Visual pass changed seeded user data');
             if(errors.length)throw new Error('Page errors: '+errors.join(' | '));
+          };
+          (async()=>{
+            const browser=await webkit.launch();
+            const phone=await browser.newContext({viewport:{width:430,height:932},deviceScaleFactor:2,userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 26_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1'});
+            await review(await phone.newPage(),'phone');await phone.close();
+
+            const ipad=await browser.newContext({viewport:{width:834,height:1194},deviceScaleFactor:2,userAgent:'Mozilla/5.0 (iPad; CPU OS 26_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1'});
+            await review(await ipad.newPage(),'ipad');await ipad.close();
             await browser.close();
             console.log('ARC premium visual QA: PASS');
           })().catch(e=>{console.error(e);process.exit(1)});
