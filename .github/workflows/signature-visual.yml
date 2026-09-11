@@ -1,0 +1,68 @@
+name: ARC signature visual QA
+
+on:
+  push:
+    branches:
+      - signature-eclipse-body
+
+jobs:
+  signature-visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Serve ARC
+        run: python3 -m http.server 4173 >/tmp/arc-signature-http.log 2>&1 &
+      - name: Verify locked eclipse + Body visuals
+        run: |
+          mkdir -p visual-review
+          node <<'NODE'
+          const {webkit}=require('playwright');
+          const base='http://127.0.0.1:4173/';
+          (async()=>{
+            const browser=await webkit.launch();
+            for(const [name,viewport] of [['phone',{width:430,height:932}],['ipad',{width:834,height:1194}]]){
+              const context=await browser.newContext({viewport,deviceScaleFactor:2});
+              const page=await context.newPage();
+              await page.goto(base+'diagnostics/webkit-control.html?signature-seed=1',{waitUntil:'domcontentloaded'});
+              await page.evaluate(()=>{
+                const d=new Date(),key=d.toISOString().slice(0,10),prior=new Date(d.getTime()-86400000*9).toISOString().slice(0,10);
+                localStorage.setItem('arcStarted','1');
+                localStorage.setItem('arcState',JSON.stringify({screen:'today',on:1,profile:{name:'Kimberly',weight:'165',waist:'35',days:3,duration:30,location:'Home + Gym',nutrition:'Guided — calories + protein',activities:['Strength training'],equipment:['Dumbbells']},logs:{workouts:2,bodyChecks:1,cal:1280,protein:92,steps:5821},history:{workouts:[{date:prior,name:'Full Body Strength',completed:true}],nutrition:[{date:prior,name:'Saved Meal',calories:380,protein:28}],body:[{date:prior,weight:165,neck:13.5,shoulders:42,chest:38,arm:12.5,waist:35,hips:40,thigh:23,calf:14.5}],activity:[],sleep:[],signals:[],weight:[],context:[],measurements:[]},meta:{},nutritionV1:{targets:{calories:1900,protein:140},days:{[key]:{meals:{breakfast:{logged:true,portion:1}},custom:[{id:'flex',name:'Chocolate',calories:120,protein:2,balance:'flex'}]}}},done:false}));
+              });
+              await page.goto(base+'?signature-visual=1',{waitUntil:'domcontentloaded'});
+              await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&window.__ARC_SIGNATURE_VISUALS===true&&document.querySelector('.arc-eclipse-lock[data-signature-eclipse="1"]'),null,{timeout:12000});
+              await page.addStyleTag({content:'.arc-auth-shield,.arc-auth-gate,.arc-cloud-account{display:none!important}'});
+              await page.waitForTimeout(450);
+              const arc=await page.evaluate(()=>{const hero=document.querySelector('.arc-insights-hero'),orb=document.querySelector('.arc-eclipse-orb'),center=document.querySelector('.arc-eclipse-center');return{heroH:hero?.getBoundingClientRect().height||0,orbW:orb?.getBoundingClientRect().width||0,title:center?.querySelector('h3')?.textContent||'',foundation:center?.querySelector('strong')?.textContent||'',guide:!!document.querySelector('.arc-eclipse-guide-marker'),live:!!document.querySelector('.arc-eclipse-live-marker'),insight:document.querySelector('.arc-insight-card')?.textContent||'',overflow:document.documentElement.scrollWidth-innerWidth}});
+              if(arc.heroH<480||arc.orbW<300||arc.title!=='Your Arc'||!arc.foundation.includes('%')||!arc.guide||!arc.live||!arc.insight.includes('ARC INSIGHT')||arc.overflow>2)throw new Error(`${name}: eclipse Arc visual failed`);
+              await page.screenshot({path:`visual-review/${name}-eclipse.png`,fullPage:true});
+              await page.evaluate(()=>{S.screen='body';save();render()});
+              await page.waitForSelector('.focus-body-map[data-signature-body="locked"]',{state:'visible',timeout:3000});
+              await page.waitForTimeout(250);
+              const body=await page.evaluate(()=>{const map=document.querySelector('.focus-body-map'),visual=document.querySelector('.focus-body-visual');return{labels:[...document.querySelectorAll('.focus-body-lines b')].map(x=>x.textContent).join('|'),art:getComputedStyle(map,'::before').backgroundImage,height:visual?.getBoundingClientRect().height||0,oldSvg:getComputedStyle(document.querySelector('.focus-body-map>svg')).opacity,update:!!document.querySelector('[data-body-checkin-052]'),overflow:document.documentElement.scrollWidth-innerWidth}});
+              if(body.labels!=='Neck|Shoulders|Chest|Arms|Waist|Hips|Thighs|Calves'||!body.art.includes('data:image/webp;base64')||body.height<600||body.oldSvg!=='0'||!body.update||body.overflow>2)throw new Error(`${name}: locked Body visual failed`);
+              await page.screenshot({path:`visual-review/${name}-body.png`,fullPage:true});
+              const preserved=await page.evaluate(()=>({target:S.nutritionV1?.targets?.calories,meal:S.history?.nutrition?.[0]?.name,waist:S.history?.body?.[0]?.waist}));
+              if(preserved.target!==1900||preserved.meal!=='Saved Meal'||preserved.waist!==35)throw new Error(`${name}: visual layer altered saved data`);
+              await context.close();
+            }
+            await browser.close();
+            console.log('ARC locked signature visual QA: PASS');
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+      - name: Upload visual review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc-signature-visual-review
+          path: visual-review
+          if-no-files-found: warn
+          retention-days: 7
