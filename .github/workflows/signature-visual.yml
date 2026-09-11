@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - signature-eclipse-body
+      - main
 
 jobs:
   signature-visual:
@@ -31,27 +32,41 @@ jobs:
             for(const [name,viewport] of [['phone',{width:430,height:932}],['ipad',{width:834,height:1194}]]){
               const context=await browser.newContext({viewport,deviceScaleFactor:2});
               const page=await context.newPage();
+              const pageErrors=[];
+              page.on('pageerror',e=>pageErrors.push(String(e)));
               await page.goto(base+'diagnostics/webkit-control.html?signature-seed=1',{waitUntil:'domcontentloaded'});
               await page.evaluate(()=>{
                 const d=new Date(),key=d.toISOString().slice(0,10),prior=new Date(d.getTime()-86400000*9).toISOString().slice(0,10);
                 localStorage.setItem('arcStarted','1');
                 localStorage.setItem('arcState',JSON.stringify({screen:'today',on:1,profile:{name:'Kimberly',weight:'165',waist:'35',days:3,duration:30,location:'Home + Gym',nutrition:'Guided — calories + protein',activities:['Strength training'],equipment:['Dumbbells']},logs:{workouts:2,bodyChecks:1,cal:1280,protein:92,steps:5821},history:{workouts:[{date:prior,name:'Full Body Strength',completed:true}],nutrition:[{date:prior,name:'Saved Meal',calories:380,protein:28}],body:[{date:prior,weight:165,neck:13.5,shoulders:42,chest:38,arm:12.5,waist:35,hips:40,thigh:23,calf:14.5}],activity:[],sleep:[],signals:[],weight:[],context:[],measurements:[]},meta:{},nutritionV1:{targets:{calories:1900,protein:140},days:{[key]:{meals:{breakfast:{logged:true,portion:1}},custom:[{id:'flex',name:'Chocolate',calories:120,protein:2,balance:'flex'}]}}},done:false}));
               });
+              pageErrors.length=0;
               await page.goto(base+'?signature-visual=1',{waitUntil:'domcontentloaded'});
               await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&window.__ARC_SIGNATURE_VISUALS===true&&document.querySelector('.arc-eclipse-lock[data-signature-eclipse="1"]'),null,{timeout:12000});
               await page.addStyleTag({content:'.arc-auth-shield,.arc-auth-gate,.arc-cloud-account{display:none!important}'});
               await page.waitForTimeout(450);
-              const arc=await page.evaluate(()=>{const hero=document.querySelector('.arc-insights-hero'),orb=document.querySelector('.arc-eclipse-orb'),center=document.querySelector('.arc-eclipse-center');return{heroH:hero?.getBoundingClientRect().height||0,orbW:orb?.getBoundingClientRect().width||0,title:center?.querySelector('h3')?.textContent||'',foundation:center?.querySelector('strong')?.textContent||'',guide:!!document.querySelector('.arc-eclipse-guide-marker'),live:!!document.querySelector('.arc-eclipse-live-marker'),insight:document.querySelector('.arc-insight-card')?.textContent||'',overflow:document.documentElement.scrollWidth-innerWidth}});
-              if(arc.heroH<480||arc.orbW<300||arc.title!=='Your Arc'||!arc.foundation.includes('%')||!arc.guide||!arc.live||!arc.insight.includes('ARC INSIGHT')||arc.overflow>2)throw new Error(`${name}: eclipse Arc visual failed`);
+              const arc=await page.evaluate(()=>{
+                const hero=document.querySelector('.arc-insights-hero'),visual=document.querySelector('.arc-insights-visual'),eclipse=document.querySelector('.arc-eclipse-lock'),orb=document.querySelector('.arc-eclipse-orb'),center=document.querySelector('.arc-eclipse-center'),insight=document.querySelector('.arc-insight-card');
+                const er=eclipse?.getBoundingClientRect(),ir=insight?.getBoundingClientRect();
+                return {heroH:hero?.getBoundingClientRect().height||0,orbW:orb?.getBoundingClientRect().width||0,title:center?.querySelector('h3')?.textContent||'',foundation:center?.querySelector('strong')?.textContent||'',guide:!!document.querySelector('.arc-eclipse-guide-marker'),live:!!document.querySelector('.arc-eclipse-live-marker'),insight:insight?.textContent||'',flow:visual?.dataset.signatureLayout||'',locked:hero?.dataset.signatureLayout||'',separated:!!(er&&ir&&ir.top>=er.bottom-1),overflow:document.documentElement.scrollWidth-innerWidth};
+              });
+              if(arc.heroH<480||arc.orbW<300||arc.title!=='Your Arc'||!arc.foundation.includes('%')||!arc.guide||!arc.live||!arc.insight.includes('ARC INSIGHT')||arc.flow!=='flow'||arc.locked!=='locked'||!arc.separated||arc.overflow>2)throw new Error(`${name}: eclipse Arc visual failed ${JSON.stringify(arc)}`);
               await page.screenshot({path:`visual-review/${name}-eclipse.png`,fullPage:true});
+
               await page.evaluate(()=>{S.screen='body';save();render()});
               await page.waitForSelector('.focus-body-map[data-signature-body="locked"]',{state:'visible',timeout:3000});
-              await page.waitForTimeout(250);
-              const body=await page.evaluate(()=>{const map=document.querySelector('.focus-body-map'),visual=document.querySelector('.focus-body-visual');return{labels:[...document.querySelectorAll('.focus-body-lines b')].map(x=>x.textContent).join('|'),art:getComputedStyle(map,'::before').backgroundImage,height:visual?.getBoundingClientRect().height||0,oldSvg:getComputedStyle(document.querySelector('.focus-body-map>svg')).opacity,update:!!document.querySelector('[data-body-checkin-052]'),overflow:document.documentElement.scrollWidth-innerWidth}});
-              if(body.labels!=='Neck|Shoulders|Chest|Arms|Waist|Hips|Thighs|Calves'||!body.art.includes('data:image/webp;base64')||body.height<600||body.oldSvg!=='0'||!body.update||body.overflow>2)throw new Error(`${name}: locked Body visual failed`);
+              await page.waitForFunction(()=>{const map=document.querySelector('.focus-body-map[data-signature-body="locked"]'),img=map?.querySelector('.arc-body-locked-img');return !!(img&&img.complete&&img.naturalWidth>0&&img.naturalHeight>0&&map.dataset.bodyImageReady==='1')},null,{timeout:3000});
+              const body=await page.evaluate(()=>{
+                const map=document.querySelector('.focus-body-map[data-signature-body="locked"]'),visual=document.querySelector('.focus-body-visual'),img=map?.querySelector('.arc-body-locked-img'),svg=map?.querySelector(':scope>svg'),mr=map?.getBoundingClientRect(),ir=img?.getBoundingClientRect();
+                return {labels:[...document.querySelectorAll('.focus-body-lines b')].map(x=>x.textContent).join('|'),ready:map?.dataset.bodyImageReady||'',src:img?.getAttribute('src')||'',naturalW:img?.naturalWidth||0,naturalH:img?.naturalHeight||0,imgDisplay:img?getComputedStyle(img).display:'',imgOpacity:img?getComputedStyle(img).opacity:'',mapW:mr?.width||0,mapH:mr?.height||0,imgW:ir?.width||0,imgH:ir?.height||0,height:visual?.getBoundingClientRect().height||0,oldSvg:svg?getComputedStyle(svg).opacity:'missing',aria:map?.getAttribute('aria-label')||'',update:!!document.querySelector('[data-body-checkin-052]'),overflow:document.documentElement.scrollWidth-innerWidth};
+              });
+              const ratio=body.mapW?body.mapH/body.mapW:0;
+              if(body.labels!=='Neck|Shoulders|Chest|Arms|Waist|Hips|Thighs|Calves'||body.ready!=='1'||!body.src.startsWith('data:image/webp;base64,')||body.naturalW<100||body.naturalH<100||body.imgDisplay==='none'||body.imgOpacity!=='1'||body.mapW<250||body.mapH<375||ratio<1.45||ratio>1.55||Math.abs(body.imgW-body.mapW)>2||Math.abs(body.imgH-body.mapH)>2||body.oldSvg!=='0'||!body.aria.includes('neck')||!body.aria.includes('calves')||!body.update||body.overflow>2)throw new Error(`${name}: locked Body visual failed ${JSON.stringify(body)}`);
               await page.screenshot({path:`visual-review/${name}-body.png`,fullPage:true});
+
               const preserved=await page.evaluate(()=>({target:S.nutritionV1?.targets?.calories,meal:S.history?.nutrition?.[0]?.name,waist:S.history?.body?.[0]?.waist}));
               if(preserved.target!==1900||preserved.meal!=='Saved Meal'||preserved.waist!==35)throw new Error(`${name}: visual layer altered saved data`);
+              if(pageErrors.length)throw new Error(`${name}: page errors ${pageErrors.join(' | ')}`);
               await context.close();
             }
             await browser.close();
