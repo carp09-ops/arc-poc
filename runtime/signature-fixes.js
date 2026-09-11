@@ -12,21 +12,35 @@
     }
   }
 
-  function approvedBodyDataUrl(){
+  function extractBodyDataUrl(value){
+    const text=String(value||'');
+    const match=text.match(/url\(["']?(data:image\/webp;base64,[A-Za-z0-9+/=]+)["']?\)/i);
+    return match?.[1]||'';
+  }
+
+  function approvedBodyDataUrl(map){
     if(window.__arcApprovedBodyDataUrl)return window.__arcApprovedBodyDataUrl;
     let found='';
-    for(const sheet of Array.from(document.styleSheets||[])){
-      try{
-        walkRules(sheet.cssRules,rule=>{
-          if(found||!rule.selectorText||!rule.style)return;
-          if(!rule.selectorText.includes('.focus-body-map:before'))return;
-          const bg=rule.style.backgroundImage||'';
-          const match=bg.match(/url\(["']?(data:image\/webp;base64,[^)"']+)["']?\)/i);
-          if(match?.[1])found=match[1];
-        });
-      }catch(e){}
-      if(found)break;
+
+    // Prefer the browser's resolved pseudo-element style. The pseudo is hidden by
+    // the final presentation layer, but its embedded approved artwork remains a
+    // dependable source for the real image element.
+    try{found=extractBodyDataUrl(getComputedStyle(map,'::before').backgroundImage)}catch(e){}
+
+    // CSSOM fallback supports both :before and ::before spellings and nested rules.
+    if(!found){
+      for(const sheet of Array.from(document.styleSheets||[])){
+        try{
+          walkRules(sheet.cssRules,rule=>{
+            if(found||!rule.selectorText||!rule.style)return;
+            if(!/\.focus-body-map:{1,2}before/i.test(rule.selectorText))return;
+            found=extractBodyDataUrl(rule.style.backgroundImage||'');
+          });
+        }catch(e){}
+        if(found)break;
+      }
     }
+
     if(found)window.__arcApprovedBodyDataUrl=found;
     return found;
   }
@@ -40,19 +54,31 @@
 
     let img=map.querySelector('.arc-body-locked-img');
     if(!img){
-      const src=approvedBodyDataUrl();
+      const src=approvedBodyDataUrl(map);
       if(!src){map.dataset.bodyImageReady='missing';return;}
+
       img=document.createElement('img');
       img.className='arc-body-locked-img';
       img.alt='';
-      img.decoding='async';
+      img.decoding='sync';
       img.loading='eager';
-      img.src=src;
-      img.addEventListener('load',()=>{map.dataset.bodyImageReady=img.naturalWidth>0?'1':'0'},{once:true});
+      map.dataset.bodyImageReady='loading';
+
+      const markReady=()=>{
+        map.dataset.bodyImageReady=img.complete&&img.naturalWidth>0&&img.naturalHeight>0?'1':'0';
+      };
+      img.addEventListener('load',markReady,{once:true});
       img.addEventListener('error',()=>{map.dataset.bodyImageReady='0'},{once:true});
       map.prepend(img);
+      img.src=src;
+
+      if(img.complete)markReady();
+      try{img.decode?.().then(markReady).catch(()=>{})}catch(e){}
+    }else{
+      const markReady=()=>{map.dataset.bodyImageReady=img.complete&&img.naturalWidth>0&&img.naturalHeight>0?'1':'0'};
+      if(img.complete)markReady();
+      else img.addEventListener('load',markReady,{once:true});
     }
-    if(img.complete)map.dataset.bodyImageReady=img.naturalWidth>0?'1':'0';
   }
 
   function normalizeSignatureLayout(){
@@ -70,6 +96,8 @@
     try{normalizeSignatureLayout()}catch(e){console.warn('ARC locked visual finalizer skipped',e)}
     requestAnimationFrame(()=>{try{normalizeSignatureLayout()}catch(e){}});
     setTimeout(()=>{try{normalizeSignatureLayout()}catch(e){}},40);
+    setTimeout(()=>{try{normalizeSignatureLayout()}catch(e){}},160);
+    setTimeout(()=>{try{normalizeSignatureLayout()}catch(e){}},500);
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});else schedule();
