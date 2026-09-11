@@ -207,7 +207,6 @@
 .arc-signature-locked .focus-body-map:before{
   content:none!important;
   display:none!important;
-  background-image:none!important;
 }
 .arc-signature-locked .arc-body-locked-img{
   position:absolute!important;
