@@ -1,0 +1,269 @@
+/* ARC locked-reference corrections.
+   This file exists only to enforce the approved eclipse + Body mockups over prior presentation layers. */
+
+/* --- ECLIPSE: preserve the full visual height so insight content can never overlap it. --- */
+.arc-signature-locked .arc-insights-visual{
+  height:auto!important;
+  max-width:none!important;
+  min-height:0!important;
+  margin:0!important;
+  overflow:visible!important;
+  position:relative!important;
+}
+.arc-signature-locked .arc-eclipse-lock{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  position:relative!important;
+  overflow:visible!important;
+}
+.arc-signature-locked .arc-eclipse-stage{
+  position:relative!important;
+  z-index:2!important;
+}
+.arc-signature-locked .arc-eclipse-orb{
+  position:relative!important;
+  z-index:2!important;
+}
+.arc-signature-locked .arc-eclipse-center{
+  z-index:4!important;
+}
+.arc-signature-locked .arc-eclipse-center h3{
+  color:#f5ddb0!important;
+  font-family:var(--arc-serif)!important;
+  font-weight:500!important;
+}
+.arc-signature-locked .arc-eclipse-center strong{
+  color:#f4d69b!important;
+  font-family:var(--arc-serif)!important;
+  font-weight:500!important;
+}
+.arc-signature-locked .arc-eclipse-center>span,
+.arc-signature-locked .arc-eclipse-center>small{
+  color:rgba(239,233,205,.86)!important;
+}
+.arc-signature-locked .arc-eclipse-corona-soft{
+  stroke:rgba(248,216,145,.72)!important;
+  stroke-width:14!important;
+  filter:blur(7px)!important;
+  opacity:.54!important;
+}
+.arc-signature-locked .arc-eclipse-ring-base{
+  stroke:rgba(121,116,96,.72)!important;
+  stroke-width:8!important;
+}
+.arc-signature-locked .arc-eclipse-foundation{
+  stroke:#f5cd79!important;
+  stroke-width:7!important;
+  filter:drop-shadow(0 0 4px rgba(255,215,126,.90)) drop-shadow(0 0 12px rgba(255,224,150,.62))!important;
+}
+.arc-signature-locked .arc-eclipse-flex{
+  stroke:#969b8b!important;
+  stroke-width:7!important;
+  opacity:.92!important;
+}
+.arc-signature-locked .arc-eclipse-core-disc{
+  stroke:rgba(250,226,164,.20)!important;
+  stroke-width:1!important;
+}
+.arc-signature-locked .arc-eclipse-live-marker{
+  fill:#fff8dd!important;
+  stroke:#ffd573!important;
+  stroke-width:2!important;
+}
+.arc-signature-locked .arc-eclipse-guide-marker{
+  fill:#d8c79b!important;
+  stroke:#fff4cf!important;
+}
+
+/* Insight is interpretation AFTER the eclipse, never layered over it. */
+.arc-signature-locked .arc-insight-card{
+  position:relative!important;
+  z-index:3!important;
+  display:block!important;
+  margin:22px 0 0!important;
+  padding:18px 16px 15px!important;
+  transform:none!important;
+  float:none!important;
+  clear:both!important;
+  border-radius:20px!important;
+  background:linear-gradient(138deg,#173e31 0%,#204d3c 58%,#2a624b 100%)!important;
+  border:1px solid rgba(255,255,255,.07)!important;
+  box-shadow:0 18px 38px rgba(26,65,50,.16)!important;
+  color:#fffdf7!important;
+}
+.arc-signature-locked .arc-insight-card h3{color:#fffdf7!important}
+.arc-signature-locked .arc-insight-card>p{color:rgba(255,253,247,.78)!important}
+.arc-signature-locked .arc-insight-card>header>span{color:#e3d59f!important}
+.arc-signature-locked .arc-insight-card>header>small{color:rgba(255,253,247,.80)!important}
+
+/* Keep the eclipse reference composition centered and legible at phone scale. */
+@media(max-width:560px){
+  .arc-signature-locked .arc-eclipse-stage{
+    display:block!important;
+    width:100%!important;
+    max-width:410px!important;
+    margin:0 auto!important;
+  }
+  .arc-signature-locked .arc-eclipse-orb{
+    width:min(100%,370px)!important;
+    margin:0 auto!important;
+  }
+  .arc-signature-locked .arc-eclipse-callout{
+    position:absolute!important;
+    top:51%!important;
+    bottom:auto!important;
+    width:84px!important;
+    transform:translateY(-50%)!important;
+    padding:0!important;
+  }
+  .arc-signature-locked .arc-eclipse-callout.foundation{left:0!important;text-align:left!important}
+  .arc-signature-locked .arc-eclipse-callout.flex{right:0!important;text-align:right!important}
+  .arc-signature-locked .arc-eclipse-callout>span{font-size:6.5px!important;letter-spacing:.18em!important}
+  .arc-signature-locked .arc-eclipse-callout>b{font-size:22px!important;margin-top:5px!important}
+  .arc-signature-locked .arc-eclipse-callout>small{display:none!important}
+  .arc-signature-locked .arc-eclipse-center h3{font-size:32px!important}
+  .arc-signature-locked .arc-eclipse-center strong{font-size:52px!important}
+  .arc-signature-locked .arc-eclipse-center>span{font-size:7px!important}
+  .arc-signature-locked .arc-eclipse-center>small{font-size:6.5px!important;line-height:1.5!important}
+  .arc-signature-locked .arc-eclipse-tagline{margin-top:24px!important}
+}
+
+/* iPad: preserve the same composition instead of stretching the object into a dashboard. */
+@media(min-width:700px){
+  .arc-signature-locked .arc-eclipse-stage{max-width:650px!important;margin-inline:auto!important}
+  .arc-signature-locked .arc-eclipse-orb{width:410px!important;max-width:100%!important}
+  .arc-signature-locked .arc-insights-hero{max-width:760px!important;margin-inline:auto!important}
+}
+
+/* --- BODY: the approved generated editorial figure is the visual. --- */
+.arc-signature-locked .focus-body{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  transform:none!important;
+  position:relative!important;
+}
+.arc-signature-locked .focus-body>.focus-page-header{
+  display:grid!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+.arc-signature-locked .focus-body>.focus-tabs{
+  display:grid!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+.arc-signature-locked .focus-body-measurements{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  transform:none!important;
+}
+.arc-signature-locked .focus-body-visual{
+  position:relative!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  padding:20px 14px 14px!important;
+  overflow:hidden!important;
+  border-radius:28px!important;
+  background:linear-gradient(180deg,#fffdf9 0%,#f8f3ea 100%)!important;
+  border:1px solid rgba(37,72,56,.06)!important;
+  box-shadow:0 22px 55px rgba(50,58,51,.08),inset 0 1px 0 rgba(255,255,255,.9)!important;
+}
+.arc-signature-locked .focus-body-visual:after{
+  content:"BODY MAP"!important;
+  position:absolute!important;
+  top:17px!important;
+  left:20px!important;
+  z-index:5!important;
+  font:750 8px/1 var(--arc-sans)!important;
+  letter-spacing:.22em!important;
+  color:#82918a!important;
+}
+.arc-signature-locked .focus-body-map{
+  position:relative!important;
+  inset:auto!important;
+  top:auto!important;
+  right:auto!important;
+  bottom:auto!important;
+  left:auto!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:0!important;
+  aspect-ratio:2/3!important;
+  margin:0!important;
+  padding:0!important;
+  overflow:hidden!important;
+  background:none!important;
+}
+.arc-signature-locked .focus-body-map:before{
+  content:none!important;
+  display:none!important;
+  background-image:none!important;
+}
+.arc-signature-locked .arc-body-locked-img{
+  position:absolute!important;
+  inset:0!important;
+  z-index:3!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  max-height:none!important;
+  object-fit:contain!important;
+  object-position:center top!important;
+  filter:none!important;
+  transform:none!important;
+  pointer-events:none!important;
+}
+.arc-signature-locked .focus-body-map>svg{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+.arc-signature-locked .focus-body-lines{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  overflow:hidden!important;
+  clip:rect(0 0 0 0)!important;
+  clip-path:inset(50%)!important;
+  white-space:nowrap!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+.arc-signature-locked .focus-body-values{display:none!important}
+.arc-signature-locked .focus-body-update{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  width:100%!important;
+  min-height:52px!important;
+  margin-top:16px!important;
+  border-radius:26px!important;
+  background:linear-gradient(180deg,#174c3b,#123f31)!important;
+  color:#fff!important;
+  box-shadow:0 14px 28px rgba(22,68,53,.18)!important;
+}
+.arc-signature-locked .focus-body-measurements>p{display:block!important;color:#7b837e!important}
+
+@media(max-width:560px){
+  .arc-signature-locked .focus-body-visual{padding:18px 8px 10px!important;border-radius:24px!important}
+  .arc-signature-locked .focus-body-map{aspect-ratio:2/3!important}
+}
+@media(min-width:700px){
+  .arc-signature-locked .focus-body-visual{padding:24px 22px 18px!important}
+  .arc-signature-locked .focus-body-map{aspect-ratio:2/3!important;max-width:680px!important;margin-inline:auto!important}
+}
