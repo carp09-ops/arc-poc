@@ -1,0 +1,105 @@
+/* ARC Premium shell — removes legacy dark chrome from the Focus-first product.
+   This is intentionally presentation-only. */
+.arc-focus-ui,
+.arc-focus-ui body,
+.arc-focus-ui #app,
+.arc-focus-ui .arc-app,
+.arc-focus-ui .arc-app.with-chrome,
+.arc-focus-ui .arc-stage{
+  width:100%!important;
+  min-width:0!important;
+  min-height:100dvh!important;
+  margin:0!important;
+  padding:0!important;
+  background:var(--arc-canvas)!important;
+  color:var(--arc-ink)!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.arc-focus-ui body{overflow-x:hidden!important}
+.arc-focus-ui #app{display:block!important;max-width:none!important}
+.arc-focus-ui .arc-app,.arc-focus-ui .arc-app.with-chrome{display:block!important;grid-template-columns:none!important;max-width:none!important}
+.arc-focus-ui .arc-stage{display:block!important;max-width:none!important;overflow:visible!important}
+.arc-focus-ui .arc-rail,
+.arc-focus-ui .arc-mobile-brandline,
+.arc-focus-ui .arc-mobile-nav,
+.arc-focus-ui .nav{
+  display:none!important;
+}
+.arc-focus-ui .phone{
+  display:block!important;
+  width:100%!important;
+  max-width:560px!important;
+  min-height:100dvh!important;
+  margin:0 auto!important;
+  padding:0!important;
+  overflow:visible!important;
+  background:var(--arc-canvas)!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+}
+.arc-focus-ui .focus-app{min-height:100dvh!important}
+
+/* The focus nav is the sole mobile navigation surface. */
+.arc-focus-ui .focus-nav{display:grid!important;opacity:1!important;visibility:visible!important}
+
+/* Auth belongs to the same warm editorial system as the product. */
+.arc-auth-gate,.arc-auth-shield{font-family:var(--arc-sans)!important;color-scheme:light!important}
+.arc-auth-gate .arc-auth-backdrop,.arc-auth-shield .arc-auth-backdrop{
+  background:
+    linear-gradient(180deg,rgba(244,239,230,.68),rgba(244,239,230,.96)),
+    var(--arc-atmosphere-image) center/cover no-repeat!important;
+  backdrop-filter:blur(7px) saturate(.86)!important;
+  -webkit-backdrop-filter:blur(7px) saturate(.86)!important;
+}
+.arc-auth-gate,.arc-auth-shield{background:var(--arc-canvas)!important}
+.arc-auth-card{
+  width:min(430px,calc(100% - 32px))!important;
+  max-width:430px!important;
+  padding:30px 26px 25px!important;
+  border-radius:30px!important;
+  border:1px solid rgba(43,67,57,.09)!important;
+  background:rgba(255,253,248,.94)!important;
+  color:var(--arc-ink)!important;
+  box-shadow:0 35px 90px rgba(38,52,45,.16)!important;
+  backdrop-filter:blur(24px)!important;
+  -webkit-backdrop-filter:blur(24px)!important;
+}
+.arc-auth-lockup{filter:sepia(.25) saturate(.55) brightness(.52)!important;max-width:170px!important;margin-bottom:18px!important}
+.arc-auth-kicker{color:#718179!important;letter-spacing:.20em!important;font-size:8px!important;font-weight:750!important}
+.arc-auth-card h1{font-family:var(--arc-serif)!important;font-size:38px!important;line-height:1!important;font-weight:500!important;letter-spacing:-.04em!important;color:var(--arc-ink)!important;margin:9px 0 10px!important}
+.arc-auth-card>p{color:#6e7a74!important;font-size:12px!important;line-height:1.55!important;margin-bottom:20px!important}
+.arc-auth-tabs{background:#ebe7de!important;border:1px solid rgba(42,61,52,.06)!important;border-radius:999px!important;padding:4px!important}
+.arc-auth-tabs button{color:#75807b!important;border-radius:999px!important}
+.arc-auth-tabs button.active{background:#fffdf8!important;color:var(--arc-forest)!important;box-shadow:0 4px 14px rgba(46,61,54,.08)!important}
+.arc-auth-card label{color:#58675f!important;font-size:9px!important;letter-spacing:.04em!important}
+.arc-auth-card input{
+  background:#fffdf8!important;
+  border:1px solid rgba(47,69,59,.13)!important;
+  color:var(--arc-ink)!important;
+  border-radius:15px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8)!important;
+}
+.arc-auth-card input::placeholder{color:#a0a7a2!important}
+.arc-auth-submit{
+  border:0!important;
+  border-radius:999px!important;
+  background:var(--arc-forest-deep)!important;
+  color:#fffdf8!important;
+  box-shadow:0 14px 28px rgba(24,55,45,.17)!important;
+}
+.arc-forgot-password{color:var(--arc-forest)!important}
+.arc-auth-message{color:#68766f!important;background:#f1ece3!important;border-color:rgba(46,68,58,.08)!important;border-radius:12px!important}
+.arc-auth-private{border-color:rgba(43,64,55,.09)!important;color:#67746e!important}
+.arc-auth-private i{color:var(--arc-gold)!important}.arc-auth-private b{color:#35473e!important}.arc-auth-private small{color:#7b8580!important}
+
+/* Cloud/account chrome should float quietly, not compete with the page. */
+.arc-focus-ui .arc-cloud-account{z-index:75!important}
+.arc-focus-ui .arc-cloud-pill{background:rgba(255,253,248,.86)!important;border:1px solid rgba(42,65,55,.09)!important;color:var(--arc-ink)!important;backdrop-filter:blur(18px)!important;-webkit-backdrop-filter:blur(18px)!important;box-shadow:0 10px 28px rgba(37,52,44,.09)!important}
+
+@media(max-width:620px){
+  .arc-focus-ui .phone{max-width:none!important}
+  .arc-focus-ui .focus-app{padding-left:20px!important;padding-right:20px!important}
+  .arc-auth-card{width:calc(100% - 28px)!important;padding:27px 22px 23px!important}
+}
