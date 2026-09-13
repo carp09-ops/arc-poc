@@ -1,0 +1,21 @@
+/* ARC iPad responsive hardening — geometry only. */
+@media (min-width:700px) and (max-width:1366px){
+  .arc-focus-ui .arc-app,
+  .arc-focus-ui .arc-stage,
+  .arc-focus-ui .phone,
+  .arc-focus-ui .focus-app{
+    transform:none!important;
+    perspective:none!important;
+  }
+
+  .arc-focus-ui .focus-nav{
+    position:fixed!important;
+    inset:auto auto 16px 50%!important;
+    top:auto!important;
+    right:auto!important;
+    bottom:16px!important;
+    left:50%!important;
+    margin:0!important;
+    transform:translateX(-50%)!important;
+  }
+}
