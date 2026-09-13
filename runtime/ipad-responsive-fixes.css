@@ -25,13 +25,8 @@
     border-radius:22px!important;
     box-shadow:0 16px 42px rgba(16,43,36,.13)!important;
   }
-  .arc-focus-ui .focus-nav button{
-    min-height:48px!important;
-  }
-  .arc-focus-ui .focus-nav svg{
-    width:20px!important;
-    height:20px!important;
-  }
+  .arc-focus-ui .focus-nav button{min-height:48px!important}
+  .arc-focus-ui .focus-nav svg{width:20px!important;height:20px!important}
 
   /* The injected Today label is a real section heading on tablet, not a 1-column grid orphan. */
   .arc-focus-ui .focus-page.focus-today>.arc-secondary-label{
@@ -68,35 +63,105 @@
   .arc-signature-locked .arc-insight-card>p{color:rgba(255,248,237,.80)!important}
   .arc-signature-locked .arc-insight-card>header>span{color:#e7c96f!important}
 
-  /* Older premium rules intentionally force these wrappers to block on phone.
-     On tablet the responsive composition must win with greater specificity. */
+  /* Nutrition: use the tablet width for a real editorial image + compact guidance rail. */
+  .arc-focus-ui .focus-page.focus-nutrition,
+  .arc-focus-ui .focus-page.focus-nutrition>.focus-page-header,
+  .arc-focus-ui .focus-page.focus-nutrition>.focus-tabs,
+  .arc-focus-ui .focus-page.focus-nutrition>.focus-nut-content{
+    visibility:visible!important;
+    opacity:1!important;
+    transform:none!important;
+  }
   .arc-focus-ui .focus-page.focus-nutrition>.focus-nut-content{
     display:grid!important;
     grid-template-columns:repeat(12,minmax(0,1fr))!important;
     gap:12px 18px!important;
     align-items:start!important;
   }
+  .arc-focus-ui .focus-nut-content>.focus-nut-hero{
+    grid-column:1/8!important;
+    grid-row:1/5!important;
+    min-height:0!important;
+    height:100%!important;
+    border-radius:28px!important;
+    background-color:var(--arc-ns-deep)!important;
+    background-image:
+      linear-gradient(180deg,rgba(9,31,25,.12) 0%,rgba(9,31,25,.25) 36%,rgba(9,31,25,.84) 100%),
+      var(--arc-food-lunch)!important;
+    background-size:cover!important;
+    background-position:center 48%!important;
+    box-shadow:var(--arc-shadow-image)!important;
+  }
+  .arc-focus-ui .focus-nut-content>.focus-nut-hero .focus-food-art{display:none!important}
+  .arc-focus-ui .focus-nut-content>.focus-nut-hero>div{
+    left:24px!important;
+    right:24px!important;
+    bottom:24px!important;
+    max-width:78%!important;
+  }
+  .arc-focus-ui .focus-nut-content>.focus-nut-hero h2{
+    color:#fff9ef!important;
+    font-family:var(--arc-serif)!important;
+    font-size:36px!important;
+    line-height:1!important;
+    text-shadow:0 4px 24px rgba(0,0,0,.30)!important;
+  }
+  .arc-focus-ui .focus-nut-content>.focus-nut-hero p{
+    margin-top:10px!important;
+    color:rgba(255,249,239,.82)!important;
+    font-size:11px!important;
+  }
+
+  /* Train: guarantee the Focus-first page wins over older tablet rules. */
+  .arc-focus-ui .focus-page.focus-train{
+    display:block!important;
+    visibility:visible!important;
+    opacity:1!important;
+    transform:none!important;
+  }
+  .arc-focus-ui .focus-page.focus-train>.focus-page-header{
+    display:grid!important;
+    visibility:visible!important;
+    opacity:1!important;
+  }
+  .arc-focus-ui .focus-page.focus-train>.focus-tabs{
+    display:grid!important;
+    visibility:visible!important;
+    opacity:1!important;
+  }
   .arc-focus-ui .focus-page.focus-train>.focus-train-content{
     display:grid!important;
+    visibility:visible!important;
+    opacity:1!important;
+    transform:none!important;
     grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr)!important;
     gap:20px!important;
     align-items:start!important;
   }
+  .arc-focus-ui .focus-page.focus-train .focus-train-hero,
+  .arc-focus-ui .focus-page.focus-train .focus-exercise-list{
+    visibility:visible!important;
+    opacity:1!important;
+  }
+
+  /* Body: keep the exact approved artwork, but size it to clear the iPad dock. */
+  .arc-signature-locked .focus-body-measurements{max-width:560px!important}
+  .arc-signature-locked .focus-body-visual{max-width:540px!important}
+  .arc-signature-locked .focus-body-map{max-width:500px!important}
+  .arc-signature-locked .focus-body-update,
+  .arc-signature-locked .focus-body-measurements>p{max-width:540px!important}
 }
 
 @media (min-width:980px) and (max-width:1366px) and (orientation:landscape){
-  /* Landscape has less vertical room; keep the approved Body artwork fully legible above the dock. */
-  .arc-signature-locked .focus-body-measurements{
-    max-width:760px!important;
+  /* The first landscape viewport belongs to the Arc; Focus begins cleanly beneath the dock. */
+  .arc-focus-ui .focus-page.focus-today>.arc-secondary-label{
+    margin-top:54px!important;
   }
-  .arc-signature-locked .focus-body-visual{
-    max-width:460px!important;
-  }
-  .arc-signature-locked .focus-body-map{
-    max-width:410px!important;
-  }
+
+  /* Landscape has less vertical room; scale the Body plate rather than letting the dock cross it. */
+  .arc-signature-locked .focus-body-measurements{max-width:420px!important}
+  .arc-signature-locked .focus-body-visual{max-width:380px!important}
+  .arc-signature-locked .focus-body-map{max-width:340px!important}
   .arc-signature-locked .focus-body-update,
-  .arc-signature-locked .focus-body-measurements>p{
-    max-width:460px!important;
-  }
+  .arc-signature-locked .focus-body-measurements>p{max-width:380px!important}
 }
