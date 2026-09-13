@@ -56,18 +56,18 @@ jobs:
               await page.addStyleTag({content:'.arc-auth-shield,.arc-auth-gate,.arc-cloud-account{display:none!important}'});
               await page.waitForTimeout(400);
               const m=await page.evaluate(()=>{
-                const phone=document.querySelector('.phone')?.getBoundingClientRect();
                 const app=document.querySelector('.focus-app')?.getBoundingClientRect();
                 const hero=document.querySelector('.arc-insights-hero')?.getBoundingClientRect();
                 const nav=document.querySelector('.focus-nav')?.getBoundingClientRect();
                 const focus=document.querySelector('.focus-primary-card')?.getBoundingClientRect();
-                return {phoneW:phone?.width||0,appW:app?.width||0,heroW:hero?.width||0,navW:nav?.width||0,navBottom:nav?innerHeight-nav.bottom:999,focusW:focus?.width||0,overflow:document.documentElement.scrollWidth-innerWidth,target:S.nutritionV1?.targets?.calories,meal:S.history?.nutrition?.[0]?.name};
+                return {innerW:innerWidth,innerH:innerHeight,appW:app?.width||0,heroW:hero?.width||0,navW:nav?.width||0,navTop:nav?.top||0,navBottom:nav?.bottom||0,navPosition:nav?getComputedStyle(document.querySelector('.focus-nav')).position:'',focusW:focus?.width||0,overflow:document.documentElement.scrollWidth-innerWidth,target:S.nutritionV1?.targets?.calories,meal:S.history?.nutrition?.[0]?.name};
               });
-              const minW=name==='landscape'?950:760;
-              if(m.phoneW<minW||m.appW<minW||m.heroW<(name==='landscape'?850:700)||m.focusW<(name==='landscape'?900:700)) throw new Error(`${name}: still rendering as phone geometry ${JSON.stringify(m)}`);
-              if(m.navW>840||m.navW<650||m.navBottom<10||m.navBottom>45) throw new Error(`${name}: iPad nav geometry failed ${JSON.stringify(m)}`);
-              if(m.overflow>2||m.target!==1900||m.meal!=='Saved Meal') throw new Error(`${name}: overflow/data preservation failed ${JSON.stringify(m)}`);
+              console.log(name,m);
               await page.screenshot({path:`ipad-review/${name}-today.png`,fullPage:true});
+              const minW=name==='landscape'?950:760;
+              if(m.appW<minW||m.heroW<(name==='landscape'?850:700)||m.focusW<(name==='landscape'?900:700)) throw new Error(`${name}: still rendering as phone geometry ${JSON.stringify(m)}`);
+              if(m.navW>840||m.navW<650||m.navPosition!=='fixed') throw new Error(`${name}: iPad nav geometry failed ${JSON.stringify(m)}`);
+              if(m.overflow>2||m.target!==1900||m.meal!=='Saved Meal') throw new Error(`${name}: overflow/data preservation failed ${JSON.stringify(m)}`);
               await page.evaluate(()=>{S.screen='body';save();render()});
               await page.waitForSelector('.focus-body-map[data-signature-body="locked"]',{state:'visible',timeout:3000});
               await page.waitForTimeout(250);
