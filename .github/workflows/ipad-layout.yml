@@ -1,0 +1,91 @@
+name: ARC iPad layout QA
+
+on:
+  push:
+    branches:
+      - ipad-layout-pass
+      - main
+
+jobs:
+  ipad-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify iPad layer contract
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const index=fs.readFileSync('index.html','utf8');
+          const css=fs.readFileSync('runtime/ipad-layout.css','utf8');
+          if(!index.includes('runtime/ipad-layout.css')) throw new Error('iPad stylesheet not loaded');
+          if(index.indexOf('runtime/ipad-layout.css')<index.indexOf('runtime/north-star.css')) throw new Error('iPad layer must load after North Star');
+          if(!index.includes('north-star-ipad-1.1')) throw new Error('iPad build version missing');
+          if(!css.includes('@media (min-width:700px)')||!css.includes('orientation:landscape')) throw new Error('Portrait/landscape iPad contracts missing');
+          console.log('ARC iPad static contract: PASS');
+          NODE
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Serve ARC
+        run: python3 -m http.server 4173 >/tmp/arc-ipad-http.log 2>&1 &
+      - name: Verify iPad portrait and landscape rendering
+        run: |
+          mkdir -p ipad-review
+          node <<'NODE'
+          const {webkit}=require('playwright');
+          const base='http://127.0.0.1:4173/';
+          (async()=>{
+            const browser=await webkit.launch();
+            for(const [name,viewport] of [['portrait',{width:834,height:1194}],['landscape',{width:1194,height:834}]]){
+              const context=await browser.newContext({viewport,deviceScaleFactor:2,userAgent:'Mozilla/5.0 (iPad; CPU OS 26_6_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6 Mobile/15E148 Safari/604.1'});
+              const page=await context.newPage();
+              const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+              await page.goto(base+'diagnostics/webkit-control.html?ipad-seed=1',{waitUntil:'domcontentloaded'});
+              await page.evaluate(()=>{
+                const d=new Date(),key=d.toISOString().slice(0,10),prior=new Date(d.getTime()-86400000*9).toISOString().slice(0,10);
+                localStorage.setItem('arcStarted','1');
+                localStorage.setItem('arcState',JSON.stringify({screen:'today',on:1,profile:{name:'Kimberly',goals:['Improve overall health'],primary:'Improve overall health',weight:'165',waist:'35',life:'A mix of sitting and moving',sleep:'7',location:'Home + Gym',experience:'Know the basics',days:3,duration:30,nutrition:'Guided — calories + protein',activities:['Strength training'],equipment:['Dumbbells']},logs:{workouts:2,bodyChecks:1,cal:1280,protein:92,steps:5821},history:{workouts:[{date:prior,name:'Saved Workout',completed:true}],nutrition:[{date:prior,name:'Saved Meal',calories:380,protein:28}],body:[{date:prior,weight:165,waist:35,hips:40,chest:38}],activity:[],sleep:[],signals:[],weight:[],context:[],measurements:[]},meta:{},nutritionV1:{targets:{calories:1900,protein:140},days:{[key]:{meals:{breakfast:{logged:true,portion:1}},custom:[]}}},done:false}));
+              });
+              await page.goto(base+'?ipad-layout=1',{waitUntil:'domcontentloaded'});
+              await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&document.querySelector('.focus-today')&&document.querySelector('.arc-eclipse-lock[data-signature-eclipse="1"]'),null,{timeout:12000});
+              await page.addStyleTag({content:'.arc-auth-shield,.arc-auth-gate,.arc-cloud-account{display:none!important}'});
+              await page.waitForTimeout(400);
+              const m=await page.evaluate(()=>{
+                const phone=document.querySelector('.phone')?.getBoundingClientRect();
+                const app=document.querySelector('.focus-app')?.getBoundingClientRect();
+                const hero=document.querySelector('.arc-insights-hero')?.getBoundingClientRect();
+                const nav=document.querySelector('.focus-nav')?.getBoundingClientRect();
+                const focus=document.querySelector('.focus-primary-card')?.getBoundingClientRect();
+                return {phoneW:phone?.width||0,appW:app?.width||0,heroW:hero?.width||0,navW:nav?.width||0,navBottom:nav?innerHeight-nav.bottom:999,focusW:focus?.width||0,overflow:document.documentElement.scrollWidth-innerWidth,target:S.nutritionV1?.targets?.calories,meal:S.history?.nutrition?.[0]?.name};
+              });
+              const minW=name==='landscape'?950:760;
+              if(m.phoneW<minW||m.appW<minW||m.heroW<(name==='landscape'?850:700)||m.focusW<(name==='landscape'?900:700)) throw new Error(`${name}: still rendering as phone geometry ${JSON.stringify(m)}`);
+              if(m.navW>840||m.navW<650||m.navBottom<10||m.navBottom>45) throw new Error(`${name}: iPad nav geometry failed ${JSON.stringify(m)}`);
+              if(m.overflow>2||m.target!==1900||m.meal!=='Saved Meal') throw new Error(`${name}: overflow/data preservation failed ${JSON.stringify(m)}`);
+              await page.screenshot({path:`ipad-review/${name}-today.png`,fullPage:true});
+              await page.evaluate(()=>{S.screen='body';save();render()});
+              await page.waitForSelector('.focus-body-map[data-signature-body="locked"]',{state:'visible',timeout:3000});
+              await page.waitForTimeout(250);
+              const body=await page.evaluate(()=>{const map=document.querySelector('.focus-body-map')?.getBoundingClientRect();return{mapW:map?.width||0,mapH:map?.height||0,overflow:document.documentElement.scrollWidth-innerWidth,target:S.nutritionV1?.targets?.calories}});
+              if(body.mapW>530||body.mapW<400||body.overflow>2||body.target!==1900) throw new Error(`${name}: Body tablet containment failed ${JSON.stringify(body)}`);
+              await page.screenshot({path:`ipad-review/${name}-body.png`,fullPage:true});
+              if(errors.length) throw new Error(`${name}: page errors ${errors.join(' | ')}`);
+              await context.close();
+            }
+            await browser.close();
+            console.log('ARC iPad layout QA: PASS');
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+      - name: Upload iPad review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc-ipad-layout-review
+          path: ipad-review
+          if-no-files-found: warn
+          retention-days: 7
