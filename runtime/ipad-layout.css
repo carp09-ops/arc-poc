@@ -57,15 +57,23 @@
   .arc-signature-locked .focus-body-map{max-width:520px!important;margin-inline:auto!important;aspect-ratio:2/3!important}
   .arc-signature-locked .focus-body-update{max-width:760px!important;margin-left:auto!important;margin-right:auto!important}
 
-  /* iPad navigation floats like a native dock rather than spanning the entire screen. */
+  /* iPad navigation floats like a native dock rather than falling into document flow. */
   .arc-focus-ui .focus-nav{
+    position:fixed!important;
+    z-index:80!important;
+    top:auto!important;
+    right:auto!important;
     left:50%!important;
     bottom:calc(16px + env(safe-area-inset-bottom))!important;
     width:min(760px,calc(100% - 48px))!important;
+    margin:0!important;
     transform:translateX(-50%)!important;
     padding:9px 14px!important;
     border:1px solid rgba(16,43,36,.08)!important;
     border-radius:26px!important;
+    background:rgba(255,250,242,.93)!important;
+    -webkit-backdrop-filter:blur(22px) saturate(1.08)!important;
+    backdrop-filter:blur(22px) saturate(1.08)!important;
     box-shadow:0 18px 46px rgba(16,43,36,.12)!important;
     overflow:hidden!important;
   }
