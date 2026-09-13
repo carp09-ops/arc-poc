@@ -8,16 +8,65 @@
     perspective:none!important;
   }
 
+  /* Keep the approved five-item navigation, but size it like an iPad dock. */
   .arc-focus-ui .focus-nav{
     position:fixed!important;
-    inset:auto auto 16px 50%!important;
+    inset:auto auto 14px 50%!important;
     top:auto!important;
     right:auto!important;
-    bottom:16px!important;
+    bottom:14px!important;
     left:50%!important;
+    width:min(580px,calc(100% - 88px))!important;
+    max-width:580px!important;
     margin:0!important;
+    padding:8px 12px calc(8px + env(safe-area-inset-bottom))!important;
     transform:translateX(-50%)!important;
+    background:rgba(255,250,242,.84)!important;
+    border-radius:22px!important;
+    box-shadow:0 16px 42px rgba(16,43,36,.13)!important;
   }
+  .arc-focus-ui .focus-nav button{
+    min-height:48px!important;
+  }
+  .arc-focus-ui .focus-nav svg{
+    width:20px!important;
+    height:20px!important;
+  }
+
+  /* The injected Today label is a real section heading on tablet, not a 1-column grid orphan. */
+  .arc-focus-ui .focus-page.focus-today>.arc-secondary-label{
+    grid-column:1/-1!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    width:100%!important;
+    margin:2px 2px -4px!important;
+    padding:0!important;
+  }
+  .arc-focus-ui .focus-page.focus-today>.arc-secondary-label span{
+    font:800 9px/1 var(--arc-sans)!important;
+    letter-spacing:.18em!important;
+    color:var(--arc-ns-evergreen)!important;
+  }
+  .arc-focus-ui .focus-page.focus-today>.arc-secondary-label small{
+    display:block!important;
+    font:500 9px/1.25 var(--arc-sans)!important;
+    color:#87918c!important;
+    text-align:right!important;
+  }
+
+  /* Finish Arc Insight immediately on tablet so the hero never flashes as a pale card. */
+  .arc-signature-locked .arc-insight-card{
+    animation:none!important;
+    opacity:1!important;
+    background:
+      radial-gradient(circle at 100% 0%,rgba(206,175,99,.12),transparent 35%),
+      linear-gradient(138deg,var(--arc-ns-deep) 0%,var(--arc-ns-evergreen) 68%,#28574a 100%)!important;
+    color:#fff8ed!important;
+  }
+  .arc-signature-locked .arc-insight-card h3{color:#fff8ed!important}
+  .arc-signature-locked .arc-insight-card>p{color:rgba(255,248,237,.80)!important}
+  .arc-signature-locked .arc-insight-card>header>span{color:#e7c96f!important}
 
   /* Older premium rules intentionally force these wrappers to block on phone.
      On tablet the responsive composition must win with greater specificity. */
@@ -32,5 +81,22 @@
     grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr)!important;
     gap:20px!important;
     align-items:start!important;
+  }
+}
+
+@media (min-width:980px) and (max-width:1366px) and (orientation:landscape){
+  /* Landscape has less vertical room; keep the approved Body artwork fully legible above the dock. */
+  .arc-signature-locked .focus-body-measurements{
+    max-width:760px!important;
+  }
+  .arc-signature-locked .focus-body-visual{
+    max-width:460px!important;
+  }
+  .arc-signature-locked .focus-body-map{
+    max-width:410px!important;
+  }
+  .arc-signature-locked .focus-body-update,
+  .arc-signature-locked .focus-body-measurements>p{
+    max-width:460px!important;
   }
 }
