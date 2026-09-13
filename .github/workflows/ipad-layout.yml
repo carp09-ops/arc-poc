@@ -60,19 +60,25 @@ jobs:
                 const hero=document.querySelector('.arc-insights-hero')?.getBoundingClientRect();
                 const nav=document.querySelector('.focus-nav')?.getBoundingClientRect();
                 const focus=document.querySelector('.focus-primary-card')?.getBoundingClientRect();
-                return {innerW:innerWidth,innerH:innerHeight,appW:app?.width||0,heroW:hero?.width||0,navW:nav?.width||0,navTop:nav?.top||0,navBottom:nav?.bottom||0,navPosition:nav?getComputedStyle(document.querySelector('.focus-nav')).position:'',focusW:focus?.width||0,overflow:document.documentElement.scrollWidth-innerWidth,target:S.nutritionV1?.targets?.calories,meal:S.history?.nutrition?.[0]?.name};
+                const mantra=document.querySelector('.focus-mantra')?.getBoundingClientRect();
+                return {appW:app?.width||0,heroW:hero?.width||0,navW:nav?.width||0,navTop:nav?.top||0,navPosition:nav?getComputedStyle(document.querySelector('.focus-nav')).position:'',focusW:focus?.width||0,contentBottom:mantra?.bottom||0,overflow:document.documentElement.scrollWidth-innerWidth,target:S.nutritionV1?.targets?.calories,meal:S.history?.nutrition?.[0]?.name};
               });
-              console.log(name,m);
-              await page.screenshot({path:`ipad-review/${name}-today.png`,fullPage:true});
               const minW=name==='landscape'?950:760;
               if(m.appW<minW||m.heroW<(name==='landscape'?850:700)||m.focusW<(name==='landscape'?900:700)) throw new Error(`${name}: still rendering as phone geometry ${JSON.stringify(m)}`);
-              if(m.navW>840||m.navW<650||m.navPosition!=='fixed') throw new Error(`${name}: iPad nav geometry failed ${JSON.stringify(m)}`);
+              if(m.navW>840||m.navW<650||m.navPosition!=='relative'||m.navTop<m.contentBottom+16) throw new Error(`${name}: iPad nav must follow content without covering it ${JSON.stringify(m)}`);
               if(m.overflow>2||m.target!==1900||m.meal!=='Saved Meal') throw new Error(`${name}: overflow/data preservation failed ${JSON.stringify(m)}`);
+              await page.screenshot({path:`ipad-review/${name}-today.png`,fullPage:true});
+
               await page.evaluate(()=>{S.screen='body';save();render()});
               await page.waitForSelector('.focus-body-map[data-signature-body="locked"]',{state:'visible',timeout:3000});
               await page.waitForTimeout(250);
-              const body=await page.evaluate(()=>{const map=document.querySelector('.focus-body-map')?.getBoundingClientRect();return{mapW:map?.width||0,mapH:map?.height||0,overflow:document.documentElement.scrollWidth-innerWidth,target:S.nutritionV1?.targets?.calories}});
-              if(body.mapW>530||body.mapW<400||body.overflow>2||body.target!==1900) throw new Error(`${name}: Body tablet containment failed ${JSON.stringify(body)}`);
+              const body=await page.evaluate(()=>{
+                const map=document.querySelector('.focus-body-map')?.getBoundingClientRect();
+                const update=document.querySelector('.focus-body-update')?.getBoundingClientRect();
+                const nav=document.querySelector('.focus-nav')?.getBoundingClientRect();
+                return{mapW:map?.width||0,mapH:map?.height||0,updateBottom:update?.bottom||0,navTop:nav?.top||0,navPosition:nav?getComputedStyle(document.querySelector('.focus-nav')).position:'',overflow:document.documentElement.scrollWidth-innerWidth,target:S.nutritionV1?.targets?.calories};
+              });
+              if(body.mapW>530||body.mapW<400||body.overflow>2||body.target!==1900||body.navPosition!=='relative'||body.navTop<body.updateBottom+16) throw new Error(`${name}: Body tablet containment/nav failed ${JSON.stringify(body)}`);
               await page.screenshot({path:`ipad-review/${name}-body.png`,fullPage:true});
               if(errors.length) throw new Error(`${name}: page errors ${errors.join(' | ')}`);
               await context.close();
