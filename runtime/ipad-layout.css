@@ -1,0 +1,87 @@
+/* ARC iPad responsive pass — preserves the locked North Star visual system while giving tablet layouts their own geometry. */
+
+@media (min-width:700px) and (max-width:1199px){
+  html.arc-focus-ui body{overflow-x:hidden!important}
+  .arc-focus-ui .phone{
+    width:100%!important;
+    max-width:1024px!important;
+    min-height:100dvh!important;
+    margin:0 auto!important;
+  }
+  .arc-focus-ui .focus-app{
+    width:100%!important;
+    max-width:1024px!important;
+    margin:0 auto!important;
+    padding:28px clamp(28px,4.5vw,52px) calc(112px + env(safe-area-inset-bottom))!important;
+  }
+  .arc-focus-ui .focus-page{width:100%!important;max-width:100%!important}
+  .arc-focus-ui .focus-greeting{padding:18px 2px 24px!important}
+  .arc-focus-ui .focus-greeting h1{font-size:clamp(38px,5.2vw,54px)!important;max-width:560px!important;line-height:.96!important}
+  .arc-focus-ui .focus-avatar{width:42px!important;height:42px!important;font-size:12px!important}
+
+  /* The Arc stays dominant, but no longer stretches like an oversized phone card. */
+  .arc-signature-locked .arc-insights-hero{
+    width:100%!important;
+    max-width:900px!important;
+    margin:0 auto 26px!important;
+    padding:18px clamp(20px,3vw,34px) 24px!important;
+    border-radius:30px!important;
+  }
+  .arc-signature-locked .arc-eclipse-stage{max-width:760px!important;margin:0 auto!important}
+  .arc-signature-locked .arc-eclipse-orb{width:clamp(330px,43vw,405px)!important}
+  .arc-signature-locked .arc-insight-card{max-width:820px!important;margin:22px auto 0!important;padding:20px 20px 17px!important}
+  .arc-signature-locked .arc-insight-card h3{font-size:clamp(24px,3vw,31px)!important;max-width:620px!important}
+  .arc-signature-locked .arc-insight-card>p{font-size:11px!important;max-width:720px!important}
+
+  /* Supporting Today content uses the tablet width rather than a 480–560px phone column. */
+  .arc-focus-ui .focus-primary-card{min-height:230px!important;border-radius:24px!important}
+  .arc-focus-ui .focus-primary-copy{width:58%!important;padding:30px 0 28px 28px!important}
+  .arc-focus-ui .focus-primary-copy h2{font-size:clamp(34px,4.4vw,46px)!important;max-width:390px!important}
+  .arc-focus-ui .focus-why{padding:17px 19px!important;border-radius:17px!important}
+  .arc-focus-ui .focus-why p{font-size:12px!important}
+  .arc-focus-ui .focus-glance{gap:12px!important}
+  .arc-focus-ui .focus-glance>button{min-height:132px!important;padding:16px 14px!important;border-radius:18px!important}
+  .arc-focus-ui .focus-glance b{font-size:20px!important}
+
+  /* Tabs and lists get touch-friendly tablet sizing without becoming desktop chrome. */
+  .arc-focus-ui .focus-tabs{max-width:760px!important;margin-left:auto!important;margin-right:auto!important}
+  .arc-focus-ui .focus-tabs button{padding:10px 8px!important;font-size:11px!important}
+  .arc-focus-ui .focus-copy-head{max-width:820px!important;margin-inline:auto!important}
+  .arc-focus-ui .focus-nut-hero,.arc-focus-ui .focus-train-hero{min-height:250px!important;border-radius:24px!important}
+  .arc-focus-ui .focus-meal-list,.arc-focus-ui .focus-plan-view,.arc-focus-ui .focus-recipes,.arc-focus-ui .focus-log-view,
+  .arc-focus-ui .focus-exercise-list,.arc-focus-ui .focus-programs,.arc-focus-ui .focus-history,
+  .arc-focus-ui .focus-more-list,.arc-focus-ui .focus-more-promo{max-width:860px!important;margin-left:auto!important;margin-right:auto!important}
+
+  /* Body image was especially oversized on iPad; keep it editorial and contained. */
+  .arc-signature-locked .focus-body-visual{max-width:760px!important;margin:0 auto!important;padding:24px 22px 18px!important}
+  .arc-signature-locked .focus-body-map{max-width:520px!important;margin-inline:auto!important;aspect-ratio:2/3!important}
+  .arc-signature-locked .focus-body-update{max-width:760px!important;margin-left:auto!important;margin-right:auto!important}
+
+  /* iPad navigation floats like a native dock rather than spanning the entire screen. */
+  .arc-focus-ui .focus-nav{
+    left:50%!important;
+    bottom:calc(16px + env(safe-area-inset-bottom))!important;
+    width:min(760px,calc(100% - 48px))!important;
+    transform:translateX(-50%)!important;
+    padding:9px 14px!important;
+    border:1px solid rgba(16,43,36,.08)!important;
+    border-radius:26px!important;
+    box-shadow:0 18px 46px rgba(16,43,36,.12)!important;
+    overflow:hidden!important;
+  }
+  .arc-focus-ui .focus-nav button{min-height:48px!important;font-size:10px!important}
+  .arc-focus-ui .focus-nav svg{width:21px!important;height:21px!important}
+}
+
+@media (min-width:900px) and (max-width:1199px) and (orientation:landscape){
+  .arc-focus-ui .phone,.arc-focus-ui .focus-app{max-width:1120px!important}
+  .arc-focus-ui .focus-app{padding-left:48px!important;padding-right:48px!important}
+  .arc-signature-locked .arc-insights-hero{max-width:980px!important}
+  .arc-signature-locked .arc-eclipse-stage{max-width:820px!important}
+  .arc-signature-locked .arc-eclipse-orb{width:360px!important}
+  .arc-focus-ui .focus-primary-card{min-height:218px!important}
+  .arc-focus-ui .focus-glance>button{min-height:118px!important}
+  .arc-signature-locked .focus-body-visual{max-width:820px!important}
+  .arc-signature-locked .focus-body-map{max-width:460px!important}
+  .arc-focus-ui .focus-nav{width:min(820px,calc(100% - 80px))!important}
+}
