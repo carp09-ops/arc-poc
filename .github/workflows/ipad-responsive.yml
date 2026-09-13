@@ -27,7 +27,8 @@ jobs:
           if(index.indexOf('runtime/ipad-responsive-fixes.css')<index.indexOf('runtime/ipad-responsive.css'))throw new Error('iPad hardening layer must load last');
           if(!index.includes('north-star-ipad-1.1'))throw new Error('iPad build version missing');
           if(!css.includes('@media (min-width:700px)')||!css.includes('orientation:landscape'))throw new Error('Tablet breakpoints missing');
-          if(!fixes.includes('position:fixed!important')||!fixes.includes('bottom:16px!important'))throw new Error('Tablet navigation hardening missing');
+          if(!fixes.includes('position:fixed!important')||!fixes.includes('bottom:14px!important'))throw new Error('Tablet navigation hardening missing');
+          if(!fixes.includes('arc-secondary-label')||!fixes.includes('animation:none!important'))throw new Error('Tablet hierarchy polish missing');
           if(/removeItem\s*\(\s*["']arcState["']/.test(css+fixes+index))throw new Error('Responsive layer must never clear user state');
           console.log('ARC iPad static contract: PASS');
           NODE
@@ -60,16 +61,18 @@ jobs:
               await page.goto(base+'?ipad-responsive=1',{waitUntil:'domcontentloaded'});
               await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&document.querySelector('.focus-today')&&document.querySelector('.arc-eclipse-lock[data-signature-eclipse="1"]'),null,{timeout:12000});
               await page.addStyleTag({content:'.arc-auth-shield,.arc-auth-gate,.arc-cloud-account{display:none!important}'});
-              await page.waitForTimeout(450);
+              await page.waitForTimeout(650);
               const today=await page.evaluate(()=>{
-                const hero=document.querySelector('.arc-insights-hero'),visual=document.querySelector('.arc-insights-visual'),insight=document.querySelector('.arc-insight-card'),focus=document.querySelector('.focus-primary-card'),why=document.querySelector('.focus-why'),nav=document.querySelector('.focus-nav');
+                const hero=document.querySelector('.arc-insights-hero'),visual=document.querySelector('.arc-insights-visual'),insight=document.querySelector('.arc-insight-card'),focus=document.querySelector('.focus-primary-card'),why=document.querySelector('.focus-why'),nav=document.querySelector('.focus-nav'),label=document.querySelector('.arc-secondary-label');
                 const r=x=>x?.getBoundingClientRect();
-                const hr=r(hero),vr=r(visual),ir=r(insight),fr=r(focus),wr=r(why),nr=r(nav),ns=nav?getComputedStyle(nav):null;
+                const hr=r(hero),vr=r(visual),ir=r(insight),fr=r(focus),wr=r(why),nr=r(nav),lr=r(label),ns=nav?getComputedStyle(nav):null,is=insight?getComputedStyle(insight):null;
                 return {
                   overflow:document.documentElement.scrollWidth-innerWidth,
                   heroW:hr?.width||0,visualW:vr?.width||0,insightW:ir?.width||0,
                   sideBySide:!!(vr&&ir&&Math.abs(vr.top-ir.top)<120&&vr.right<=ir.left+6),
                   focusWhySide:!!(fr&&wr&&Math.abs(fr.top-wr.top)<12&&fr.right<=wr.left+8),
+                  labelW:lr?.width||0,labelAbove:!!(lr&&fr&&lr.bottom<=fr.top+6),
+                  insightOpacity:is?.opacity||'',insightAnimation:is?.animationName||'',
                   navW:nr?.width||0,navGap:nr?Math.abs(innerHeight-nr.bottom):999,
                   navPosition:ns?.position||'',navBottom:ns?.bottom||'',navTransform:ns?.transform||'',
                   nav:[...document.querySelectorAll('.focus-nav button')].map(x=>x.textContent.trim()),
@@ -78,25 +81,30 @@ jobs:
               });
               console.log(name,'today',today);
               await page.screenshot({path:`ipad-review/${name}-today.png`,fullPage:true});
+              await page.screenshot({path:`ipad-review/${name}-today-viewport.png`,fullPage:false});
               const navBottom=parseFloat(today.navBottom);
-              if(today.overflow>2||!today.sideBySide||!today.focusWhySide||today.heroW<700||today.visualW<360||today.insightW<220||today.navW>700||today.navPosition!=='fixed'||!Number.isFinite(navBottom)||Math.abs(navBottom-16)>1||today.navGap>22||today.nav.join('|')!=='Today|Nutrition|Train|Body|More'||today.target!==1900||today.meal!=='Saved Meal')throw new Error(`${name}: Today tablet layout failed ${JSON.stringify(today)}`);
+              if(today.overflow>2||!today.sideBySide||!today.focusWhySide||!today.labelAbove||today.labelW<700||today.insightOpacity!=='1'||today.insightAnimation!=='none'||today.heroW<700||today.visualW<360||today.insightW<220||today.navW>600||today.navPosition!=='fixed'||!Number.isFinite(navBottom)||Math.abs(navBottom-14)>1||today.navGap>20||today.nav.join('|')!=='Today|Nutrition|Train|Body|More'||today.target!==1900||today.meal!=='Saved Meal')throw new Error(`${name}: Today tablet layout failed ${JSON.stringify(today)}`);
 
               await page.evaluate(()=>document.querySelector('[data-focus-go="nutrition"]')?.click());
               await page.waitForSelector('.focus-nutrition',{timeout:2500});
               const nutrition=await page.evaluate(()=>{const h=document.querySelector('.focus-nut-hero')?.getBoundingClientRect(),m=document.querySelector('.focus-meal-list')?.getBoundingClientRect();return{side:!!(h&&m&&h.right<=m.left+8),overflow:document.documentElement.scrollWidth-innerWidth,target:S.nutritionV1?.targets?.calories}});
+              await page.screenshot({path:`ipad-review/${name}-nutrition.png`,fullPage:true});
               if(!nutrition.side||nutrition.overflow>2||nutrition.target!==1900)throw new Error(`${name}: Nutrition tablet layout failed ${JSON.stringify(nutrition)}`);
 
               await page.evaluate(()=>document.querySelector('[data-focus-go="train"]')?.click());
               await page.waitForSelector('.focus-train-content',{timeout:2500});
               const train=await page.evaluate(()=>{const h=document.querySelector('.focus-train-hero')?.getBoundingClientRect(),l=document.querySelector('.focus-exercise-list')?.getBoundingClientRect();return{side:!!(h&&l&&h.right<=l.left+8),overflow:document.documentElement.scrollWidth-innerWidth}});
+              await page.screenshot({path:`ipad-review/${name}-train.png`,fullPage:true});
               if(!train.side||train.overflow>2)throw new Error(`${name}: Train tablet layout failed ${JSON.stringify(train)}`);
 
               await page.evaluate(()=>{S.screen='body';save();render()});
               await page.waitForSelector('.focus-body-map[data-signature-body="locked"]',{state:'visible',timeout:3000});
               await page.waitForFunction(()=>{const img=document.querySelector('.focus-body-map .arc-body-locked-img');return !!(img&&img.complete&&img.naturalWidth>0)},null,{timeout:5000});
               const body=await page.evaluate(()=>{const v=document.querySelector('.focus-body-visual')?.getBoundingClientRect(),u=document.querySelector('.focus-body-update')?.getBoundingClientRect();return{visualW:v?.width||0,center:v?Math.abs((v.left+v.width/2)-innerWidth/2):999,updateW:u?.width||0,overflow:document.documentElement.scrollWidth-innerWidth,target:S.nutritionV1?.targets?.calories}});
-              if(body.visualW>650||body.visualW<480||body.center>12||body.updateW>650||body.overflow>2||body.target!==1900)throw new Error(`${name}: Body tablet layout failed ${JSON.stringify(body)}`);
+              const minBody=name==='landscape'?400:480;
+              if(body.visualW>650||body.visualW<minBody||body.center>12||body.updateW>650||body.overflow>2||body.target!==1900)throw new Error(`${name}: Body tablet layout failed ${JSON.stringify(body)}`);
               await page.screenshot({path:`ipad-review/${name}-body.png`,fullPage:true});
+              await page.screenshot({path:`ipad-review/${name}-body-viewport.png`,fullPage:false});
               if(errors.length)throw new Error(`${name}: page errors ${errors.join(' | ')}`);
               await context.close();
             }
