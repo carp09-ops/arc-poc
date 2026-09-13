@@ -81,23 +81,23 @@ jobs:
                   deep:root.getPropertyValue('--arc-ns-deep').trim(),evergreen:root.getPropertyValue('--arc-ns-evergreen').trim(),gold:root.getPropertyValue('--arc-ns-gold').trim(),cream:root.getPropertyValue('--arc-ns-cream').trim(),
                   headingFont:getComputedStyle(greeting).fontFamily,bodyFont:getComputedStyle(document.body).fontFamily,
                   heroFirst:!!(hr&&fr&&hr.top<fr.top),insightText:insight?.textContent||'',ringStroke:ring?getComputedStyle(ring).stroke:'',
-                  navBottom:navr?Math.abs(innerHeight-navr.bottom):999,overflow:document.documentElement.scrollWidth-innerWidth,
+                  navWidth:navr?.width||0,navDisplay:nav?getComputedStyle(nav).display:'',overflow:document.documentElement.scrollWidth-innerWidth,
                   nav:[...document.querySelectorAll('.focus-nav button')].map(x=>x.textContent.trim()),
                   target:S.nutritionV1?.targets?.calories,meal:S.history?.nutrition?.[0]?.name,waist:S.history?.body?.[0]?.waist
                 };
               });
+              await page.screenshot({path:`north-star-review/${name}-today.png`,fullPage:true});
               if(today.deep.toUpperCase()!=='#102B24'||today.evergreen.toUpperCase()!=='#1D4037'||today.gold.toUpperCase()!=='#CEAF63'||today.cream.toUpperCase()!=='#F6F1E8')throw new Error(`${name}: North Star palette mismatch ${JSON.stringify(today)}`);
               if(!today.headingFont.includes('Cormorant Garamond')||!today.bodyFont.includes('Inter'))throw new Error(`${name}: North Star typography mismatch ${JSON.stringify(today)}`);
-              if(!today.heroFirst||!today.insightText.includes('ARC INSIGHT')||today.nav.join('|')!=='Today|Nutrition|Train|Body|More'||today.navBottom>2||today.overflow>2)throw new Error(`${name}: North Star layout/navigation mismatch ${JSON.stringify(today)}`);
+              if(!today.heroFirst||!today.insightText.includes('ARC INSIGHT')||today.nav.join('|')!=='Today|Nutrition|Train|Body|More'||today.navDisplay!=='grid'||today.navWidth<300||today.overflow>2)throw new Error(`${name}: North Star layout/navigation mismatch ${JSON.stringify(today)}`);
               if(today.target!==1900||today.meal!=='Saved Meal'||today.waist!==35)throw new Error(`${name}: North Star visual layer altered user data`);
-              await page.screenshot({path:`north-star-review/${name}-today.png`,fullPage:true});
 
               await page.evaluate(()=>{S.screen='body';save();render()});
               await page.waitForSelector('.focus-body-map[data-signature-body="locked"]',{state:'visible',timeout:3000});
               await page.waitForFunction(()=>{const img=document.querySelector('.focus-body-map[data-signature-body="locked"] .arc-body-locked-img');return !!(img&&img.complete&&img.naturalWidth>0)},null,{timeout:5000});
               const body=await page.evaluate(()=>({labels:[...document.querySelectorAll('.focus-body-lines b')].map(x=>x.textContent).join('|'),update:!!document.querySelector('[data-body-checkin-052]'),overflow:document.documentElement.scrollWidth-innerWidth,target:S.nutritionV1?.targets?.calories}));
-              if(body.labels!=='Neck|Shoulders|Chest|Arms|Waist|Hips|Thighs|Calves'||!body.update||body.overflow>2||body.target!==1900)throw new Error(`${name}: North Star Body failed ${JSON.stringify(body)}`);
               await page.screenshot({path:`north-star-review/${name}-body.png`,fullPage:true});
+              if(body.labels!=='Neck|Shoulders|Chest|Arms|Waist|Hips|Thighs|Calves'||!body.update||body.overflow>2||body.target!==1900)throw new Error(`${name}: North Star Body failed ${JSON.stringify(body)}`);
               if(errors.length)throw new Error(`${name}: page errors ${errors.join(' | ')}`);
               await context.close();
             }
