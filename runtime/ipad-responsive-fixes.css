@@ -18,4 +18,19 @@
     margin:0!important;
     transform:translateX(-50%)!important;
   }
+
+  /* Older premium rules intentionally force these wrappers to block on phone.
+     On tablet the responsive composition must win with greater specificity. */
+  .arc-focus-ui .focus-page.focus-nutrition>.focus-nut-content{
+    display:grid!important;
+    grid-template-columns:repeat(12,minmax(0,1fr))!important;
+    gap:12px 18px!important;
+    align-items:start!important;
+  }
+  .arc-focus-ui .focus-page.focus-train>.focus-train-content{
+    display:grid!important;
+    grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr)!important;
+    gap:20px!important;
+    align-items:start!important;
+  }
 }
