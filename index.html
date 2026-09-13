@@ -3,22 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#f4efe6" />
+  <meta name="theme-color" content="#F6F1E8" />
   <meta name="color-scheme" content="light" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <title>Arc — Progress Has a Shape</title>
   <link rel="manifest" href="manifest.json?v=runtime-stable" />
   <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="preload" as="image" href="assets/arc-lockup-horizontal-transparent.svg" />
   <link rel="preload" as="image" href="assets/arc-monogram-transparent.svg" />
   <link rel="apple-touch-icon" href="assets/arc-app-icon.webp" />
   <link rel="icon" type="image/webp" href="assets/arc-app-icon.webp" />
   <style>
-    html,body{margin:0;min-height:100%;background:#f4efe6;color:#17241f;color-scheme:light}
-    #arc-boot{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:radial-gradient(circle at 50% 37%,#fffdf8 0,#f6f1e8 40%,#ede7dc 100%);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;transition:opacity .24s ease}
-    #arc-boot.hide{opacity:0;pointer-events:none}.arc-boot-inner{text-align:center;padding:28px}.arc-boot-mark{width:64px;height:64px;margin:0 auto 18px;border:1px solid rgba(35,77,61,.16);border-radius:50%;display:grid;place-items:center;color:#234d3d;font:31px Georgia,serif;box-shadow:0 14px 36px rgba(39,55,47,.07)}
-    .arc-boot-title{font:32px Georgia,serif;letter-spacing:.12em;color:#17241f}.arc-boot-sub{margin-top:9px;font-size:9px;letter-spacing:.18em;color:#78847e}.arc-boot-line{width:128px;height:2px;margin:22px auto 0;background:#ddd8ce;overflow:hidden;border-radius:10px}.arc-boot-line i{display:block;width:42%;height:100%;background:#4f9173;animation:arcBoot 1.15s ease-in-out infinite}.arc-boot-status{margin-top:12px;min-height:18px;font-size:9px;color:#7d8782;max-width:300px}
+    html,body{margin:0;min-height:100%;background:#F6F1E8;color:#102B24;color-scheme:light}
+    #arc-boot{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;background:radial-gradient(circle at 50% 37%,#fffdf8 0,#f6f1e8 40%,#ede7dc 100%);font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;transition:opacity .24s ease}
+    #arc-boot.hide{opacity:0;pointer-events:none}.arc-boot-inner{text-align:center;padding:28px}.arc-boot-mark{width:64px;height:64px;margin:0 auto 18px;border:1px solid rgba(16,43,36,.16);border-radius:50%;display:grid;place-items:center;color:#102B24;font:31px "Cormorant Garamond",Georgia,serif;box-shadow:0 14px 36px rgba(16,43,36,.07)}
+    .arc-boot-title{font:32px "Cormorant Garamond",Georgia,serif;letter-spacing:.12em;color:#102B24}.arc-boot-sub{margin-top:9px;font-size:9px;letter-spacing:.18em;color:#78847e}.arc-boot-line{width:128px;height:2px;margin:22px auto 0;background:#ddd8ce;overflow:hidden;border-radius:10px}.arc-boot-line i{display:block;width:42%;height:100%;background:#1D4037;animation:arcBoot 1.15s ease-in-out infinite}.arc-boot-status{margin-top:12px;min-height:18px;font-size:9px;color:#7d8782;max-width:300px}
     @keyframes arcBoot{0%{transform:translateX(-110%)}100%{transform:translateX(350%)}}
   </style>
   <link rel="stylesheet" href="styles.css?v=runtime-stable" />
@@ -52,6 +55,7 @@
   <link rel="stylesheet" href="runtime/premium-ui-v3.css?v=1" />
   <link rel="stylesheet" href="runtime/signature-visuals.css?v=1" />
   <link rel="stylesheet" href="runtime/signature-fixes.css?v=1" />
+  <link rel="stylesheet" href="runtime/north-star.css?v=1" />
   <script>
     window.__ARC_BOOTSTRAPPING=true;
     try{
@@ -60,7 +64,7 @@
     }catch(e){
       try{localStorage.setItem('arcStateRecoveryBackup',localStorage.getItem('arcState')||'');localStorage.setItem('arcState','null')}catch(ignore){}
     }
-    try{localStorage.setItem('arcVersion','signature-eclipse-body-1.1')}catch(e){}
+    try{localStorage.setItem('arcVersion','north-star-visual-1.0')}catch(e){}
   </script>
 </head>
 <body>
