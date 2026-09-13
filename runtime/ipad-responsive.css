@@ -1,0 +1,337 @@
+/* ARC iPad responsive composition
+   North Star colors, typography, imagery and navigation remain authoritative.
+   This layer only adapts geometry and density for tablet viewports. */
+
+@media (min-width:700px) and (max-width:1366px){
+  html.arc-focus-ui body{
+    min-width:0!important;
+    overflow-x:hidden!important;
+    background:
+      radial-gradient(80% 55% at 50% -8%,rgba(255,255,255,.72),transparent 64%),
+      linear-gradient(135deg,#e9e0d2 0%,#f4ede3 48%,#e8dfd1 100%)!important;
+  }
+
+  .arc-focus-ui .phone{
+    width:100%!important;
+    max-width:1120px!important;
+    min-height:100dvh!important;
+    margin:0 auto!important;
+    background:transparent!important;
+  }
+
+  .arc-focus-ui .focus-app{
+    width:100%!important;
+    max-width:1040px!important;
+    min-height:100dvh!important;
+    margin:0 auto!important;
+    padding:30px 34px calc(118px + env(safe-area-inset-bottom))!important;
+    background:
+      radial-gradient(90% 34% at 50% 0%,rgba(255,255,255,.82),transparent 72%),
+      linear-gradient(180deg,#fbf7f0 0%,var(--arc-ns-cream) 58%,#f0e8dc 100%)!important;
+    box-shadow:0 0 90px rgba(16,43,36,.055)!important;
+  }
+
+  .arc-focus-ui .focus-page{
+    width:100%!important;
+    max-width:none!important;
+    margin:0 auto!important;
+  }
+
+  .arc-focus-ui .focus-greeting{
+    padding:10px 2px 22px!important;
+  }
+  .arc-focus-ui .focus-greeting h1{
+    font-size:46px!important;
+    line-height:.94!important;
+    max-width:520px!important;
+  }
+  .arc-focus-ui .focus-avatar{
+    width:42px!important;
+    height:42px!important;
+    font-size:12px!important;
+  }
+
+  /* Today becomes a true tablet composition instead of a stretched phone stack. */
+  .arc-focus-ui .focus-today{
+    display:grid!important;
+    grid-template-columns:repeat(12,minmax(0,1fr))!important;
+    gap:18px 20px!important;
+    align-items:start!important;
+  }
+  .arc-focus-ui .focus-today>.focus-greeting,
+  .arc-focus-ui .focus-today>.arc-insights-hero,
+  .arc-focus-ui .focus-today>.focus-section-head,
+  .arc-focus-ui .focus-today>.focus-glance,
+  .arc-focus-ui .focus-today>.focus-mantra,
+  .arc-focus-ui .focus-today>.arc-philosophy-strip{
+    grid-column:1/-1!important;
+  }
+
+  .arc-focus-ui .focus-today>.focus-primary-card{
+    grid-column:1/8!important;
+    min-height:260px!important;
+    margin:0!important;
+    border-radius:26px!important;
+  }
+  .arc-focus-ui .focus-today>.focus-why{
+    grid-column:8/-1!important;
+    min-height:260px!important;
+    height:100%!important;
+    margin:0!important;
+    padding:24px 22px!important;
+    border-radius:24px!important;
+    align-content:center!important;
+    grid-template-columns:36px 1fr!important;
+    gap:14px!important;
+  }
+  .arc-focus-ui .focus-today>.focus-why .focus-bulb{
+    width:32px!important;
+    height:32px!important;
+  }
+  .arc-focus-ui .focus-today>.focus-why span{
+    font-size:9px!important;
+    letter-spacing:.15em!important;
+  }
+  .arc-focus-ui .focus-today>.focus-why p{
+    margin-top:9px!important;
+    font-size:13px!important;
+    line-height:1.55!important;
+  }
+  .arc-focus-ui .focus-section-head{
+    margin:8px 2px 0!important;
+  }
+  .arc-focus-ui .focus-glance{
+    gap:12px!important;
+  }
+  .arc-focus-ui .focus-glance>button{
+    min-height:132px!important;
+    padding:16px 14px!important;
+    border-radius:18px!important;
+  }
+  .arc-focus-ui .focus-glance b{
+    font-size:21px!important;
+  }
+
+  /* Arc hero: eclipse + interpretation side-by-side. */
+  .arc-signature-locked .arc-insights-hero{
+    display:grid!important;
+    grid-template-columns:minmax(0,1.58fr) minmax(248px,.82fr)!important;
+    grid-template-rows:auto auto!important;
+    column-gap:24px!important;
+    row-gap:8px!important;
+    align-items:center!important;
+    max-width:none!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:22px 22px 24px!important;
+    border-radius:30px!important;
+  }
+  .arc-signature-locked .arc-insights-topline{
+    grid-column:1/-1!important;
+    grid-row:1!important;
+    padding:0 0 4px!important;
+  }
+  .arc-signature-locked .arc-insights-visual{
+    grid-column:1!important;
+    grid-row:2!important;
+    align-self:center!important;
+    margin:0!important;
+  }
+  .arc-signature-locked .arc-insight-card{
+    grid-column:2!important;
+    grid-row:2!important;
+    align-self:center!important;
+    margin:0!important;
+    min-width:0!important;
+    padding:20px 18px 17px!important;
+    border-radius:22px!important;
+  }
+  .arc-signature-locked .arc-insight-card h3{
+    font-size:26px!important;
+    line-height:1.02!important;
+  }
+  .arc-signature-locked .arc-insight-card>p{
+    font-size:10px!important;
+    line-height:1.55!important;
+  }
+  .arc-signature-locked .arc-eclipse-stage{
+    max-width:500px!important;
+    margin-inline:auto!important;
+    grid-template-columns:minmax(70px,.56fr) minmax(250px,1.7fr) minmax(70px,.56fr)!important;
+  }
+  .arc-signature-locked .arc-eclipse-orb{
+    width:min(100%,340px)!important;
+  }
+  .arc-signature-locked .arc-eclipse-callout{
+    padding:0 6px!important;
+  }
+  .arc-signature-locked .arc-eclipse-callout>b{
+    font-size:26px!important;
+  }
+  .arc-signature-locked .arc-eclipse-callout>small{
+    font-size:6.5px!important;
+  }
+  .arc-signature-locked .arc-eclipse-center h3{
+    font-size:36px!important;
+  }
+  .arc-signature-locked .arc-eclipse-center strong{
+    font-size:58px!important;
+  }
+  .arc-signature-locked .arc-eclipse-lower{
+    margin-top:-10px!important;
+  }
+  .arc-signature-locked .arc-eclipse-tagline{
+    margin-top:18px!important;
+  }
+
+  /* Bottom nav becomes a deliberate floating tablet dock. */
+  .arc-focus-ui .focus-nav{
+    left:50%!important;
+    bottom:16px!important;
+    width:min(680px,calc(100% - 64px))!important;
+    max-width:680px!important;
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom))!important;
+    border:1px solid rgba(16,43,36,.09)!important;
+    border-radius:24px!important;
+    box-shadow:0 18px 50px rgba(16,43,36,.14)!important;
+    backdrop-filter:blur(24px) saturate(1.08)!important;
+    -webkit-backdrop-filter:blur(24px) saturate(1.08)!important;
+  }
+  .arc-focus-ui .focus-nav:before{
+    left:12%!important;
+    right:12%!important;
+  }
+  .arc-focus-ui .focus-nav button{
+    min-height:54px!important;
+    gap:5px!important;
+    font-size:10px!important;
+  }
+  .arc-focus-ui .focus-nav svg{
+    width:22px!important;
+    height:22px!important;
+  }
+
+  /* Nutrition uses the tablet width instead of stretching a phone card. */
+  .arc-focus-ui .focus-nut-content{
+    display:grid!important;
+    grid-template-columns:repeat(12,minmax(0,1fr))!important;
+    gap:12px 18px!important;
+    align-items:start!important;
+  }
+  .arc-focus-ui .focus-nut-content>.focus-nut-hero{
+    grid-column:1/8!important;
+    grid-row:1/6!important;
+    min-height:368px!important;
+    height:100%!important;
+    border-radius:26px!important;
+  }
+  .arc-focus-ui .focus-nut-content>.focus-8020-bar,
+  .arc-focus-ui .focus-nut-content>.focus-nut-actions,
+  .arc-focus-ui .focus-nut-content>.focus-list-title,
+  .arc-focus-ui .focus-nut-content>.focus-meal-list{
+    grid-column:8/-1!important;
+  }
+  .arc-focus-ui .focus-nut-content>.focus-8020-bar{margin-top:0!important}
+  .arc-focus-ui .focus-meal-list{border-radius:18px!important}
+  .arc-focus-ui .focus-meal-row{padding:13px 14px!important}
+
+  /* Training splits hero and session details across the tablet. */
+  .arc-focus-ui .focus-train-content{
+    display:grid!important;
+    grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr)!important;
+    gap:20px!important;
+    align-items:start!important;
+  }
+  .arc-focus-ui .focus-train-hero{
+    min-height:430px!important;
+    height:100%!important;
+    border-radius:28px!important;
+    position:sticky!important;
+    top:26px!important;
+  }
+  .arc-focus-ui .focus-exercise-list{
+    margin:0!important;
+    display:grid!important;
+    gap:10px!important;
+  }
+  .arc-focus-ui .focus-exercise-list>button{
+    min-height:82px!important;
+    border-radius:18px!important;
+  }
+
+  /* Body image should read like a deliberate editorial plate, not an oversized poster. */
+  .arc-focus-ui .focus-body{
+    max-width:940px!important;
+    margin:0 auto!important;
+  }
+  .arc-signature-locked .focus-body-measurements{
+    max-width:640px!important;
+    margin:0 auto!important;
+  }
+  .arc-signature-locked .focus-body-visual{
+    width:100%!important;
+    max-width:620px!important;
+    margin:0 auto!important;
+    border-radius:30px!important;
+  }
+  .arc-signature-locked .focus-body-map{
+    width:100%!important;
+    max-width:580px!important;
+    margin:0 auto!important;
+  }
+  .arc-signature-locked .focus-body-update{
+    max-width:620px!important;
+    margin:16px auto 0!important;
+  }
+  .arc-signature-locked .focus-body-measurements>p{
+    max-width:620px!important;
+    margin:10px auto 0!important;
+    text-align:center!important;
+  }
+
+  /* More becomes an editorial two-column destination. */
+  .arc-focus-ui .focus-more{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) minmax(300px,.78fr)!important;
+    gap:22px!important;
+    align-items:start!important;
+  }
+  .arc-focus-ui .focus-more>.focus-page-header{
+    grid-column:1/-1!important;
+  }
+  .arc-focus-ui .focus-more-list{
+    grid-column:1!important;
+    border-radius:24px!important;
+  }
+  .arc-focus-ui .focus-more-promo{
+    grid-column:2!important;
+    min-height:100%!important;
+    margin:0!important;
+    border-radius:26px!important;
+  }
+}
+
+/* Landscape iPad: widen the editorial composition without turning ARC into a desktop dashboard. */
+@media (min-width:980px) and (max-width:1366px) and (orientation:landscape){
+  .arc-focus-ui .focus-app{
+    max-width:1160px!important;
+    padding-left:42px!important;
+    padding-right:42px!important;
+  }
+  .arc-signature-locked .arc-insights-hero{
+    grid-template-columns:minmax(520px,1.7fr) minmax(300px,.85fr)!important;
+    column-gap:30px!important;
+  }
+  .arc-signature-locked .arc-eclipse-stage{
+    max-width:560px!important;
+  }
+  .arc-signature-locked .arc-eclipse-orb{
+    width:370px!important;
+  }
+  .arc-focus-ui .focus-today>.focus-primary-card{
+    grid-column:1/9!important;
+  }
+  .arc-focus-ui .focus-today>.focus-why{
+    grid-column:9/-1!important;
+  }
+}
