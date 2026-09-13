@@ -1,0 +1,108 @@
+name: ARC iPad responsive QA
+
+on:
+  push:
+    branches:
+      - ipad-responsive-pass
+      - main
+
+jobs:
+  ipad-responsive:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify iPad layer contract
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const index=fs.readFileSync('index.html','utf8');
+          const css=fs.readFileSync('runtime/ipad-responsive.css','utf8');
+          if(!index.includes('runtime/ipad-responsive.css'))throw new Error('iPad responsive stylesheet is not loaded');
+          if(index.indexOf('runtime/ipad-responsive.css')<index.indexOf('runtime/north-star.css'))throw new Error('iPad responsive layer must load after North Star');
+          if(!index.includes('north-star-ipad-1.0'))throw new Error('iPad build version missing');
+          if(!css.includes('@media (min-width:700px)')||!css.includes('orientation:landscape'))throw new Error('Tablet breakpoints missing');
+          if(/removeItem\s*\(\s*["']arcState["']/.test(css+index))throw new Error('Responsive layer must never clear user state');
+          console.log('ARC iPad static contract: PASS');
+          NODE
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Serve ARC
+        run: python3 -m http.server 4173 >/tmp/arc-ipad-http.log 2>&1 &
+      - name: Verify tablet rendering
+        run: |
+          mkdir -p ipad-review
+          node <<'NODE'
+          const {webkit}=require('playwright');
+          const base='http://127.0.0.1:4173/';
+          const seed=()=>{
+            const d=new Date(),key=d.toISOString().slice(0,10),prior=new Date(d.getTime()-86400000*9).toISOString().slice(0,10);
+            localStorage.setItem('arcStarted','1');
+            localStorage.setItem('arcState',JSON.stringify({screen:'today',on:1,profile:{name:'Kimberly',goals:['Improve overall health'],primary:'Improve overall health',weight:'165',waist:'35',life:'A mix of sitting and moving',sleep:'7',location:'Home + Gym',experience:'Know the basics',days:3,duration:30,nutrition:'Guided — calories + protein',activities:['Strength training'],equipment:['Dumbbells']},logs:{workouts:2,bodyChecks:1,cal:1280,protein:92,steps:5821},history:{workouts:[{date:prior,name:'Saved Workout',completed:true}],nutrition:[{date:prior,name:'Saved Meal',calories:380,protein:28}],body:[{date:prior,weight:165,neck:13.5,shoulders:42,chest:38,arm:12.5,waist:35,hips:40,thigh:23,calf:14.5}],activity:[],sleep:[],signals:[],weight:[],context:[],measurements:[]},meta:{},nutritionV1:{targets:{calories:1900,protein:140},days:{[key]:{meals:{breakfast:{logged:true,portion:1}},custom:[{id:'flex',name:'Chocolate',calories:120,protein:2,balance:'flex'}]}}},done:false}));
+          };
+          (async()=>{
+            const browser=await webkit.launch();
+            for(const [name,viewport] of [['portrait',{width:834,height:1194}],['landscape',{width:1194,height:834}]]){
+              const context=await browser.newContext({viewport,deviceScaleFactor:2});
+              const page=await context.newPage();
+              const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+              await page.goto(base+'diagnostics/webkit-control.html?ipad-seed=1',{waitUntil:'domcontentloaded'});
+              await page.evaluate(seed);
+              errors.length=0;
+              await page.goto(base+'?ipad-responsive=1',{waitUntil:'domcontentloaded'});
+              await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&document.querySelector('.focus-today')&&document.querySelector('.arc-eclipse-lock[data-signature-eclipse="1"]'),null,{timeout:12000});
+              await page.addStyleTag({content:'.arc-auth-shield,.arc-auth-gate,.arc-cloud-account{display:none!important}'});
+              await page.waitForTimeout(450);
+              const today=await page.evaluate(()=>{
+                const hero=document.querySelector('.arc-insights-hero'),visual=document.querySelector('.arc-insights-visual'),insight=document.querySelector('.arc-insight-card'),focus=document.querySelector('.focus-primary-card'),why=document.querySelector('.focus-why'),nav=document.querySelector('.focus-nav');
+                const r=x=>x?.getBoundingClientRect();
+                const hr=r(hero),vr=r(visual),ir=r(insight),fr=r(focus),wr=r(why),nr=r(nav);
+                return {
+                  overflow:document.documentElement.scrollWidth-innerWidth,
+                  heroW:hr?.width||0,visualW:vr?.width||0,insightW:ir?.width||0,
+                  sideBySide:!!(vr&&ir&&Math.abs(vr.top-ir.top)<120&&vr.right<=ir.left+6),
+                  focusWhySide:!!(fr&&wr&&Math.abs(fr.top-wr.top)<12&&fr.right<=wr.left+8),
+                  navW:nr?.width||0,navBottom:nr?Math.abs(innerHeight-nr.bottom):999,
+                  nav:[...document.querySelectorAll('.focus-nav button')].map(x=>x.textContent.trim()),
+                  target:S.nutritionV1?.targets?.calories,meal:S.history?.nutrition?.[0]?.name
+                };
+              });
+              if(today.overflow>2||!today.sideBySide||!today.focusWhySide||today.heroW<700||today.visualW<360||today.insightW<220||today.navW>700||today.navBottom>20||today.nav.join('|')!=='Today|Nutrition|Train|Body|More'||today.target!==1900||today.meal!=='Saved Meal')throw new Error(`${name}: Today tablet layout failed ${JSON.stringify(today)}`);
+              await page.screenshot({path:`ipad-review/${name}-today.png`,fullPage:true});
+
+              await page.evaluate(()=>document.querySelector('[data-focus-go="nutrition"]')?.click());
+              await page.waitForSelector('.focus-nutrition',{timeout:2500});
+              const nutrition=await page.evaluate(()=>{const h=document.querySelector('.focus-nut-hero')?.getBoundingClientRect(),m=document.querySelector('.focus-meal-list')?.getBoundingClientRect();return{side:!!(h&&m&&h.right<=m.left+8),overflow:document.documentElement.scrollWidth-innerWidth,target:S.nutritionV1?.targets?.calories}});
+              if(!nutrition.side||nutrition.overflow>2||nutrition.target!==1900)throw new Error(`${name}: Nutrition tablet layout failed ${JSON.stringify(nutrition)}`);
+
+              await page.evaluate(()=>document.querySelector('[data-focus-go="train"]')?.click());
+              await page.waitForSelector('.focus-train-content',{timeout:2500});
+              const train=await page.evaluate(()=>{const h=document.querySelector('.focus-train-hero')?.getBoundingClientRect(),l=document.querySelector('.focus-exercise-list')?.getBoundingClientRect();return{side:!!(h&&l&&h.right<=l.left+8),overflow:document.documentElement.scrollWidth-innerWidth}});
+              if(!train.side||train.overflow>2)throw new Error(`${name}: Train tablet layout failed ${JSON.stringify(train)}`);
+
+              await page.evaluate(()=>{S.screen='body';save();render()});
+              await page.waitForSelector('.focus-body-map[data-signature-body="locked"]',{state:'visible',timeout:3000});
+              await page.waitForFunction(()=>{const img=document.querySelector('.focus-body-map .arc-body-locked-img');return !!(img&&img.complete&&img.naturalWidth>0)},null,{timeout:5000});
+              const body=await page.evaluate(()=>{const v=document.querySelector('.focus-body-visual')?.getBoundingClientRect(),u=document.querySelector('.focus-body-update')?.getBoundingClientRect();return{visualW:v?.width||0,center:v?Math.abs((v.left+v.width/2)-innerWidth/2):999,updateW:u?.width||0,overflow:document.documentElement.scrollWidth-innerWidth,target:S.nutritionV1?.targets?.calories}});
+              if(body.visualW>650||body.visualW<480||body.center>12||body.updateW>650||body.overflow>2||body.target!==1900)throw new Error(`${name}: Body tablet layout failed ${JSON.stringify(body)}`);
+              await page.screenshot({path:`ipad-review/${name}-body.png`,fullPage:true});
+              if(errors.length)throw new Error(`${name}: page errors ${errors.join(' | ')}`);
+              await context.close();
+            }
+            await browser.close();
+            console.log('ARC iPad responsive QA: PASS');
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+      - name: Upload iPad review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc-ipad-responsive-review
+          path: ipad-review
+          if-no-files-found: warn
+          retention-days: 7
