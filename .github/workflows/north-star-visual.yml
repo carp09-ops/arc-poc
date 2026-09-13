@@ -1,0 +1,115 @@
+name: ARC North Star visual QA
+
+on:
+  push:
+    branches:
+      - north-star-visual-system
+
+jobs:
+  north-star-visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify North Star static contract
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const index=fs.readFileSync('index.html','utf8');
+          const css=fs.readFileSync('runtime/north-star.css','utf8');
+          const must=[
+            ['Deep Forest','#102B24'],
+            ['Evergreen','#1D4037'],
+            ['Muted Gold','#CEAF63'],
+            ['Warm Ivory','#FADFCF'],
+            ['Soft Cream','#F6F1E8'],
+            ['Blush Sand','#D9C8B6'],
+            ['Cormorant Garamond','Cormorant Garamond'],
+            ['Inter','Inter']
+          ];
+          for(const [label,token] of must){if(!css.includes(token)&&!index.includes(token))throw new Error(`${label} North Star token missing`)}
+          if(!index.includes('runtime/north-star.css'))throw new Error('North Star stylesheet is not loaded');
+          if(index.indexOf('runtime/north-star.css')<index.indexOf('runtime/signature-fixes.css'))throw new Error('North Star stylesheet must load after signature fixes');
+          if(!index.includes('north-star-visual-1.0'))throw new Error('North Star build version missing');
+          if(!index.includes('fonts.googleapis.com/css2?family=Cormorant+Garamond'))throw new Error('Cormorant Garamond font import missing');
+          if(/removeItem\s*\(\s*["']arcState["']/.test(css+index))throw new Error('North Star layer must never clear user state');
+          console.log('ARC North Star static contract: PASS');
+          NODE
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Serve ARC
+        run: python3 -m http.server 4173 >/tmp/arc-north-star-http.log 2>&1 &
+      - name: Verify North Star rendering
+        run: |
+          mkdir -p north-star-review
+          node <<'NODE'
+          const {webkit}=require('playwright');
+          const base='http://127.0.0.1:4173/';
+          (async()=>{
+            const browser=await webkit.launch();
+            for(const [name,viewport] of [['phone',{width:430,height:932}],['ipad',{width:834,height:1194}]]){
+              const context=await browser.newContext({viewport,deviceScaleFactor:2});
+              const page=await context.newPage();
+              const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+              await page.goto(base+'diagnostics/webkit-control.html?north-star-seed=1',{waitUntil:'domcontentloaded'});
+              await page.evaluate(()=>{
+                const d=new Date(),key=d.toISOString().slice(0,10),prior=new Date(d.getTime()-86400000*9).toISOString().slice(0,10);
+                localStorage.setItem('arcStarted','1');
+                localStorage.setItem('arcState',JSON.stringify({screen:'today',on:1,profile:{name:'Kimberly',goals:['Improve overall health'],primary:'Improve overall health',weight:'165',waist:'35',life:'A mix of sitting and moving',sleep:'7',location:'Home + Gym',experience:'Know the basics',days:3,duration:30,nutrition:'Guided — calories + protein',activities:['Strength training'],equipment:['Dumbbells']},logs:{workouts:2,bodyChecks:1,cal:1280,protein:92,steps:5821},history:{workouts:[{date:prior,name:'Saved Workout',completed:true}],nutrition:[{date:prior,name:'Saved Meal',calories:380,protein:28}],body:[{date:prior,weight:165,neck:13.5,shoulders:42,chest:38,arm:12.5,waist:35,hips:40,thigh:23,calf:14.5}],activity:[],sleep:[],signals:[],weight:[],context:[],measurements:[]},meta:{},nutritionV1:{targets:{calories:1900,protein:140},days:{[key]:{meals:{breakfast:{logged:true,portion:1}},custom:[{id:'flex',name:'Chocolate',calories:120,protein:2,balance:'flex'}]}}},done:false}));
+              });
+              errors.length=0;
+              await page.goto(base+'?north-star=1',{waitUntil:'domcontentloaded'});
+              await page.waitForFunction(()=>window.__ARC_BOOTSTRAPPING===false&&window.__ARC_SIGNATURE_VISUALS===true&&document.querySelector('.focus-today')&&document.querySelector('.arc-eclipse-lock[data-signature-eclipse="1"]'),null,{timeout:12000});
+              await page.addStyleTag({content:'.arc-auth-shield,.arc-auth-gate,.arc-cloud-account{display:none!important}'});
+              await page.waitForTimeout(500);
+              const today=await page.evaluate(()=>{
+                const root=getComputedStyle(document.documentElement);
+                const greeting=document.querySelector('.focus-greeting h1');
+                const nav=document.querySelector('.focus-nav');
+                const hero=document.querySelector('.arc-insights-hero');
+                const focus=document.querySelector('.focus-primary-card');
+                const insight=document.querySelector('.arc-insight-card');
+                const ring=document.querySelector('.arc-eclipse-foundation');
+                const navr=nav?.getBoundingClientRect();
+                const hr=hero?.getBoundingClientRect(),fr=focus?.getBoundingClientRect();
+                return {
+                  deep:root.getPropertyValue('--arc-ns-deep').trim(),evergreen:root.getPropertyValue('--arc-ns-evergreen').trim(),gold:root.getPropertyValue('--arc-ns-gold').trim(),cream:root.getPropertyValue('--arc-ns-cream').trim(),
+                  headingFont:getComputedStyle(greeting).fontFamily,bodyFont:getComputedStyle(document.body).fontFamily,
+                  heroFirst:!!(hr&&fr&&hr.top<fr.top),insightText:insight?.textContent||'',ringStroke:ring?getComputedStyle(ring).stroke:'',
+                  navBottom:navr?Math.abs(innerHeight-navr.bottom):999,overflow:document.documentElement.scrollWidth-innerWidth,
+                  nav:[...document.querySelectorAll('.focus-nav button')].map(x=>x.textContent.trim()),
+                  target:S.nutritionV1?.targets?.calories,meal:S.history?.nutrition?.[0]?.name,waist:S.history?.body?.[0]?.waist
+                };
+              });
+              if(today.deep.toUpperCase()!=='#102B24'||today.evergreen.toUpperCase()!=='#1D4037'||today.gold.toUpperCase()!=='#CEAF63'||today.cream.toUpperCase()!=='#F6F1E8')throw new Error(`${name}: North Star palette mismatch ${JSON.stringify(today)}`);
+              if(!today.headingFont.includes('Cormorant Garamond')||!today.bodyFont.includes('Inter'))throw new Error(`${name}: North Star typography mismatch ${JSON.stringify(today)}`);
+              if(!today.heroFirst||!today.insightText.includes('ARC INSIGHT')||today.nav.join('|')!=='Today|Nutrition|Train|Body|More'||today.navBottom>2||today.overflow>2)throw new Error(`${name}: North Star layout/navigation mismatch ${JSON.stringify(today)}`);
+              if(today.target!==1900||today.meal!=='Saved Meal'||today.waist!==35)throw new Error(`${name}: North Star visual layer altered user data`);
+              await page.screenshot({path:`north-star-review/${name}-today.png`,fullPage:true});
+
+              await page.evaluate(()=>{S.screen='body';save();render()});
+              await page.waitForSelector('.focus-body-map[data-signature-body="locked"]',{state:'visible',timeout:3000});
+              await page.waitForFunction(()=>{const img=document.querySelector('.focus-body-map[data-signature-body="locked"] .arc-body-locked-img');return !!(img&&img.complete&&img.naturalWidth>0)},null,{timeout:5000});
+              const body=await page.evaluate(()=>({labels:[...document.querySelectorAll('.focus-body-lines b')].map(x=>x.textContent).join('|'),update:!!document.querySelector('[data-body-checkin-052]'),overflow:document.documentElement.scrollWidth-innerWidth,target:S.nutritionV1?.targets?.calories}));
+              if(body.labels!=='Neck|Shoulders|Chest|Arms|Waist|Hips|Thighs|Calves'||!body.update||body.overflow>2||body.target!==1900)throw new Error(`${name}: North Star Body failed ${JSON.stringify(body)}`);
+              await page.screenshot({path:`north-star-review/${name}-body.png`,fullPage:true});
+              if(errors.length)throw new Error(`${name}: page errors ${errors.join(' | ')}`);
+              await context.close();
+            }
+            await browser.close();
+            console.log('ARC North Star visual QA: PASS');
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+      - name: Upload North Star review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc-north-star-visual-review
+          path: north-star-review
+          if-no-files-found: warn
+          retention-days: 7
