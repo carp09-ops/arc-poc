@@ -21,11 +21,14 @@ jobs:
           const fs=require('fs');
           const index=fs.readFileSync('index.html','utf8');
           const css=fs.readFileSync('runtime/ipad-responsive.css','utf8');
-          if(!index.includes('runtime/ipad-responsive.css'))throw new Error('iPad responsive stylesheet is not loaded');
+          const fixes=fs.readFileSync('runtime/ipad-responsive-fixes.css','utf8');
+          if(!index.includes('runtime/ipad-responsive.css')||!index.includes('runtime/ipad-responsive-fixes.css'))throw new Error('iPad responsive stylesheets are not loaded');
           if(index.indexOf('runtime/ipad-responsive.css')<index.indexOf('runtime/north-star.css'))throw new Error('iPad responsive layer must load after North Star');
-          if(!index.includes('north-star-ipad-1.0'))throw new Error('iPad build version missing');
+          if(index.indexOf('runtime/ipad-responsive-fixes.css')<index.indexOf('runtime/ipad-responsive.css'))throw new Error('iPad hardening layer must load last');
+          if(!index.includes('north-star-ipad-1.1'))throw new Error('iPad build version missing');
           if(!css.includes('@media (min-width:700px)')||!css.includes('orientation:landscape'))throw new Error('Tablet breakpoints missing');
-          if(/removeItem\s*\(\s*["']arcState["']/.test(css+index))throw new Error('Responsive layer must never clear user state');
+          if(!fixes.includes('position:fixed!important')||!fixes.includes('bottom:16px!important'))throw new Error('Tablet navigation hardening missing');
+          if(/removeItem\s*\(\s*["']arcState["']/.test(css+fixes+index))throw new Error('Responsive layer must never clear user state');
           console.log('ARC iPad static contract: PASS');
           NODE
       - name: Install Playwright WebKit
@@ -61,19 +64,22 @@ jobs:
               const today=await page.evaluate(()=>{
                 const hero=document.querySelector('.arc-insights-hero'),visual=document.querySelector('.arc-insights-visual'),insight=document.querySelector('.arc-insight-card'),focus=document.querySelector('.focus-primary-card'),why=document.querySelector('.focus-why'),nav=document.querySelector('.focus-nav');
                 const r=x=>x?.getBoundingClientRect();
-                const hr=r(hero),vr=r(visual),ir=r(insight),fr=r(focus),wr=r(why),nr=r(nav);
+                const hr=r(hero),vr=r(visual),ir=r(insight),fr=r(focus),wr=r(why),nr=r(nav),ns=nav?getComputedStyle(nav):null;
                 return {
                   overflow:document.documentElement.scrollWidth-innerWidth,
                   heroW:hr?.width||0,visualW:vr?.width||0,insightW:ir?.width||0,
                   sideBySide:!!(vr&&ir&&Math.abs(vr.top-ir.top)<120&&vr.right<=ir.left+6),
                   focusWhySide:!!(fr&&wr&&Math.abs(fr.top-wr.top)<12&&fr.right<=wr.left+8),
-                  navW:nr?.width||0,navBottom:nr?Math.abs(innerHeight-nr.bottom):999,
+                  navW:nr?.width||0,navGap:nr?Math.abs(innerHeight-nr.bottom):999,
+                  navPosition:ns?.position||'',navBottom:ns?.bottom||'',navTransform:ns?.transform||'',
                   nav:[...document.querySelectorAll('.focus-nav button')].map(x=>x.textContent.trim()),
                   target:S.nutritionV1?.targets?.calories,meal:S.history?.nutrition?.[0]?.name
                 };
               });
-              if(today.overflow>2||!today.sideBySide||!today.focusWhySide||today.heroW<700||today.visualW<360||today.insightW<220||today.navW>700||today.navBottom>20||today.nav.join('|')!=='Today|Nutrition|Train|Body|More'||today.target!==1900||today.meal!=='Saved Meal')throw new Error(`${name}: Today tablet layout failed ${JSON.stringify(today)}`);
+              console.log(name,'today',today);
               await page.screenshot({path:`ipad-review/${name}-today.png`,fullPage:true});
+              const navBottom=parseFloat(today.navBottom);
+              if(today.overflow>2||!today.sideBySide||!today.focusWhySide||today.heroW<700||today.visualW<360||today.insightW<220||today.navW>700||today.navPosition!=='fixed'||!Number.isFinite(navBottom)||Math.abs(navBottom-16)>1||today.navGap>22||today.nav.join('|')!=='Today|Nutrition|Train|Body|More'||today.target!==1900||today.meal!=='Saved Meal')throw new Error(`${name}: Today tablet layout failed ${JSON.stringify(today)}`);
 
               await page.evaluate(()=>document.querySelector('[data-focus-go="nutrition"]')?.click());
               await page.waitForSelector('.focus-nutrition',{timeout:2500});
