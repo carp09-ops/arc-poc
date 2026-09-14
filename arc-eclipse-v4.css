@@ -46,19 +46,44 @@
 .arc-gauge-inner {
   position: relative !important;
   z-index: 3 !important;
+  width: 74% !important;
+  min-width: 0 !important;
+  margin: 0 auto !important;
+  padding: 0 5% !important;
   background: transparent !important;
   border: 0 !important;
   box-shadow: none !important;
+  text-align: center !important;
+  display: grid !important;
+  place-items: center !important;
+  gap: 7px !important;
 }
 
+/* The Arc communicates state first; raw workout math stays in the supporting cards. */
 .arc-gauge-inner strong {
   color: #fff !important;
   text-shadow: 0 2px 14px rgba(0,0,0,.95) !important;
+  font-family: var(--serif, Georgia, serif) !important;
+  font-size: clamp(1.32rem, 2.15vw, 1.72rem) !important;
+  font-weight: 600 !important;
+  line-height: .98 !important;
+  letter-spacing: -.025em !important;
+  text-wrap: balance;
+}
+
+.arc-gauge.large .arc-gauge-inner strong {
+  font-size: clamp(1.55rem, 2.5vw, 2.05rem) !important;
 }
 
 .arc-gauge-inner span {
   color: #f6cf8a !important;
   text-shadow: 0 2px 10px rgba(0,0,0,.95) !important;
+  font-size: .58rem !important;
+  line-height: 1.2 !important;
+  letter-spacing: .14em !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
 }
 
 .arc-gauge-wrap > small {
@@ -76,4 +101,8 @@
 
 @media (max-width: 680px) {
   .arc-gauge.large { width: 235px !important; }
+  .arc-gauge-inner { width: 78% !important; }
+  .arc-gauge-inner strong { font-size: 1.16rem !important; }
+  .arc-gauge.large .arc-gauge-inner strong { font-size: 1.42rem !important; }
+  .arc-gauge-inner span { font-size: .52rem !important; }
 }
