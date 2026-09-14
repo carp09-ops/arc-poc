@@ -34,6 +34,7 @@
 .arc-gauge-inner span{color:#f6dfad;text-shadow:0 2px 8px rgba(0,0,0,.95)}
 .arc-gauge.large{width:285px;box-shadow:0 0 35px rgba(255,239,205,.23),0 22px 55px rgba(12,28,31,.18)}
 .arc-gauge.large .arc-gauge-inner strong{font-size:3.5rem}
+.eclipse-visual-wrap{display:grid;justify-items:center;flex:0 0 auto}
 .eclipse-credit{display:block;margin-top:12px;color:var(--slate);font-size:.62rem;line-height:1.4;text-align:center;max-width:285px}
 .eclipse-credit a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(93,112,120,.35)}
 .arc-period-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0 0}
@@ -49,7 +50,7 @@
 .analytics-segments button.active{background:var(--pine-deep);border-color:var(--pine-deep);color:#fff;box-shadow:0 6px 14px rgba(23,55,50,.14)}
 .body-analytic-card strong{font-size:1.85rem}
 .body-chart-rich{min-height:330px;padding-top:4px}
-.body-chart-rich svg{height:auto;min-height:300px;display:block}
+.body-chart-rich svg{height:auto;min-height:300px;display:block;width:100%}
 .body-chart-rich .axis-label{fill:#6e7c80;font-family:var(--sans);font-size:11px;font-weight:600}
 .body-chart-rich .axis-unit{fill:#8a9495;font-family:var(--sans);font-size:10px;font-weight:800;text-transform:uppercase}
 .body-chart-rich .axis-tick{stroke:#aeb8b5;stroke-width:1}
@@ -88,7 +89,7 @@
   .analytics-segments{flex-wrap:nowrap;overflow-x:auto;padding-bottom:3px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
   .analytics-segments::-webkit-scrollbar{display:none}
   .analytics-segments button{white-space:nowrap;flex:0 0 auto}
-  .body-chart-rich{margin-left:-12px;margin-right:-8px;overflow:hidden}
-  .body-chart-rich svg{min-width:610px;width:100%;transform-origin:left top}
+  .body-chart-rich{margin-left:-12px;margin-right:-8px}
+  .body-chart-rich svg{width:100%;min-width:0}
   .body-chart-legend{justify-content:flex-start;margin-left:58px;flex-wrap:wrap}
 }
