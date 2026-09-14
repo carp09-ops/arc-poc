@@ -1,4 +1,4 @@
-const CACHE_VERSION='arc-ready12';
+const CACHE_VERSION='arc-ready13';
 const SHELL_CACHE=`${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE=`${CACHE_VERSION}-runtime`;
 
@@ -45,6 +45,7 @@ const PRECACHE=[
   './what-arc-sees.js',
   './privacy-controls.js',
   './workout-engine-badge.js',
+  './assets/arc-icons.svg',
   './assets/arc-icon-180.png',
   './assets/arc-icon-192.png',
   './assets/arc-icon-512.png',
@@ -55,8 +56,6 @@ const PRECACHE=[
 self.addEventListener('install',event=>{
   event.waitUntil((async()=>{
     const cache=await caches.open(SHELL_CACHE);
-    // Cache entries individually so one transient failure does not invalidate
-    // the entire offline shell.
     await Promise.allSettled(PRECACHE.map(url=>cache.add(url)));
   })());
 });
@@ -128,8 +127,6 @@ self.addEventListener('fetch',event=>{
       return response;
     }).catch(()=>null);
 
-    // Versioned local resources can fall back to their precached unversioned
-    // equivalent. This is what makes a cold standalone launch resilient offline.
     return exact || shell || (await network) || Response.error();
   })());
 });
