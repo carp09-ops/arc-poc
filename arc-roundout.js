@@ -8,7 +8,7 @@ const $ = (id) => document.getElementById(id);
 function setGauge(el, visualPct) {
   if (!el) return;
   const pct = Math.max(0, Math.min(100, Number(visualPct) || 0));
-  el.style.setProperty('--progress', `${pct * 3}deg`);
+  el.style.setProperty('--progress', `${pct * 3.6}deg`);
   el.style.setProperty('--arc-fill', `${pct}%`);
 }
 
@@ -30,23 +30,9 @@ function ensureArcSummary() {
   story.insertAdjacentElement('afterend', summary);
 }
 
-function ensureEclipseCredit() {
-  const gauge = $('arcLargeGauge');
-  if (!gauge || gauge.closest('.eclipse-visual-wrap')) return;
-  const wrapper = document.createElement('div');
-  wrapper.className = 'eclipse-visual-wrap';
-  gauge.parentElement?.insertBefore(wrapper, gauge);
-  wrapper.appendChild(gauge);
-  const credit = document.createElement('small');
-  credit.className = 'eclipse-credit';
-  credit.innerHTML = 'Eclipse imagery: <a href="https://science.nasa.gov/image-article/centers-and-facilities/goddard/2024-total-solar-eclipse-prediction-vs-reality/" target="_blank" rel="noopener">NASA / Keegan Barber ↗</a>';
-  wrapper.appendChild(credit);
-}
-
 function renderArc(row) {
   if (!row) return;
   ensureArcSummary();
-  ensureEclipseCredit();
 
   const learning = row.arc_state === 'learning';
   const completed = Number(row.completed_workouts || 0);
