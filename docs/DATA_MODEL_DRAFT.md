@@ -1,248 +1,84 @@
-# Arc Phase 1 — Data Model Draft
+# Arc Phase 1 — Implemented Data Model
 
-**Status:** architecture draft only. The production `public` schema is intentionally empty until this model is approved.
+**Status:** implemented in the Arc Supabase project on September 14, 2026.
 
 ## Principles
+
 1. **Events are the source of truth.** Analytics are derived from dated records.
-2. **80% is success.** The Arc is a consistency interpretation, not a generic health score.
-3. **Store canonical units.** Weight is stored in kilograms and circumference in centimeters; UI converts to the user's preferred units.
-4. **Keep generated plans reproducible.** Store the inputs/version used to generate a workout recommendation.
-5. **Wearable data informs the experience; it does not become the product.** Normalize only the metrics Arc actually needs.
-6. **User data is user-owned.** Every exposed table gets RLS and explicit grants.
-7. **Provider secrets never live in public tables.** OAuth tokens belong in a protected secret/private store.
+2. **80% is success.** Arc is a consistency interpretation, not a generic health score.
+3. **Canonical units.** Weight is stored in kilograms and circumference in centimeters; the UI converts to the user's preferred display units.
+4. **Historical commitments remain historical.** Weekly targets are effective-dated so changing a future goal does not rewrite prior adherence.
+5. **Generated plans and completed workouts are separate.** Recommendations are suggestions; sessions are the performance record.
+6. **Wearables inform decisions.** Arc normalizes only the daily metrics needed for recommendations and insights.
+7. **User data is user-owned.** Every exposed user-data table has RLS and explicit Data API grants.
+8. **Secrets stay out of public tables.** Provider OAuth secrets and model API keys must live behind protected server/edge boundaries.
 
-## Proposed Phase 1 entities
+## Implemented entities
 
-### `profiles`
-One row per authenticated user.
+### Identity and commitment
+- `profiles` — one row per `auth.users` identity; display preferences, goal, experience and available equipment.
+- `weekly_targets` — effective-dated workouts-per-week commitments.
 
-Key fields:
-- `user_id uuid` PK → `auth.users.id`
-- `display_name text`
-- `unit_system text` (`imperial` | `metric`)
-- `timezone text`
-- `weekly_workout_target smallint`
-- `primary_goal text`
-- `equipment jsonb`
-- `training_preferences jsonb`
-- timestamps
+### Body
+- `body_measurements` — longitudinal weight, waist, hips, chest, arm and thigh events. Each check-in may contain any subset of measurements.
 
-### `weekly_targets`
-Snapshots the user's intended training frequency so historical Arc calculations do not change when preferences change later.
+### Daily readiness and recommendations
+- `readiness_checkins` — energy (1–5), soreness (1–5), time available, desired effort (`restore | build | push`) and optional limitations.
+- `workout_recommendation_sets` — one generation event per readiness check-in, including a context snapshot and generator version.
+- `workout_options` — Restore, Build and Push options belonging to a recommendation set.
+- `workout_option_exercises` — structured prescription for each generated option.
 
-Key fields:
-- `id uuid`
-- `user_id uuid`
-- `week_start date`
-- `target_workouts smallint`
-- unique (`user_id`, `week_start`)
+### Actual training
+- `workout_sessions` — planned / in-progress / completed / abandoned sessions. Only completed sessions with `counts_toward_arc = true` contribute to Arc adherence.
+- `workout_session_exercises` — the copied exercise plan for the selected session so history remains stable if recommendation logic changes later.
+- `workout_sets` — set-level reps, weight, time, distance, RPE and completion state for future progression analytics.
+- `saved_workouts` — favorites linked to a workout session.
 
-### `body_measurements`
-A longitudinal measurement event. Every measurement except timestamp/user may be nullable.
+### Wearables
+- `device_connections` — connection metadata for `oura` and `apple_health`; no raw OAuth secrets.
+- `wearable_daily_metrics` — normalized sleep, readiness, resting HR, HRV, steps, active calories and workout minutes by day/provider.
 
-Key fields:
-- `id uuid`
-- `user_id uuid`
-- `measured_at timestamptz`
-- `weight_kg numeric`
-- `waist_cm numeric`
-- `hips_cm numeric`
-- `chest_cm numeric`
-- `arm_cm numeric`
-- `thigh_cm numeric`
-- `notes text`
+## Arc calculation
 
-No separate analytics table is required initially. Baseline, latest, deltas, and trends are derived from these events.
+Arc is **derived**, never stored as a mutable score.
 
-### `readiness_checkins`
-The short questionnaire that answers: **How are you showing up today?**
+The database view `arc_progress_28d` calculates a rolling window using the weekly target that was effective on each day:
 
-Key fields:
-- `id uuid`
-- `user_id uuid`
-- `created_at timestamptz`
-- `energy smallint` (1–5)
-- `soreness smallint` (1–5)
-- `available_minutes smallint`
-- `desired_effort text` (`restore` | `build` | `push`)
-- `limitations text`
-- `context_snapshot jsonb`
+`actual adherence % = completed qualifying workouts / expected workouts × 100`
 
-`context_snapshot` may record the normalized wearable values and user preferences used at generation time; it is evidence/reproducibility data, not the source of truth for wearable metrics.
+Product states:
 
-### `workout_recommendation_sets`
-One AI generation event produced from one readiness check-in.
-
-Key fields:
-- `id uuid`
-- `user_id uuid`
-- `readiness_checkin_id uuid`
-- `generated_at timestamptz`
-- `prompt_version text`
-- `model_provider text`
-- `model_name text`
-- `generation_summary text`
-
-### `workout_options`
-Exactly three recommendations belong to a recommendation set: Restore, Build, Push.
-
-Key fields:
-- `id uuid`
-- `recommendation_set_id uuid`
-- `tier text` (`restore` | `build` | `push`)
-- `title text`
-- `summary text`
-- `duration_minutes smallint`
-- `intensity text`
-- `focus text`
-- `equipment jsonb`
-- unique (`recommendation_set_id`, `tier`)
-
-### `workout_option_exercises`
-Structured prescription behind each generated option.
-
-Key fields:
-- `id uuid`
-- `workout_option_id uuid`
-- `position smallint`
-- `exercise_name text`
-- `prescribed_sets smallint`
-- `rep_range text`
-- `duration_seconds integer`
-- `rest_seconds integer`
-- `notes text`
-
-### `workout_sessions`
-The actual training event. Analytics come from sessions, not generated options.
-
-Key fields:
-- `id uuid`
-- `user_id uuid`
-- `source_option_id uuid nullable`
-- `started_at timestamptz`
-- `completed_at timestamptz`
-- `status text` (`planned` | `in_progress` | `completed` | `abandoned`)
-- `duration_minutes smallint`
-- `perceived_effort smallint nullable`
-- `notes text`
-
-When a generated option is chosen, the prescribed exercise structure is copied into the session log so history remains stable even if generation logic changes later.
-
-### `workout_exercises`
-Exercises actually performed in a session.
-
-Key fields:
-- `id uuid`
-- `workout_session_id uuid`
-- `position smallint`
-- `exercise_name text`
-- `notes text`
-
-### `workout_sets`
-Fine-grained performance history.
-
-Key fields:
-- `id uuid`
-- `workout_exercise_id uuid`
-- `set_number smallint`
-- `reps integer nullable`
-- `weight_kg numeric nullable`
-- `duration_seconds integer nullable`
-- `distance_meters numeric nullable`
-- `completed boolean`
-
-This supports strength volume, PRs, duration, and exercise-level progression without redesigning the database later.
-
-### `saved_workouts`
-A reusable favorite. Phase 1 can intentionally use a versioned JSON snapshot because completed-session analytics do not depend on this table.
-
-Key fields:
-- `id uuid`
-- `user_id uuid`
-- `source_session_id uuid nullable`
-- `name text`
-- `plan_snapshot jsonb`
-- `created_at timestamptz`
-
-### `device_connections`
-Connection metadata only; never raw access/refresh tokens.
-
-Key fields:
-- `id uuid`
-- `user_id uuid`
-- `provider text` (`oura` | `apple_health`)
-- `status text`
-- `scopes text[]`
-- `external_user_id text nullable`
-- `last_synced_at timestamptz nullable`
-- `metadata jsonb`
-
-### `wearable_daily_metrics`
-Normalized daily context Arc actually uses.
-
-Key fields:
-- `id uuid`
-- `user_id uuid`
-- `metric_date date`
-- `provider text`
-- `sleep_minutes integer nullable`
-- `readiness_score numeric nullable`
-- `resting_hr_bpm numeric nullable`
-- `hrv_ms numeric nullable`
-- `steps integer nullable`
-- `active_calories numeric nullable`
-- `workout_minutes integer nullable`
-- unique (`user_id`, `metric_date`, `provider`)
-
-## The Arc calculation
-Do **not** store a mutable "Arc score" as the source of truth.
-
-For a rolling 28-day window:
-
-`adherence % = completed qualifying workouts / expected workouts × 100`
-
-Expected workouts are derived from the historical `weekly_targets` rows covering the window, prorated by day when necessary.
-
-Product interpretation:
-- `< 60%` → **Build momentum**
+- `< 60%` → **Build Momentum**
 - `60–79.9%` → **Closing the Arc**
 - `>= 80%` → **In Your Arc**
+- first 7 observed days → **Learning**
 
-Visual completion is normalized so 80% adherence fills 100% of the Arc:
+Visual completion:
 
-`visual fill % = min(100, adherence % / 80 × 100)`
+`visual Arc % = min(100, actual adherence % / 80 × 100)`
 
-The UI should still show the real adherence number. A user at 82% sees **82% — In Your Arc**, not a fake 100% metric.
+That means **80% actual adherence fills 100% of the visual Arc**. Higher adherence remains useful information, but Arc never creates a “better than complete” score.
 
-Extra workouts may be reported in supporting analytics, but the Arc adherence display should cap at 100% so overtraining is not gamified.
+## Security baseline
 
-## Derived analytics — no tables yet
-- workouts per week
-- 28-day consistency
-- total training minutes
-- training volume by exercise / movement
-- personal records
-- body measurement deltas and trend lines
-- readiness selections over time
-- Restore / Build / Push mix
-- wearable context trends
+- RLS is enabled on every user-data table in `public`.
+- Ownership policies use `(select auth.uid()) = user_id` for both visibility and mutation checks.
+- `anon` has no table access.
+- `authenticated` has only `SELECT / INSERT / UPDATE / DELETE` on user tables and `SELECT` on `arc_progress_28d`.
+- `arc_progress_28d` is a `security_invoker` view so underlying RLS remains authoritative.
+- A private trigger creates `profiles` rows for new Auth identities; the trigger function is not exposed to browser roles.
 
-Add persisted aggregates only if performance later requires them.
+## Current recommendation generator
 
-## Security baseline for implementation
-- RLS enabled on every `public` table
-- ownership policy uses `auth.uid() = user_id`
-- update policies include both `USING` and `WITH CHECK`
-- explicit Data API grants are created only for required roles/actions
-- no provider token or service key is exposed to the browser
-- AI generation should happen through a protected server/edge boundary, not with a secret embedded in client code
+The Phase 1 web shell currently writes recommendation sets using `generator_version = phase1-rules-v1`. This deterministic engine exists so the complete readiness → three options → selected session data contract can be tested before a model endpoint is introduced.
 
-## Intentionally not modeled in Phase 1
+The AI replacement must preserve the same structured contract and run through an authenticated server/edge boundary. No model secret may be embedded in client JavaScript.
+
+## Intentionally out of scope
+
 - nutrition
 - community/social graph
 - legacy signal engine
 - progress photos
 - meal plans
 - coaching marketplace
-
-These can be added later without contaminating the Phase 1 core.
