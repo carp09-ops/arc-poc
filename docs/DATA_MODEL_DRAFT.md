@@ -1,6 +1,6 @@
 # Arc Phase 1 — Implemented Data Model
 
-**Status:** implemented in the Arc Supabase project on September 14, 2026.
+**Status:** implemented in the Arc Supabase project and extended with provider-agnostic nutrition plumbing on September 14, 2026.
 
 ## Principles
 
@@ -10,8 +10,9 @@
 4. **Historical commitments remain historical.** Weekly targets are effective-dated so changing a future goal does not rewrite prior adherence.
 5. **Generated plans and completed workouts are separate.** Recommendations are suggestions; sessions are the performance record.
 6. **Wearables inform decisions.** Arc normalizes only the daily metrics needed for recommendations and insights.
-7. **User data is user-owned.** Every exposed user-data table has RLS and explicit Data API grants.
-8. **Secrets stay out of public tables.** Provider OAuth secrets and model API keys must live behind protected server/edge boundaries.
+7. **Nutrition is provider-agnostic context.** Arc stores normalized daily totals and does not depend on a specific logging vendor.
+8. **User data is user-owned.** Every exposed user-data table has RLS and explicit Data API grants.
+9. **Secrets stay out of public tables.** Provider OAuth secrets and model API keys must live behind protected server/edge boundaries.
 
 ## Implemented entities
 
@@ -31,12 +32,18 @@
 ### Actual training
 - `workout_sessions` — planned / in-progress / completed / abandoned sessions. Only completed sessions with `counts_toward_arc = true` contribute to Arc adherence.
 - `workout_session_exercises` — the copied exercise plan for the selected session so history remains stable if recommendation logic changes later.
-- `workout_sets` — set-level reps, weight, time, distance, RPE and completion state for future progression analytics.
+- `workout_sets` — set-level reps, weight, time, distance, RPE and completion state for progression analytics.
 - `saved_workouts` — favorites linked to a workout session.
 
 ### Wearables
 - `device_connections` — connection metadata for `oura` and `apple_health`; no raw OAuth secrets.
 - `wearable_daily_metrics` — normalized sleep, readiness, resting HR, HRV, steps, active calories and workout minutes by day/provider.
+
+### Nutrition context
+- `nutrition_sources` — provider metadata for `lose_it`, `apple_health`, `manual_import` or another future adapter. Supports OAuth, HealthKit, file-import and manual connection methods. No access tokens are stored in this public table.
+- `nutrition_daily_summaries` — normalized daily totals: calories consumed, calorie target, protein, carbs, fat, fiber and water. Every row belongs to a source owned by the same user.
+
+The normalized nutrition model deliberately avoids raw meals, foods, recipes or vendor-specific payloads. A direct Lose It! API adapter, Apple Health/HealthKit reader or file importer can all populate the same table.
 
 ## Arc calculation
 
@@ -59,24 +66,27 @@ Visual completion:
 
 That means **80% actual adherence fills 100% of the visual Arc**. Higher adherence remains useful information, but Arc never creates a “better than complete” score.
 
+Nutrition does **not** alter this calculation. It is context for insights, not another component of the Arc score.
+
 ## Security baseline
 
 - RLS is enabled on every user-data table in `public`.
 - Ownership policies use `(select auth.uid()) = user_id` for both visibility and mutation checks.
+- Nutrition daily rows use a composite source/user foreign key so one user cannot attach a nutrition row to another user's source.
 - `anon` has no table access.
 - `authenticated` has only `SELECT / INSERT / UPDATE / DELETE` on user tables and `SELECT` on `arc_progress_28d`.
 - `arc_progress_28d` is a `security_invoker` view so underlying RLS remains authoritative.
 - A private trigger creates `profiles` rows for new Auth identities; the trigger function is not exposed to browser roles.
 
-## Current recommendation generator
+## Recommendation generator
 
-The Phase 1 web shell currently writes recommendation sets using `generator_version = phase1-rules-v1`. This deterministic engine exists so the complete readiness → three options → selected session data contract can be tested before a model endpoint is introduced.
+Workout generation runs behind the authenticated `generate-workouts` Edge Function. The function preserves the Restore / Build / Push structured contract and can use a model-backed path with a deterministic server fallback.
 
-The AI replacement must preserve the same structured contract and run through an authenticated server/edge boundary. No model secret may be embedded in client JavaScript.
+Nutrition may later be included as contextual input only when source quality and freshness are known. No model or provider secret may be embedded in client JavaScript.
 
 ## Intentionally out of scope
 
-- nutrition
+- native meal logging / food database
 - community/social graph
 - legacy signal engine
 - progress photos
