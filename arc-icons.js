@@ -1,4 +1,4 @@
-const SPRITE='./assets/arc-icons.svg?v=ready13';
+const SPRITE='./assets/arc-icons.svg?v=ready14';
 const NAV_ICON={today:'today',train:'train',body:'body',arc:'arc',history:'history',connections:'connections'};
 
 function svg(name,extra=''){
