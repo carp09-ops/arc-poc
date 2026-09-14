@@ -13,6 +13,11 @@ eclipseMotionStyle.rel = 'stylesheet';
 eclipseMotionStyle.href = './eclipse-arc-motion.css';
 document.head.appendChild(eclipseMotionStyle);
 
+const eclipseV4Style = document.createElement('link');
+eclipseV4Style.rel = 'stylesheet';
+eclipseV4Style.href = './arc-eclipse-v4.css?v=4';
+document.head.appendChild(eclipseV4Style);
+
 const trainingStyle = document.createElement('link');
 trainingStyle.rel = 'stylesheet';
 trainingStyle.href = './training-roundout.css';
