@@ -109,9 +109,33 @@ async function repeatWorkout(sessionId,button){
   }catch(error){toast(error.message||'Could not repeat workout.');button.disabled=false;button.textContent=original;}
 }
 
+async function completeWithReceipt(button){
+  const original=button.textContent;button.disabled=true;button.textContent='Saving workout…';
+  try{
+    const user=await authUser();
+    const{data:session,error:sessionError}=await supabase.from('workout_sessions').select('*').eq('user_id',user.id).eq('status','in_progress').order('started_at',{ascending:false}).limit(1).maybeSingle();
+    if(sessionError||!session)throw sessionError||new Error('No active workout found.');
+    const effortValue=document.querySelector('input[name="sessionEffort"]:checked')?.value;const note=$('sessionNote')?.value.trim()||null;const completedAt=new Date().toISOString();
+    const{data:exercises,error:exError}=await supabase.from('workout_session_exercises').select('id').eq('workout_session_id',session.id);if(exError)throw exError;
+    const exIds=(exercises||[]).map(x=>x.id);let sets=[];
+    if(exIds.length){const{data,error}=await supabase.from('workout_sets').select('*').in('workout_exercise_id',exIds);if(error)throw error;sets=data||[];}
+    const{error:updateError}=await supabase.from('workout_sessions').update({status:'completed',completed_at:completedAt,counts_toward_arc:true,perceived_effort:effortValue?Number(effortValue):null,notes:note}).eq('id',session.id);if(updateError)throw updateError;
+    const completedSets=sets.filter(s=>s.completed);const volumeLb=kgToLb(completedSets.reduce((sum,s)=>sum+(Number(s.reps)||0)*(Number(s.weight_kg)||0),0));
+    const duration=fmtDuration(session.started_at,completedAt);
+    const{data:arc}=await supabase.from('arc_progress_28d').select('*').eq('user_id',user.id).maybeSingle();
+    const arcLine=arc?.arc_state==='learning'?`${arc.weekly_completed} of ${arc.weekly_target} workouts this week.`:arc?.adherence_pct!=null?`${Math.round(Number(arc.adherence_pct))}% rolling consistency.`:'The pattern moved forward.';
+    historyCache=null;
+    const active=$('activeWorkout');
+    if(active){active.innerHTML=`<div class="completion-receipt"><span class="eyebrow">Workout complete</span><h2>That counts.</h2><p>You showed up. Arc records the pattern—not perfection.</p><div class="receipt-stats"><div><span>Time</span><strong>${duration}</strong></div><div><span>Sets</span><strong>${completedSets.length||'—'}</strong></div>${volumeLb>0?`<div><span>Logged volume</span><strong>${Math.round(volumeLb).toLocaleString()} lb</strong></div>`:''}${effortValue?`<div><span>Effort</span><strong>${effortValue}/10</strong></div>`:''}</div><div class="receipt-arc"><strong>${escapeHTML(arcLine)}</strong><span>80% is still the finish line.</span></div><div class="receipt-actions"><button id="receiptDone" class="button button-primary">Back to Today</button><button id="receiptHistory" class="button">View history</button></div></div>`;active.scrollIntoView({behavior:'smooth',block:'start'});}
+    $('receiptDone')?.addEventListener('click',()=>window.location.reload());
+    $('receiptHistory')?.addEventListener('click',async()=>{await loadHistory();document.querySelector('[data-view="history"]')?.click();});
+  }catch(error){toast(error.message||'Could not complete workout.');button.disabled=false;button.textContent=original;}
+}
+
 function install(){
   ensureHistoryView();
   document.addEventListener('click',e=>{if(e.target.closest('[data-view="history"],[data-view-target="history"]'))setTimeout(loadHistory,100);});
+  document.addEventListener('click',e=>{const button=e.target.closest('#confirmFinishWorkout');if(!button)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();completeWithReceipt(button);},true);
   const history=$('view-history');if(history){new MutationObserver(()=>{if(history.classList.contains('active-view'))loadHistory();}).observe(history,{attributes:true,attributeFilter:['class']});}
   supabase.auth.onAuthStateChange((_event,session)=>{if(session?.user)setTimeout(loadHistory,250)});
 }
