@@ -1,11 +1,11 @@
-const CACHE_VERSION='arc-ready8';
+const CACHE_VERSION='arc-ready9';
 const SHELL_CACHE=`${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE=`${CACHE_VERSION}-runtime`;
 const APP_ROOT='./';
 
 // Keep the complete first-party Arc shell available after the PWA has installed.
 // Version query strings are intentionally omitted here; fetch matching below uses
-// ignoreSearch so ?v=ready8 remains available when the device is offline.
+// ignoreSearch so versioned resources remain available when the device is offline.
 const PRECACHE=[
   './',
   './index.html',
@@ -25,6 +25,7 @@ const PRECACHE=[
   './arc-icons.css',
   './arc-icon-details.css',
   './pwa-polish.css',
+  './what-arc-sees.css',
   './startup-loading.js',
   './arc-motion-bootstrap.js',
   './readiness-sprint.js',
@@ -40,6 +41,7 @@ const PRECACHE=[
   './arc-icons.js',
   './arc-icon-details.js',
   './pwa-polish.js',
+  './what-arc-sees.js',
   './assets/arc-icon-180.png',
   './assets/arc-icon-192.png',
   './assets/arc-icon-512.png',
