@@ -6,42 +6,50 @@
   --arc-safe-left:env(safe-area-inset-left,0px);
   --arc-vvh:100vh;
 }
-html{background:#173732;-webkit-text-size-adjust:100%;}
+html{background:#173732;-webkit-text-size-adjust:100%;text-rendering:optimizeLegibility;}
 body{min-height:100dvh;min-height:var(--arc-vvh);overscroll-behavior-y:none;}
 button,a,input,select,textarea{-webkit-tap-highlight-color:transparent;}
 button,.nav-item,.profile-chip,.segmented label{touch-action:manipulation;}
 input,select,textarea{font-size:16px;}
 
 /* Home-screen mode should feel deliberately native rather than like a cropped web page. */
+body.arc-standalone .app-shell,
+body.arc-standalone .auth-gate{min-height:100dvh;min-height:var(--arc-vvh);}
 body.arc-standalone .topbar{padding-top:calc(20px + var(--arc-safe-top));}
 body.arc-standalone .auth-card{padding-top:max(48px,calc(26px + var(--arc-safe-top)));padding-bottom:max(40px,calc(26px + var(--arc-safe-bottom)));}
 body.arc-standalone .modal-shell{padding-top:max(20px,var(--arc-safe-top));padding-right:max(20px,var(--arc-safe-right));padding-bottom:max(20px,var(--arc-safe-bottom));padding-left:max(20px,var(--arc-safe-left));}
+body.arc-standalone .toast{bottom:calc(82px + var(--arc-safe-bottom));}
 
 /* Keep controls clear of the iPhone home indicator and keep content scrollable above nav. */
 @media(max-width:900px){
   body.arc-standalone .main-content{
     padding-left:max(18px,var(--arc-safe-left));
     padding-right:max(18px,var(--arc-safe-right));
-    padding-bottom:calc(104px + var(--arc-safe-bottom));
+    padding-bottom:calc(112px + var(--arc-safe-bottom));
   }
   body.arc-standalone .mobile-nav{
+    padding-left:max(8px,var(--arc-safe-left));
+    padding-right:max(8px,var(--arc-safe-right));
     padding-bottom:calc(8px + var(--arc-safe-bottom));
     min-height:calc(68px + var(--arc-safe-bottom));
   }
-  body.arc-keyboard-open .mobile-nav{
+  body.arc-keyboard-open .mobile-nav,
+  body.arc-field-focused .mobile-nav{
     transform:translateY(120%);
     opacity:0;
     pointer-events:none;
   }
-  .mobile-nav{transition:transform .22s ease,opacity .18s ease;}
-  input,select,textarea,[contenteditable="true"]{scroll-margin-bottom:150px;}
+  .mobile-nav{transition:transform .22s ease,opacity .18s ease;will-change:transform,opacity;}
+  input,select,textarea,[contenteditable="true"]{scroll-margin-top:110px;scroll-margin-bottom:170px;}
+  .modal-shell{overflow:auto;-webkit-overflow-scrolling:touch;}
 }
 
-/* iOS form ergonomics: prevent zoom and preserve readable hit areas. */
+/* iOS form ergonomics: prevent focus zoom and preserve native-size hit targets. */
 @supports(-webkit-touch-callout:none){
   input,select,textarea{font-size:16px!important;}
   .segmented label{min-height:44px;display:grid;place-items:center;}
   .button,.nav-item,.profile-chip{min-height:44px;}
+  .button,.nav-item,.profile-chip,.segmented label{-webkit-user-select:none;user-select:none;}
 }
 
 /* Update banner: intentionally small, calm and app-like. */
@@ -69,14 +77,15 @@ body.arc-standalone .modal-shell{padding-top:max(20px,var(--arc-safe-top));paddi
 .arc-update-toast-copy{min-width:0;flex:1;}
 .arc-update-toast strong{display:block;font-family:var(--serif);font-size:1.08rem;line-height:1.05;margin-bottom:2px;}
 .arc-update-toast small{display:block;color:#c7d3cf;font-size:.72rem;line-height:1.35;}
-.arc-update-toast button{border:0;border-radius:999px;background:#c9a96e;color:#173732;font-weight:800;padding:10px 14px;white-space:nowrap;}
-body.arc-keyboard-open .arc-update-toast{display:none;}
+.arc-update-toast button{border:0;border-radius:999px;background:#c9a96e;color:#173732;font-weight:800;padding:10px 14px;white-space:nowrap;min-height:40px;}
+body.arc-keyboard-open .arc-update-toast,body.arc-field-focused .arc-update-toast{display:none;}
 
-/* Subtle standalone press feedback. */
+/* Standalone press feedback should be tactile without looking like a web hover state. */
 @media(hover:none){
-  .button:active,.profile-chip:active,.nav-item:active{transform:scale(.98);}
+  .button:active,.profile-chip:active,.nav-item:active,.segmented label:active{transform:scale(.98);}
 }
 
 @media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto!important;}
   .mobile-nav,.arc-update-toast{transition:none!important;}
 }
