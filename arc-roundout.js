@@ -31,12 +31,16 @@ function ensureArcSummary() {
 }
 
 function ensureEclipseCredit() {
-  const wrap = $('arcLargeGauge')?.parentElement;
-  if (!wrap || wrap.querySelector('.eclipse-credit')) return;
+  const gauge = $('arcLargeGauge');
+  if (!gauge || gauge.closest('.eclipse-visual-wrap')) return;
+  const wrapper = document.createElement('div');
+  wrapper.className = 'eclipse-visual-wrap';
+  gauge.parentElement?.insertBefore(wrapper, gauge);
+  wrapper.appendChild(gauge);
   const credit = document.createElement('small');
   credit.className = 'eclipse-credit';
   credit.innerHTML = 'Eclipse imagery: <a href="https://science.nasa.gov/image-article/centers-and-facilities/goddard/2024-total-solar-eclipse-prediction-vs-reality/" target="_blank" rel="noopener">NASA / Keegan Barber ↗</a>';
-  wrap.appendChild(credit);
+  wrapper.appendChild(credit);
 }
 
 function renderArc(row) {
