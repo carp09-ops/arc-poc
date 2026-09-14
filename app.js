@@ -25,6 +25,8 @@ addStyle('./privacy-controls.css');
 addStyle('./workout-engine-badge.css');
 
 import './pwa-polish.js?v=ready13';
+import './arc-icons.js?v=ready13';
+import './arc-icon-details.js?v=ready13';
 import './startup-loading.js?v=ready13';
 import './arc-motion-bootstrap.js?v=ready13';
 import './readiness-sprint.js?v=ready13';
@@ -37,8 +39,6 @@ import './arc-roundout.js?v=ready13';
 import './body-analytics.js?v=ready13';
 import './training-roundout.js?v=ready13';
 import './nutrition-plumbing.js?v=ready13';
-import './arc-icons.js?v=ready13';
-import './arc-icon-details.js?v=ready13';
 import './what-arc-sees.js?v=ready13';
 import './privacy-controls.js?v=ready13';
 import './workout-engine-badge.js?v=ready13';
