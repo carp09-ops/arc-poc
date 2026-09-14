@@ -1,0 +1,10 @@
+{
+  "name": "Arc — Progress has a shape",
+  "short_name": "Arc",
+  "description": "Aggressive consistency without perfection.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fbf8f1",
+  "theme_color": "#173732",
+  "orientation": "portrait-primary"
+}
