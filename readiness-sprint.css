@@ -1,0 +1,173 @@
+/* Arc readiness sprint — auth, resilience and signature eclipse motion */
+
+@property --progress {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* Signature Arc motion: the eclipse corona itself is the progress surface. */
+.arc-gauge {
+  transition:
+    --progress 1150ms cubic-bezier(.16,.78,.22,1),
+    filter 360ms ease,
+    box-shadow 520ms ease,
+    transform 520ms cubic-bezier(.2,.8,.2,1) !important;
+  will-change: --progress, filter, box-shadow, transform;
+}
+
+.arc-gauge.arc-closing {
+  filter: saturate(1.06) brightness(1.02);
+}
+
+.arc-gauge.arc-progress-pulse {
+  animation: arcCoronaPulse 980ms cubic-bezier(.2,.78,.22,1) both;
+}
+
+.arc-gauge.arc-progress-pulse-strong {
+  animation: arcCoronaPulseStrong 1180ms cubic-bezier(.2,.78,.22,1) both;
+}
+
+@keyframes arcCoronaPulse {
+  0% { transform: scale(1); filter: brightness(1) saturate(1); }
+  42% { transform: scale(1.012); filter: brightness(1.16) saturate(1.1); box-shadow: 0 0 48px rgba(255,154,57,.34), 0 20px 52px rgba(3,9,11,.28); }
+  100% { transform: scale(1); filter: brightness(1) saturate(1); }
+}
+
+@keyframes arcCoronaPulseStrong {
+  0% { transform: scale(1); filter: brightness(1) saturate(1); }
+  38% { transform: scale(1.018); filter: brightness(1.24) saturate(1.12); box-shadow: 0 0 64px rgba(255,157,65,.42), 0 24px 60px rgba(3,9,11,.32); }
+  100% { transform: scale(1); filter: brightness(1) saturate(1); }
+}
+
+/* Crossing into In Your Arc gets a single short flare across the real corona. */
+.arc-gauge.arc-threshold-flare::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  inset: -8% !important;
+  border-radius: 50% !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+  background:
+    radial-gradient(circle at 74% 17%, rgba(255,255,244,.96) 0 2%, rgba(255,221,151,.72) 4%, rgba(255,170,73,.30) 8%, transparent 17%),
+    radial-gradient(circle at 30% 79%, rgba(255,224,165,.34), transparent 19%) !important;
+  mix-blend-mode: screen;
+  opacity: 0;
+  transform: scale(.94) rotate(-6deg);
+  animation: arcThresholdFlare 1850ms cubic-bezier(.18,.76,.2,1) both;
+}
+
+@keyframes arcThresholdFlare {
+  0% { opacity: 0; transform: scale(.94) rotate(-6deg); filter: blur(2px); }
+  22% { opacity: .95; transform: scale(1.02) rotate(0deg); filter: blur(0); }
+  52% { opacity: .42; transform: scale(1.05) rotate(4deg); }
+  100% { opacity: 0; transform: scale(1.07) rotate(7deg); filter: blur(3px); }
+}
+
+/* Authentication additions */
+.arc-auth-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+  color: rgba(27,55,50,.46);
+  font-size: .88rem;
+}
+
+.arc-auth-actions .text-button,
+.arc-auth-secondary > .text-button {
+  font-size: .88rem;
+}
+
+.arc-auth-secondary {
+  margin-top: 12px;
+}
+
+.arc-auth-heading {
+  margin-bottom: 4px;
+}
+
+.arc-auth-heading h3 {
+  margin: 4px 0 3px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.6rem;
+  line-height: 1.05;
+  color: #183c35;
+}
+
+.arc-auth-heading p {
+  margin: 0 0 12px;
+  color: #687874;
+  font-size: .9rem;
+}
+
+/* Friendly network state. */
+.arc-network-banner {
+  position: fixed;
+  left: 50%;
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  z-index: 5000;
+  transform: translateX(-50%);
+  width: min(620px, calc(100vw - 28px));
+  padding: 10px 14px;
+  border: 1px solid rgba(226,177,91,.46);
+  border-radius: 999px;
+  background: rgba(28,49,45,.96);
+  color: #fff7e6;
+  box-shadow: 0 12px 32px rgba(5,20,17,.22);
+  font-size: .82rem;
+  font-weight: 600;
+  text-align: center;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.arc-network-banner.hidden { display: none !important; }
+
+.arc-invite-action {
+  margin-top: 10px;
+}
+
+/* More explicit loading affordances without visual noise. */
+button[aria-busy='true'] {
+  cursor: wait;
+  opacity: .78;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+.live-set-row .set-save-state {
+  min-height: 1em;
+}
+
+/* Make resumed / offline-safe workout logging feel intentional. */
+.live-workout-help::after {
+  content: ' · progress is saved as you go';
+  opacity: .72;
+}
+
+@media (max-width: 720px) {
+  .arc-network-banner {
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+    border-radius: 16px;
+    line-height: 1.35;
+  }
+
+  .arc-auth-actions {
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arc-gauge,
+  .arc-gauge.arc-progress-pulse,
+  .arc-gauge.arc-progress-pulse-strong {
+    transition: none !important;
+    animation: none !important;
+  }
+  .arc-gauge.arc-threshold-flare::after { animation: none !important; display: none !important; }
+}
