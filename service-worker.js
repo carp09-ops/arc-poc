@@ -110,7 +110,7 @@ self.addEventListener('fetch',event=>{
     const runtime=await caches.open(RUNTIME_CACHE);
     const exact=await runtime.match(request);
     const shell=await caches.match(request,{ignoreSearch:true});
-    const isBootstrap=/\/(?:app\.js|styles\.css|manifest\.webmanifest)$/i.test(url.pathname);
+    const isBootstrap=/\/(?:app\.js|styles\.css|manifest\.webmanifest|arc-icons\.svg)$/i.test(url.pathname);
 
     if(isBootstrap){
       try{
