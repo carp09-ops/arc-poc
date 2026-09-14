@@ -1,0 +1,94 @@
+/* Core roundout: eclipse Arc + body analytics */
+.arc-gauge{
+  isolation:isolate;
+  background:conic-gradient(from 210deg,
+    rgba(255,232,183,.98) 0deg,
+    rgba(255,249,234,.98) var(--progress),
+    rgba(255,255,255,.14) var(--progress) 300deg,
+    transparent 300deg 360deg);
+  box-shadow:0 0 22px rgba(255,236,196,.18),0 16px 42px rgba(5,12,14,.24);
+}
+.arc-gauge:before{
+  content:"";
+  position:absolute;
+  inset:-17%;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.20) 0 29%,rgba(244,218,161,.10) 40%,rgba(154,184,194,.08) 54%,transparent 70%);
+  filter:blur(8px);
+  z-index:-1;
+  opacity:.95;
+  pointer-events:none;
+}
+.arc-gauge:after{
+  width:82%;
+  background-color:#050607;
+  background-image:
+    linear-gradient(rgba(2,7,10,.02),rgba(2,7,10,.02)),
+    url('https://science.nasa.gov/wp-content/uploads/2024/04/2024-actual-keegan-barber-v2.png?w=1200');
+  background-repeat:no-repeat;
+  background-position:50% 45%;
+  background-size:260% auto;
+  box-shadow:0 0 22px rgba(255,255,255,.30),0 0 55px rgba(214,228,232,.16),inset 0 0 0 1px rgba(255,255,255,.12);
+}
+.arc-gauge-inner strong{color:#fff;text-shadow:0 2px 13px rgba(0,0,0,.92);font-weight:600}
+.arc-gauge-inner span{color:#f6dfad;text-shadow:0 2px 8px rgba(0,0,0,.95)}
+.arc-gauge.large{width:285px;box-shadow:0 0 35px rgba(255,239,205,.23),0 22px 55px rgba(12,28,31,.18)}
+.arc-gauge.large .arc-gauge-inner strong{font-size:3.5rem}
+.eclipse-credit{display:block;margin-top:12px;color:var(--slate);font-size:.62rem;line-height:1.4;text-align:center;max-width:285px}
+.eclipse-credit a{color:inherit;text-decoration:none;border-bottom:1px solid rgba(93,112,120,.35)}
+.arc-period-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0 0}
+.arc-period-summary>div{background:rgba(251,248,241,.92);border:1px solid rgba(154,150,140,.20);border-radius:17px;padding:17px 18px;display:grid;gap:7px}
+.arc-period-summary span{font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;color:var(--slate);font-weight:700}
+.arc-period-summary strong{font-family:var(--serif);font-size:1.55rem;font-weight:600}
+
+.body-analytics-controls{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:14px 0 20px;border-bottom:1px solid rgba(116,123,119,.12);margin-bottom:10px}
+.analytics-control-group{display:grid;gap:8px;min-width:0}
+.analytics-control-group>span{font-size:.65rem;text-transform:uppercase;letter-spacing:.09em;font-weight:800;color:var(--slate)}
+.analytics-segments{display:flex;gap:5px;flex-wrap:wrap}
+.analytics-segments button{border:1px solid var(--stone);background:#fff;color:var(--slate);border-radius:999px;padding:8px 11px;font-size:.72rem;font-weight:700}
+.analytics-segments button.active{background:var(--pine-deep);border-color:var(--pine-deep);color:#fff;box-shadow:0 6px 14px rgba(23,55,50,.14)}
+.body-analytic-card strong{font-size:1.85rem}
+.body-chart-rich{min-height:330px;padding-top:4px}
+.body-chart-rich svg{height:auto;min-height:300px;display:block}
+.body-chart-rich .axis-label{fill:#6e7c80;font-family:var(--sans);font-size:11px;font-weight:600}
+.body-chart-rich .axis-unit{fill:#8a9495;font-family:var(--sans);font-size:10px;font-weight:800;text-transform:uppercase}
+.body-chart-rich .axis-tick{stroke:#aeb8b5;stroke-width:1}
+.body-chart-rich .grid-line{stroke:#cfc8bc;stroke-width:1;opacity:.42;stroke-dasharray:3 5}
+.body-chart-rich .trend-line{fill:none;stroke:var(--pine);stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}
+.body-chart-rich .trend-regression{stroke:var(--champagne);stroke-width:2;stroke-dasharray:7 7;opacity:.92}
+.body-chart-rich .dot{fill:var(--cream);stroke:var(--pine);stroke-width:2.5}
+.body-chart-rich .latest-dot{fill:var(--champagne);stroke:var(--pine-deep);stroke-width:2.5}
+.body-chart-legend{display:flex;gap:18px;justify-content:flex-end;margin:-2px 12px 0;color:var(--slate);font-size:.68rem;font-weight:600}
+.body-chart-legend span{display:inline-flex;align-items:center;gap:7px}
+.body-chart-legend i{width:18px;height:3px;border-radius:4px;display:inline-block}
+.body-chart-legend .actual-key{background:var(--pine)}
+.body-chart-legend .trend-key{background:repeating-linear-gradient(90deg,var(--champagne) 0 6px,transparent 6px 10px)}
+.body-timeline-panel{margin:16px 0}
+.body-timeline{display:grid;margin-top:12px}
+.body-timeline-row{display:grid;grid-template-columns:18px 1fr;gap:12px;position:relative;padding:12px 0}
+.body-timeline-row:not(:last-child):before{content:"";position:absolute;left:5px;top:28px;bottom:-8px;width:1px;background:var(--stone)}
+.timeline-dot{width:11px;height:11px;border-radius:50%;background:var(--champagne);border:2px solid var(--cream);box-shadow:0 0 0 1px var(--champagne);margin-top:5px;z-index:1}
+.body-timeline-row strong{display:block;font-family:var(--serif);font-size:1.1rem;font-weight:600}
+.body-timeline-row span{display:block;color:var(--slate);font-size:.78rem;margin-top:3px}
+.body-timeline-row small{display:block;margin-top:4px;color:var(--slate);font-size:.7rem}
+.body-timeline-row small.good{color:var(--pine)}
+
+@media(max-width:900px){
+  .arc-period-summary{grid-template-columns:repeat(2,1fr)}
+  .body-analytics-controls{align-items:stretch;flex-direction:column}
+}
+@media(max-width:680px){
+  .arc-gauge{width:155px}
+  .arc-gauge.large{width:225px}
+  .arc-gauge-inner strong{font-size:2.55rem}
+  .arc-gauge.large .arc-gauge-inner strong{font-size:2.8rem}
+  .arc-period-summary{grid-template-columns:1fr 1fr;gap:8px}
+  .arc-period-summary>div{padding:14px}
+  .arc-period-summary strong{font-size:1.3rem}
+  .analytics-segments{flex-wrap:nowrap;overflow-x:auto;padding-bottom:3px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .analytics-segments::-webkit-scrollbar{display:none}
+  .analytics-segments button{white-space:nowrap;flex:0 0 auto}
+  .body-chart-rich{margin-left:-12px;margin-right:-8px;overflow:hidden}
+  .body-chart-rich svg{min-width:610px;width:100%;transform-origin:left top}
+  .body-chart-legend{justify-content:flex-start;margin-left:58px;flex-wrap:wrap}
+}
