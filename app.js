@@ -16,6 +16,7 @@ addStyle('./nutrition-plumbing.css');
 addStyle('./readiness-sprint.css');
 
 import './readiness-sprint.js?v=ready3';
+import './auth-hardening.js?v=ready3';
 import './core-app.js?v=ready3';
 import './edge-workouts.js?v=ready3';
 import './qa-enhancements.js?v=ready3';
