@@ -18,6 +18,7 @@ addStyle('./qa-enhancements.css');
 addStyle('./starting-point.css');
 
 import './startup-loading.js?v=ready4';
+import './arc-motion-bootstrap.js?v=ready4';
 import './readiness-sprint.js?v=ready4';
 import './auth-hardening.js?v=ready4';
 import './core-app.js?v=ready4';
