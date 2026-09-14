@@ -1,0 +1,54 @@
+/* Arc icon system — one visual language across navigation, metrics, training and history. */
+:root{
+  --arc-icon-pine:#21483f;
+  --arc-icon-pine-deep:#173732;
+  --arc-icon-slate:#6f8383;
+  --arc-icon-champagne:#c9a96e;
+  --arc-icon-sand:#f2eadb;
+  --arc-icon-cream:#fbf8f1;
+}
+.arc-icon{width:1.15em;height:1.15em;display:inline-block;vertical-align:-.16em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.arc-icon-sm{width:.95em;height:.95em}.arc-icon-lg{width:1.35em;height:1.35em}
+.arc-icon-badge{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;background:rgba(33,72,63,.08);color:var(--arc-icon-pine);border:1px solid rgba(33,72,63,.08)}
+
+.side-nav .nav-item>span:first-child,.mobile-nav .nav-item>span:first-child{display:inline-grid;place-items:center;color:currentColor;font-size:1rem;line-height:1}
+.side-nav .nav-item .arc-icon{width:19px;height:19px;stroke-width:1.85}
+.mobile-nav .nav-item .arc-icon{width:21px;height:21px;stroke-width:1.85}
+.side-nav .nav-item.active .arc-icon,.mobile-nav .nav-item.active .arc-icon{color:var(--arc-icon-champagne)}
+.side-nav .nav-item:not(.active) .arc-icon,.mobile-nav .nav-item:not(.active) .arc-icon{opacity:.9}
+
+.metric-card .metric-icon{display:inline-grid!important;place-items:center!important;width:34px!important;height:34px!important;border-radius:11px!important;background:rgba(33,72,63,.075)!important;color:var(--arc-icon-pine)!important;border:1px solid rgba(33,72,63,.07)!important;font-size:1rem!important}
+.metric-card .metric-icon .arc-icon{width:18px;height:18px;stroke-width:1.85}
+.slate-card .metric-icon{background:rgba(255,255,255,.1)!important;color:var(--arc-icon-champagne)!important;border-color:rgba(255,255,255,.12)!important}
+
+.workout-tier{display:inline-grid!important;place-items:center!important;width:42px!important;height:42px!important;border-radius:14px!important;border:1px solid rgba(33,72,63,.08)!important;background:rgba(33,72,63,.055)!important;color:var(--arc-icon-pine)!important;font-size:1rem!important}
+.workout-tier .arc-icon{width:22px;height:22px;stroke-width:1.8}
+.workout-card.restore .workout-tier{color:#668176!important;background:rgba(102,129,118,.09)!important}
+.workout-card.build .workout-tier{color:var(--arc-icon-pine)!important;background:rgba(33,72,63,.08)!important}
+.workout-card.push .workout-tier{color:#9d7741!important;background:rgba(201,169,110,.13)!important}
+.workout-card.recommended .workout-tier{box-shadow:0 7px 20px rgba(33,72,63,.08)}
+
+.connection-card .device-icon{display:grid!important;place-items:center!important;width:48px!important;height:48px!important;border-radius:15px!important;background:rgba(33,72,63,.07)!important;color:var(--arc-icon-pine)!important;border:1px solid rgba(33,72,63,.08)!important;font-size:1rem!important}
+.connection-card .device-icon .arc-icon{width:24px;height:24px;stroke-width:1.75}
+.connection-card .device-icon.heart{color:#9a655f!important;background:rgba(154,101,95,.08)!important}
+.connection-card[data-arc-connection="nutrition"] .device-icon{color:#9d7741!important;background:rgba(201,169,110,.12)!important}
+
+.favorite-history,.favorite-history.active,#edgeFavoriteActive{display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.favorite-history .arc-icon,#edgeFavoriteActive .arc-icon{width:19px;height:19px}
+.favorite-history.active .arc-icon,#edgeFavoriteActive[data-arc-favorited="true"] .arc-icon{color:var(--arc-icon-champagne);fill:rgba(201,169,110,.18)}
+
+.history-meta span{display:inline-flex;align-items:center;gap:5px}
+.history-meta .arc-icon{width:14px;height:14px;color:var(--arc-icon-slate);stroke-width:1.9}
+
+.arc-icon-action{display:inline-flex;align-items:center;gap:7px}
+.arc-icon-action .arc-icon{width:15px;height:15px;transition:transform .18s ease}
+.arc-icon-action:hover .arc-icon[data-arc-icon="arrow-right"]{transform:translateX(2px)}
+.arc-icon-action:hover .arc-icon[data-arc-icon="external-link"]{transform:translate(1px,-1px)}
+
+.profile-chip{box-shadow:inset 0 0 0 1px rgba(33,72,63,.05),0 6px 18px rgba(33,72,63,.05)}
+
+@media(max-width:720px){
+  .metric-card .metric-icon{width:31px!important;height:31px!important;border-radius:10px!important}
+  .workout-tier{width:39px!important;height:39px!important;border-radius:13px!important}
+  .connection-card .device-icon{width:44px!important;height:44px!important;border-radius:14px!important}
+}
