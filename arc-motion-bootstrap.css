@@ -1,0 +1,10 @@
+/* Prevent startup render passes from looking like real progress events. */
+body.arc-motion-booting .arc-gauge.arc-progress-pulse,
+body.arc-motion-booting .arc-gauge.arc-progress-pulse-strong {
+  animation: none !important;
+}
+
+body.arc-motion-booting .arc-gauge.arc-threshold-flare::after {
+  display: none !important;
+  animation: none !important;
+}
