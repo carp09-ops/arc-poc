@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#173732" />
+  <meta name="description" content="Arc — progress has a shape. Consistent effort without perfection." />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+  <title>Arc — Progress has a shape.</title>
+</head>
+<body>
+  <div id="authGate" class="auth-gate">
+    <div class="auth-landscape" aria-hidden="true"></div>
+    <section class="auth-card">
+      <div class="brand-lockup">
+        <div class="brand-mark">ARC</div>
+        <p>Progress has a shape.</p>
+      </div>
+      <div class="auth-copy">
+        <span class="eyebrow">80 is the new 100.</span>
+        <h1>Stay aggressive.<br />Skip perfection.</h1>
+        <p>Train for the day you actually have, then let the pattern tell the story.</p>
+      </div>
+      <form id="loginForm" class="stack-form">
+        <label>Email<input id="loginEmail" type="email" autocomplete="email" required /></label>
+        <label>Password<input id="loginPassword" type="password" autocomplete="current-password" required /></label>
+        <button class="button button-primary" type="submit">Enter Arc <span>→</span></button>
+        <p id="loginMessage" class="form-message" role="status"></p>
+      </form>
+    </section>
+  </div>
+
+  <div id="setupGate" class="modal-shell hidden">
+    <section class="setup-card">
+      <span class="eyebrow">Your starting line</span>
+      <h2>Set your Arc.</h2>
+      <p>The goal is not perfect attendance. Pick an aggressive weekly commitment you can realistically sustain.</p>
+      <form id="setupForm" class="setup-grid">
+        <label>Name<input id="setupName" type="text" placeholder="What should Arc call you?" /></label>
+        <label>Primary goal<input id="setupGoal" type="text" placeholder="e.g. Build strength, lose fat" /></label>
+        <label>Training days per week
+          <select id="setupTarget">
+            <option value="3">3 days</option>
+            <option value="4" selected>4 days</option>
+            <option value="5">5 days</option>
+            <option value="6">6 days</option>
+          </select>
+        </label>
+        <label>Equipment<input id="setupEquipment" type="text" placeholder="Dumbbells, bench, bands…" /></label>
+        <button class="button button-primary setup-submit" type="submit">Start my Arc <span>→</span></button>
+      </form>
+    </section>
+  </div>
+
+  <div id="app" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="brand-lockup compact">
+        <div class="brand-mark">ARC</div>
+        <p>Progress has a shape.</p>
+      </div>
+      <nav class="side-nav" aria-label="Primary">
+        <button class="nav-item active" data-view="today"><span>⌂</span> Today</button>
+        <button class="nav-item" data-view="train"><span>↗</span> Train</button>
+        <button class="nav-item" data-view="body"><span>◇</span> Body</button>
+        <button class="nav-item" data-view="arc"><span>◔</span> Arc</button>
+        <button class="nav-item" data-view="connections"><span>⌁</span> Connections</button>
+      </nav>
+      <div class="sidebar-quote">
+        <div class="gold-rule"></div>
+        <p>“80 is the new 100.”</p>
+      </div>
+      <button id="logoutButton" class="text-button">Sign out</button>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <p id="dateLabel" class="eyebrow"></p>
+          <h2 id="greeting">Good morning.</h2>
+        </div>
+        <button id="profileButton" class="profile-chip" aria-label="Profile"><span id="profileInitial">A</span></button>
+      </header>
+
+      <section id="view-today" class="view active-view">
+        <article class="hero-card">
+          <div class="hero-photo" aria-hidden="true"></div>
+          <div class="hero-overlay"></div>
+          <div class="hero-copy">
+            <span class="eyebrow light">Your Arc today</span>
+            <h1 id="heroHeadline">Build the pattern.</h1>
+            <p id="heroSubhead">Aggressive enough to make progress. Flexible enough to sustain it.</p>
+            <button class="button button-light" data-view-target="train">How do you feel today? <span>→</span></button>
+          </div>
+          <div class="arc-gauge-wrap">
+            <div id="arcGauge" class="arc-gauge" style="--progress: 0deg">
+              <div class="arc-gauge-inner">
+                <strong id="arcPercent">—</strong>
+                <span id="arcGaugeLabel">BUILDING</span>
+              </div>
+            </div>
+            <small>80% adherence completes the Arc.</small>
+          </div>
+        </article>
+
+        <div class="dashboard-grid">
+          <article class="metric-card">
+            <span class="metric-icon">↗</span><span class="metric-label">Workouts</span>
+            <strong id="workoutsMetric">0</strong><small id="workoutsMetricSub">Start the pattern</small>
+          </article>
+          <article class="metric-card">
+            <span class="metric-icon">◔</span><span class="metric-label">Consistency</span>
+            <strong id="consistencyMetric">—</strong><small>Rolling 28 days</small>
+          </article>
+          <article class="metric-card">
+            <span class="metric-icon">◇</span><span class="metric-label">Body</span>
+            <strong id="bodyMetric">No baseline</strong><small id="bodyMetricSub">Log a measurement</small>
+          </article>
+          <article class="metric-card slate-card">
+            <span class="metric-label">Arc thought</span>
+            <blockquote>Small, consistent progress creates extraordinary lives.</blockquote>
+            <div class="gold-rule"></div>
+          </article>
+        </div>
+
+        <div class="content-split">
+          <article class="panel">
+            <div class="panel-header"><div><span class="eyebrow">Recent movement</span><h3>Your training</h3></div><button class="text-button" data-view-target="train">View all →</button></div>
+            <div id="recentWorkouts" class="list-stack empty-state">No workouts logged yet.</div>
+          </article>
+          <article class="nature-card compact-nature">
+            <div><span class="eyebrow light">Keep showing up</span><h3>Discipline today.<br />Freedom tomorrow.</h3><div class="gold-rule"></div></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="view-train" class="view">
+        <div class="section-heading"><span class="eyebrow">Adaptive training</span><h1>How are you showing up today?</h1><p>A fast check-in gives Arc enough context to offer three ways forward.</p></div>
+        <article id="checkinPanel" class="panel form-panel">
+          <form id="readinessForm" class="readiness-grid">
+            <fieldset><legend>Energy</legend><div class="segmented five"><label><input type="radio" name="energy" value="1" />1</label><label><input type="radio" name="energy" value="2" />2</label><label><input type="radio" name="energy" value="3" checked />3</label><label><input type="radio" name="energy" value="4" />4</label><label><input type="radio" name="energy" value="5" />5</label></div><small>Low → high</small></fieldset>
+            <fieldset><legend>Soreness / recovery</legend><div class="segmented five"><label><input type="radio" name="soreness" value="1" />1</label><label><input type="radio" name="soreness" value="2" checked />2</label><label><input type="radio" name="soreness" value="3" />3</label><label><input type="radio" name="soreness" value="4" />4</label><label><input type="radio" name="soreness" value="5" />5</label></div><small>Fresh → very sore</small></fieldset>
+            <fieldset><legend>Time available</legend><div class="segmented"><label><input type="radio" name="minutes" value="20" />20 min</label><label><input type="radio" name="minutes" value="35" checked />35 min</label><label><input type="radio" name="minutes" value="50" />50 min</label></div></fieldset>
+            <fieldset><legend>Desired effort</legend><div class="segmented"><label><input type="radio" name="effort" value="restore" />Restore</label><label><input type="radio" name="effort" value="build" checked />Build</label><label><input type="radio" name="effort" value="push" />Push</label></div></fieldset>
+            <label class="full-field">Any pain or limitations? <span>(optional)</span><input id="limitations" type="text" placeholder="e.g. lower back tightness, shoulder, knee…" /></label>
+            <button class="button button-primary form-submit" type="submit">Show my workouts <span>→</span></button>
+          </form>
+        </article>
+        <div id="workoutOptions" class="workout-options hidden"></div>
+        <article id="activeWorkout" class="panel hidden"></article>
+      </section>
+
+      <section id="view-body" class="view">
+        <div class="section-heading inline-heading"><div><span class="eyebrow">Body measurements</span><h1>Your progress.</h1><p>Small changes add up to big results.</p></div><button id="toggleMeasurementForm" class="button button-primary">+ Log measurements</button></div>
+        <article id="measurementFormPanel" class="panel hidden">
+          <form id="measurementForm" class="measurement-grid">
+            <label>Weight <span>lb</span><input id="weightInput" type="number" step="0.1" min="1" /></label>
+            <label>Waist <span>in</span><input id="waistInput" type="number" step="0.1" min="1" /></label>
+            <label>Hips <span>in</span><input id="hipsInput" type="number" step="0.1" min="1" /></label>
+            <label>Chest <span>in</span><input id="chestInput" type="number" step="0.1" min="1" /></label>
+            <label>Arm <span>in</span><input id="armInput" type="number" step="0.1" min="1" /></label>
+            <label>Thigh <span>in</span><input id="thighInput" type="number" step="0.1" min="1" /></label>
+            <label class="full-field">Note <span>(optional)</span><input id="measurementNote" type="text" placeholder="How are you feeling?" /></label>
+            <button class="button button-primary" type="submit">Save check-in</button>
+          </form>
+        </article>
+        <div id="bodySummary" class="body-summary"></div>
+        <article class="panel chart-panel"><div class="panel-header"><div><span class="eyebrow">Trend</span><h3>Weight</h3></div><span id="weightTrendLabel" class="pill">Need data</span></div><div id="weightChart" class="weight-chart empty-state">Log at least two weight check-ins to see your trend.</div></article>
+        <article class="panel"><div class="panel-header"><div><span class="eyebrow">History</span><h3>Measurements</h3></div></div><div id="measurementHistory" class="table-wrap empty-state">No measurements yet.</div></article>
+      </section>
+
+      <section id="view-arc" class="view">
+        <div class="section-heading"><span class="eyebrow">The philosophy</span><h1>80 is the new 100.</h1><p>Arc rewards aggressive consistency—not perfection.</p></div>
+        <div class="arc-story-grid">
+          <article class="panel arc-explainer"><div id="arcLargeGauge" class="arc-gauge large" style="--progress: 0deg"><div class="arc-gauge-inner"><strong id="arcLargePercent">—</strong><span>ACTUAL</span></div></div><div><span id="arcStatePill" class="pill">Learning</span><h2 id="arcStateHeadline">Build your baseline.</h2><p id="arcStateCopy">After your first week, Arc will start comparing completed workouts to your commitment.</p></div></article>
+          <article class="nature-card"><div><span class="eyebrow light">The point</span><h2>Stay aggressive.<br />Leave room for life.</h2><p>Once you reach 80% adherence, the visual Arc is complete. Anything beyond that is information—not a demand.</p><div class="gold-rule"></div></div></article>
+        </div>
+        <div class="principle-grid"><article><strong>0–59%</strong><span>Build momentum</span></article><article><strong>60–79%</strong><span>Closing the Arc</span></article><article class="success-principle"><strong>80%+</strong><span>In your Arc</span></article></div>
+      </section>
+
+      <section id="view-connections" class="view">
+        <div class="section-heading"><span class="eyebrow">Wearables</span><h1>Bring your data together.</h1><p>Arc should use device data to improve recommendations—not recreate your wearable app.</p></div>
+        <div class="connection-grid">
+          <article class="connection-card"><div class="device-icon">◉</div><div><span class="eyebrow">Recovery</span><h3>Oura Ring</h3><p>Sleep, readiness, heart rate, HRV and activity summaries.</p><span class="status-chip">Integration next</span></div></article>
+          <article class="connection-card"><div class="device-icon heart">♥</div><div><span class="eyebrow">Activity</span><h3>Apple Health</h3><p>Workout, heart rate, activity and sleep data through the future iOS app.</p><span class="status-chip muted">Requires native app</span></div></article>
+        </div>
+        <article class="panel insight-note"><span class="eyebrow">Design rule</span><h2>More data should mean a simpler decision.</h2><p>Wearable signals will quietly influence Restore / Build / Push recommendations instead of adding another wall of charts.</p></article>
+      </section>
+    </main>
+
+    <nav class="mobile-nav" aria-label="Mobile primary">
+      <button class="nav-item active" data-view="today"><span>⌂</span><small>Today</small></button>
+      <button class="nav-item" data-view="train"><span>↗</span><small>Train</small></button>
+      <button class="nav-item" data-view="body"><span>◇</span><small>Body</small></button>
+      <button class="nav-item" data-view="arc"><span>◔</span><small>Arc</small></button>
+      <button class="nav-item" data-view="connections"><span>⌁</span><small>Connect</small></button>
+    </nav>
+  </div>
+  <div id="toast" class="toast" role="status"></div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
