@@ -8,6 +8,11 @@ eclipseStyle.rel = 'stylesheet';
 eclipseStyle.href = './eclipse-arc.css';
 document.head.appendChild(eclipseStyle);
 
+const eclipseMotionStyle = document.createElement('link');
+eclipseMotionStyle.rel = 'stylesheet';
+eclipseMotionStyle.href = './eclipse-arc-motion.css';
+document.head.appendChild(eclipseMotionStyle);
+
 const trainingStyle = document.createElement('link');
 trainingStyle.rel = 'stylesheet';
 trainingStyle.href = './training-roundout.css';
