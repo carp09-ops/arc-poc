@@ -28,10 +28,11 @@
 .workout-card.push .workout-tier{color:#9d7741!important;background:rgba(201,169,110,.13)!important}
 .workout-card.recommended .workout-tier{box-shadow:0 7px 20px rgba(33,72,63,.08)}
 
-.connection-card .device-icon{display:grid!important;place-items:center!important;width:48px!important;height:48px!important;border-radius:15px!important;background:rgba(33,72,63,.07)!important;color:var(--arc-icon-pine)!important;border:1px solid rgba(33,72,63,.08)!important;font-size:1rem!important}
-.connection-card .device-icon .arc-icon{width:24px;height:24px;stroke-width:1.75}
-.connection-card .device-icon.heart{color:#9a655f!important;background:rgba(154,101,95,.08)!important}
-.connection-card[data-arc-connection="nutrition"] .device-icon{color:#9d7741!important;background:rgba(201,169,110,.12)!important}
+.connection-card .device-icon,.nutrition-source-card .nutrition-source-icon{display:grid!important;place-items:center!important;width:48px!important;height:48px!important;border-radius:15px!important;background:rgba(33,72,63,.07)!important;color:var(--arc-icon-pine)!important;border:1px solid rgba(33,72,63,.08)!important;font-size:1rem!important}
+.connection-card .device-icon .arc-icon,.nutrition-source-card .nutrition-source-icon .arc-icon{width:24px;height:24px;stroke-width:1.75}
+.connection-card .device-icon.heart,.nutrition-source-card[data-nutrition-source="apple_health"] .nutrition-source-icon{color:#9a655f!important;background:rgba(154,101,95,.08)!important}
+.nutrition-source-card[data-nutrition-source="lose_it"] .nutrition-source-icon{color:#9d7741!important;background:rgba(201,169,110,.12)!important}
+.nutrition-source-card[data-nutrition-source="manual_import"] .nutrition-source-icon{color:var(--arc-icon-slate)!important;background:rgba(111,131,131,.09)!important}
 
 .favorite-history,.favorite-history.active,#edgeFavoriteActive{display:inline-flex;align-items:center;justify-content:center;gap:7px}
 .favorite-history .arc-icon,#edgeFavoriteActive .arc-icon{width:19px;height:19px}
@@ -42,13 +43,14 @@
 
 .arc-icon-action{display:inline-flex;align-items:center;gap:7px}
 .arc-icon-action .arc-icon{width:15px;height:15px;transition:transform .18s ease}
-.arc-icon-action:hover .arc-icon[data-arc-icon="arrow-right"]{transform:translateX(2px)}
-.arc-icon-action:hover .arc-icon[data-arc-icon="external-link"]{transform:translate(1px,-1px)}
+.arc-icon-action:hover .arc-icon[data-arc-icon="arrowRight"]{transform:translateX(2px)}
+.arc-icon-action:hover .arc-icon[data-arc-icon="externalLink"]{transform:translate(1px,-1px)}
+.button-primary.arc-icon-action .arc-icon,.button-light.arc-icon-action .arc-icon{stroke-width:2}
 
 .profile-chip{box-shadow:inset 0 0 0 1px rgba(33,72,63,.05),0 6px 18px rgba(33,72,63,.05)}
 
 @media(max-width:720px){
   .metric-card .metric-icon{width:31px!important;height:31px!important;border-radius:10px!important}
   .workout-tier{width:39px!important;height:39px!important;border-radius:13px!important}
-  .connection-card .device-icon{width:44px!important;height:44px!important;border-radius:14px!important}
+  .connection-card .device-icon,.nutrition-source-card .nutrition-source-icon{width:44px!important;height:44px!important;border-radius:14px!important}
 }
