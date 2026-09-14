@@ -1,4 +1,4 @@
-const BUILD = 'ready8';
+const BUILD = 'ready9';
 
 const addStyle = (href) => {
   const link = document.createElement('link');
@@ -20,19 +20,21 @@ addStyle('./arc-motion-bootstrap.css');
 addStyle('./arc-icons.css');
 addStyle('./arc-icon-details.css');
 addStyle('./pwa-polish.css');
+addStyle('./what-arc-sees.css');
 
-import './pwa-polish.js?v=ready8';
-import './startup-loading.js?v=ready8';
-import './arc-motion-bootstrap.js?v=ready8';
-import './readiness-sprint.js?v=ready8';
-import './auth-hardening.js?v=ready8';
-import './core-app.js?v=ready8';
-import './edge-workouts.js?v=ready8';
-import './qa-enhancements.js?v=ready8';
-import './starting-point.js?v=ready8';
-import './arc-roundout.js?v=ready8';
-import './body-analytics.js?v=ready8';
-import './training-roundout.js?v=ready8';
-import './nutrition-plumbing.js?v=ready8';
-import './arc-icons.js?v=ready8';
-import './arc-icon-details.js?v=ready8';
+import './pwa-polish.js?v=ready9';
+import './startup-loading.js?v=ready9';
+import './arc-motion-bootstrap.js?v=ready9';
+import './readiness-sprint.js?v=ready9';
+import './auth-hardening.js?v=ready9';
+import './core-app.js?v=ready9';
+import './edge-workouts.js?v=ready9';
+import './qa-enhancements.js?v=ready9';
+import './starting-point.js?v=ready9';
+import './arc-roundout.js?v=ready9';
+import './body-analytics.js?v=ready9';
+import './training-roundout.js?v=ready9';
+import './nutrition-plumbing.js?v=ready9';
+import './arc-icons.js?v=ready9';
+import './arc-icon-details.js?v=ready9';
+import './what-arc-sees.js?v=ready9';
