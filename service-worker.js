@@ -1,4 +1,4 @@
-const CACHE_VERSION='arc-ready9';
+const CACHE_VERSION='arc-ready10';
 const SHELL_CACHE=`${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE=`${CACHE_VERSION}-runtime`;
 const APP_ROOT='./';
