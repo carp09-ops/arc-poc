@@ -2,7 +2,7 @@
 
 @property --progress {
   syntax: '<angle>';
-  inherits: false;
+  inherits: true;
   initial-value: 0deg;
 }
 
