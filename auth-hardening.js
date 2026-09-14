@@ -1,4 +1,5 @@
 const recoveryMode = new URLSearchParams(window.location.search).get('recovery') === '1';
+let duplicateRecoveryQueued = false;
 
 function forceRecoveryGate() {
   if (!recoveryMode) return;
@@ -21,13 +22,25 @@ function mapLoginMessage() {
   else if (raw.includes('failed to fetch') || raw.includes('network') || raw.includes('load failed')) el.textContent = 'Arc cannot reach the server right now. Check your connection and try again.';
 }
 
+function recoverDuplicateWorkout() {
+  const toast = document.getElementById('toast');
+  if (!toast || duplicateRecoveryQueued) return;
+  const raw = (toast.textContent || '').toLowerCase();
+  if (!raw.includes('already have a workout in progress') && !raw.includes('workout_sessions_one_in_progress')) return;
+  duplicateRecoveryQueued = true;
+  toast.textContent = 'You already have a workout in progress. Resuming it now…';
+  setTimeout(() => window.location.reload(), 900);
+}
+
 const observer = new MutationObserver(() => {
   forceRecoveryGate();
   mapLoginMessage();
+  recoverDuplicateWorkout();
 });
 observer.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['class'], characterData:true });
 
 forceRecoveryGate();
 mapLoginMessage();
+recoverDuplicateWorkout();
 setTimeout(forceRecoveryGate, 250);
 setTimeout(forceRecoveryGate, 900);
