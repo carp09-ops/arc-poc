@@ -7,7 +7,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
 });
 
 let refreshTimer = null;
-let lastSetId = null;
+let observedOptions = null;
+let optionsObserver = null;
 
 function removeBadge() {
   document.getElementById('workoutEngineSource')?.remove();
@@ -35,7 +36,6 @@ function renderBadge(row) {
 }
 
 async function refreshBadge() {
-  clearTimeout(refreshTimer);
   const options = document.getElementById('workoutOptions');
   if (!options || options.classList.contains('hidden') || !options.children.length) {
     removeBadge();
@@ -53,11 +53,6 @@ async function refreshBadge() {
       .limit(1)
       .maybeSingle();
     if (error || !data) return;
-
-    // Avoid attaching an old source label to stale DOM after a navigation race.
-    const ageMs = Date.now() - new Date(data.generated_at).getTime();
-    if (ageMs > 30 * 60 * 1000 && data.id === lastSetId) return;
-    lastSetId = data.id;
     renderBadge(data);
   } catch (_) {
     // Source transparency is an enhancement; recommendations remain usable if it cannot render.
@@ -69,12 +64,26 @@ function scheduleRefresh() {
   refreshTimer = setTimeout(refreshBadge, 180);
 }
 
-const observer = new MutationObserver(scheduleRefresh);
-observer.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+function installObserver() {
+  const options = document.getElementById('workoutOptions');
+  if (!options || options === observedOptions) return;
+  optionsObserver?.disconnect();
+  observedOptions = options;
+  optionsObserver = new MutationObserver(scheduleRefresh);
+  optionsObserver.observe(options, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] });
+  scheduleRefresh();
+}
 
-window.addEventListener('DOMContentLoaded', scheduleRefresh);
-window.addEventListener('pageshow', scheduleRefresh);
+window.addEventListener('DOMContentLoaded', installObserver);
+window.addEventListener('pageshow', () => {
+  installObserver();
+  scheduleRefresh();
+});
+setTimeout(installObserver, 100);
+setTimeout(installObserver, 700);
 supabase.auth.onAuthStateChange((_event, session) => {
-  if (session?.user) scheduleRefresh();
-  else removeBadge();
+  if (session?.user) {
+    installObserver();
+    scheduleRefresh();
+  } else removeBadge();
 });
