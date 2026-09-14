@@ -16,6 +16,22 @@ function titleCase(value = '') {
   return String(value).split('_').map(x => x ? x[0].toUpperCase() + x.slice(1) : '').join(' ');
 }
 
+function stageFromPercent(percent = 0) {
+  const pct = Math.max(0, Number(percent) || 0);
+  if (pct >= 80) return { key:'in_your_arc', label:'In Your Arc' };
+  if (pct >= 60) return { key:'closing_the_arc', label:'Closing the Arc' };
+  return { key:'build_momentum', label:'Build momentum' };
+}
+
+function setGaugeState(el, label, sublabel) {
+  if (!el) return;
+  const strong = el.querySelector('.arc-gauge-inner strong');
+  const small = el.querySelector('.arc-gauge-inner span');
+  if (strong) strong.textContent = label;
+  if (small) small.textContent = sublabel;
+  el.dataset.arcStage = label.toLowerCase().replaceAll(' ', '-');
+}
+
 function ensureArcSummary() {
   const story = document.querySelector('.arc-story-grid');
   if (!story || $('arcPeriodSummary')) return;
@@ -44,15 +60,12 @@ function renderArc(row) {
   setGauge($('arcGauge'), visual);
   setGauge($('arcLargeGauge'), visual);
 
-  const heroGaugeLabel = $('arcGaugeLabel');
-  const largeGaugeLabel = document.querySelector('#arcLargeGauge .arc-gauge-inner span');
-
   if (learning) {
-    const weekly = weeklyTarget ? `${weeklyCompleted}/${weeklyTarget}` : '—';
-    if ($('arcPercent')) $('arcPercent').textContent = weekly;
-    if (heroGaugeLabel) heroGaugeLabel.textContent = 'THIS WEEK';
-    if ($('arcLargePercent')) $('arcLargePercent').textContent = weekly;
-    if (largeGaugeLabel) largeGaugeLabel.textContent = 'THIS WEEK';
+    const weeklyRate = weeklyTarget > 0 ? (weeklyCompleted / weeklyTarget) * 100 : 0;
+    const stage = stageFromPercent(weeklyRate);
+    setGaugeState($('arcGauge'), stage.label, 'LEARNING');
+    setGaugeState($('arcLargeGauge'), stage.label, 'LEARNING');
+
     if ($('consistencyMetric')) $('consistencyMetric').textContent = 'Learning';
     if ($('workoutsMetric')) $('workoutsMetric').textContent = weeklyCompleted;
     if ($('workoutsMetricSub')) $('workoutsMetricSub').textContent = `${weeklyTarget} planned this week`;
@@ -70,6 +83,7 @@ function renderArc(row) {
 
   const pct = Math.round(actual || 0);
   const expected = Number(row.expected_workouts || 0);
+  const stage = stageFromPercent(pct);
   const stateCopy = {
     build_momentum: ['Build momentum.', 'The target is still within reach. One deliberate session can change the shape of the week.'],
     closing_the_arc: ['Closing the Arc.', 'You are close to the success zone. Keep the pressure on without chasing perfection.'],
@@ -77,10 +91,8 @@ function renderArc(row) {
   };
   const [headline, copy] = stateCopy[row.arc_state] || stateCopy.build_momentum;
 
-  if ($('arcPercent')) $('arcPercent').textContent = `${pct}%`;
-  if (heroGaugeLabel) heroGaugeLabel.textContent = row.arc_state === 'in_your_arc' ? 'ARC COMPLETE' : 'CONSISTENCY';
-  if ($('arcLargePercent')) $('arcLargePercent').textContent = `${pct}%`;
-  if (largeGaugeLabel) largeGaugeLabel.textContent = 'CONSISTENCY';
+  setGaugeState($('arcGauge'), stage.label, `${pct}% CONSISTENCY`);
+  setGaugeState($('arcLargeGauge'), stage.label, `${pct}% CONSISTENCY`);
   if ($('consistencyMetric')) $('consistencyMetric').textContent = `${pct}%`;
   if ($('heroHeadline')) $('heroHeadline').textContent = headline;
   if ($('heroSubhead')) $('heroSubhead').textContent = copy;
