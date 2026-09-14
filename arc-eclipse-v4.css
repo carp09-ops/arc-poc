@@ -1,0 +1,34 @@
+/* Arc eclipse v4: use the generated photorealistic eclipse itself as the Arc. */
+.arc-gauge{
+  --progress:0deg;
+  position:relative!important;
+  overflow:hidden!important;
+  isolation:isolate!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:
+    linear-gradient(rgba(2,6,8,.56),rgba(2,6,8,.56)),
+    url('./assets/arc-eclipse-v4.svg') center/cover no-repeat!important;
+  box-shadow:0 0 34px rgba(255,143,43,.20),0 18px 46px rgba(2,8,10,.32)!important;
+}
+.arc-gauge::before{
+  content:""!important;
+  position:absolute!important;
+  inset:0!important;
+  border-radius:inherit!important;
+  background:url('./assets/arc-eclipse-v4.svg') center/cover no-repeat!important;
+  -webkit-mask-image:conic-gradient(from -90deg,#000 0deg,#000 var(--progress),transparent var(--progress),transparent 360deg)!important;
+  mask-image:conic-gradient(from -90deg,#000 0deg,#000 var(--progress),transparent var(--progress),transparent 360deg)!important;
+  z-index:1!important;
+  pointer-events:none!important;
+  filter:none!important;
+  opacity:1!important;
+}
+.arc-gauge::after{content:none!important;display:none!important}
+.arc-gauge-inner{position:relative!important;z-index:3!important;background:transparent!important;border:0!important;box-shadow:none!important}
+.arc-gauge-inner strong{color:#fff!important;text-shadow:0 2px 14px rgba(0,0,0,.95)!important}
+.arc-gauge-inner span{color:#f6cf8a!important;text-shadow:0 2px 10px rgba(0,0,0,.95)!important}
+.arc-gauge-wrap>small{color:rgba(255,255,255,.88)!important;text-shadow:0 1px 5px rgba(0,0,0,.75)}
+.arc-gauge.large{width:300px!important;max-width:100%!important;box-shadow:0 0 50px rgba(255,143,43,.24),0 24px 65px rgba(3,9,11,.28)!important}
+.eclipse-credit{display:none!important}
+@media(max-width:680px){.arc-gauge.large{width:235px!important}}
