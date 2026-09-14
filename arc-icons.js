@@ -14,6 +14,7 @@ const ICONS={
   ring:'<circle cx="12" cy="12" r="7.5"/><circle cx="12" cy="12" r="4.5"/>',
   heart:'<path d="M20.8 4.6a5.3 5.3 0 0 0-7.5 0L12 5.9l-1.3-1.3a5.3 5.3 0 0 0-7.5 7.5L12 21l8.8-8.9a5.3 5.3 0 0 0 0-7.5Z"/><path d="M7 12h2l1.2-2.3 2.1 5 1.3-2.7H17"/>',
   utensils:'<path d="M7 3v7M4.5 3v4.5A2.5 2.5 0 0 0 7 10v11M9.5 3v4.5A2.5 2.5 0 0 1 7 10"/><path d="M16 3v18M16 3c2 0 3.5 2.3 3.5 5.2S18 13 16 13"/>',
+  upload:'<path d="M12 16V4"/><path d="m7.5 8.5 4.5-4.5 4.5 4.5"/><path d="M5 14v6h14v-6"/>',
   favorite:'<path d="M20.8 4.6a5.3 5.3 0 0 0-7.5 0L12 5.9l-1.3-1.3a5.3 5.3 0 0 0-7.5 7.5L12 21l8.8-8.9a5.3 5.3 0 0 0 0-7.5Z"/>',
   clock:'<circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/>',
   check:'<circle cx="12" cy="12" r="8"/><path d="m8.5 12 2.3 2.3 4.8-5"/>',
@@ -36,12 +37,12 @@ function svg(name,extra=''){
 
 function iconizeNav(root=document){
   root.querySelectorAll?.('.nav-item[data-view]').forEach(btn=>{
-    const name=btn.dataset.view;
     const first=btn.querySelector(':scope > span:first-child');
-    if(first && first.dataset.arcIconized!=='1'){
-      first.innerHTML=svg(name);
-      first.dataset.arcIconized='1';
-    }
+    if(!first)return;
+    const expected=({today:'home',train:'train',body:'body',arc:'eclipse',history:'history',connections:'connections'}[btn.dataset.view]);
+    if(first.querySelector(`.arc-icon[data-arc-icon="${expected}"]`))return;
+    first.innerHTML=svg(btn.dataset.view);
+    first.dataset.arcIconized='1';
   });
 }
 
@@ -49,18 +50,17 @@ function iconizeMetrics(root=document){
   root.querySelectorAll?.('.metric-card').forEach(card=>{
     const label=card.querySelector('.metric-label')?.textContent?.trim().toLowerCase();
     const icon=card.querySelector('.metric-icon');
-    if(!icon||icon.dataset.arcIconized==='1')return;
+    if(!icon)return;
     const name=label==='workouts'?'workout':label==='consistency'?'consistency':label==='body'?'scale':null;
-    if(name){icon.innerHTML=svg(name);icon.dataset.arcIconized='1';}
+    if(name&&!icon.querySelector(`.arc-icon[data-arc-icon="${name}"]`)){icon.innerHTML=svg(name);icon.dataset.arcIconized='1';}
   });
 }
 
 function iconizeWorkoutTiers(root=document){
   root.querySelectorAll?.('.workout-card .workout-tier').forEach(el=>{
-    if(el.dataset.arcIconized==='1')return;
     const card=el.closest('.workout-card');
     const name=card?.classList.contains('restore')?'restore':card?.classList.contains('push')?'push':'build';
-    el.innerHTML=svg(name);el.dataset.arcIconized='1';
+    if(!el.querySelector(`.arc-icon[data-arc-icon="${name}"]`)){el.innerHTML=svg(name);el.dataset.arcIconized='1';}
   });
 }
 
@@ -68,23 +68,29 @@ function iconizeConnections(root=document){
   root.querySelectorAll?.('.connection-card').forEach(card=>{
     const title=card.querySelector('h3')?.textContent?.trim().toLowerCase()||'';
     const icon=card.querySelector('.device-icon');
-    if(!icon||icon.dataset.arcIconized==='1')return;
+    if(!icon)return;
     let name='connections';
     if(title.includes('oura'))name='ring';
     else if(title.includes('apple'))name='heart';
-    else if(title.includes('nutrition')||title.includes('lose it')){name='utensils';card.dataset.arcConnection='nutrition';}
-    icon.innerHTML=svg(name);icon.dataset.arcIconized='1';
+    if(!icon.querySelector(`.arc-icon[data-arc-icon="${name}"]`)){icon.innerHTML=svg(name);icon.dataset.arcIconized='1';}
+  });
+  root.querySelectorAll?.('.nutrition-source-card').forEach(card=>{
+    const key=card.dataset.nutritionSource;
+    const icon=card.querySelector('.nutrition-source-icon');
+    if(!icon)return;
+    const name=key==='apple_health'?'heart':key==='manual_import'?'upload':'utensils';
+    card.dataset.arcConnection='nutrition';
+    if(!icon.querySelector(`.arc-icon[data-arc-icon="${name}"]`)){icon.innerHTML=svg(name);icon.dataset.arcIconized='1';}
   });
 }
 
 function iconizeFavorites(root=document){
   root.querySelectorAll?.('.favorite-history').forEach(btn=>{
-    const active=btn.classList.contains('active');
-    btn.innerHTML=svg('favorite');
-    btn.setAttribute('aria-pressed',active?'true':'false');
+    if(!btn.querySelector('.arc-icon'))btn.innerHTML=svg('favorite');
+    btn.setAttribute('aria-pressed',btn.classList.contains('active')?'true':'false');
   });
   const active=root.querySelector?.('#edgeFavoriteActive');
-  if(active && !active.querySelector('.arc-icon')){
+  if(active&&!active.querySelector('.arc-icon')){
     const favorited=/favorited/i.test(active.textContent||'');
     active.dataset.arcFavorited=favorited?'true':'false';
     active.innerHTML=`${svg('favorite')}<span>${favorited?'Favorited':'Favorite'}</span>`;
@@ -92,8 +98,8 @@ function iconizeFavorites(root=document){
 }
 
 function iconizeHistoryMeta(root=document){
-  root.querySelectorAll?.('.history-meta span').forEach(span=>{
-    if(span.dataset.arcIconized==='1')return;
+  root.querySelectorAll?.('.history-meta > span').forEach(span=>{
+    if(span.querySelector('.arc-icon'))return;
     let text=span.textContent.trim(),name=null;
     if(text.startsWith('◷')){name='clock';text=text.slice(1).trim();}
     else if(text.startsWith('◇')){name='consistency';text=text.slice(1).trim();}
@@ -106,7 +112,9 @@ function iconizeHistoryMeta(root=document){
 function actionIcon(name){return svg(name,'arc-icon-sm');}
 function iconizeActions(root=document){
   root.querySelectorAll?.('button,a').forEach(el=>{
-    if(el.dataset.arcActionIconized==='1'||el.closest('.nav-item')||el.classList.contains('favorite-history'))return;
+    if(el.closest('.nav-item')||el.classList.contains('favorite-history')||el.classList.contains('starting-point-action'))return;
+    if(el.dataset.arcActionIconized==='1'&&el.querySelector('.arc-icon'))return;
+    if(el.children.length>1)return;
     const raw=el.textContent?.trim()||'';
     let name=null,text=raw;
     if(/^\+\s*/.test(text)){name='plus';text=text.replace(/^\+\s*/,'');}
@@ -120,8 +128,10 @@ function iconizeActions(root=document){
     el.dataset.arcActionIconized='1';
   });
   const logout=root.querySelector?.('#logoutButton');
-  if(logout && logout.dataset.arcActionIconized!=='1'){
-    logout.innerHTML=`${actionIcon('logout')}<span>Sign out</span>`;logout.classList.add('arc-icon-action');logout.dataset.arcActionIconized='1';
+  if(logout&&!logout.querySelector('.arc-icon')){
+    logout.innerHTML=`${actionIcon('logout')}<span>Sign out</span>`;
+    logout.classList.add('arc-icon-action');
+    logout.dataset.arcActionIconized='1';
   }
 }
 
@@ -132,8 +142,16 @@ function iconize(root=document){
 iconize();
 let queued=false;
 const observer=new MutationObserver(mutations=>{
-  if(queued)return;queued=true;
-  requestAnimationFrame(()=>{queued=false;for(const m of mutations){for(const node of m.addedNodes){if(node.nodeType===1)iconize(node);} if(m.type==='characterData'&&m.target.parentElement)iconize(m.target.parentElement);}iconize(document);});
+  if(queued)return;
+  queued=true;
+  requestAnimationFrame(()=>{
+    queued=false;
+    for(const m of mutations){
+      for(const node of m.addedNodes){if(node.nodeType===1)iconize(node);}
+      if(m.type==='characterData'&&m.target.parentElement)iconize(m.target.parentElement);
+    }
+    iconize(document);
+  });
 });
 observer.observe(document.body,{childList:true,subtree:true,characterData:true});
 window.addEventListener('pageshow',()=>iconize());
