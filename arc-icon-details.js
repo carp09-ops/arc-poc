@@ -1,4 +1,4 @@
-const SPRITE='./assets/arc-icons.svg?v=ready13';
+const SPRITE='./assets/arc-icons.svg?v=ready14';
 function detailIcon(name){return `<svg class="arc-icon" data-arc-detail-icon="${name}" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="${SPRITE}#${name}"></use></svg>`;}
 
 function setActionIcon(button,name){
