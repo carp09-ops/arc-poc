@@ -1,7 +1,6 @@
-const CACHE_VERSION='arc-ready10';
+const CACHE_VERSION='arc-ready11';
 const SHELL_CACHE=`${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE=`${CACHE_VERSION}-runtime`;
-const APP_ROOT='./';
 
 // Keep the complete first-party Arc shell available after the PWA has installed.
 // Version query strings are intentionally omitted here; fetch matching below uses
@@ -26,6 +25,7 @@ const PRECACHE=[
   './arc-icon-details.css',
   './pwa-polish.css',
   './what-arc-sees.css',
+  './privacy-controls.css',
   './startup-loading.js',
   './arc-motion-bootstrap.js',
   './readiness-sprint.js',
@@ -42,6 +42,7 @@ const PRECACHE=[
   './arc-icon-details.js',
   './pwa-polish.js',
   './what-arc-sees.js',
+  './privacy-controls.js',
   './assets/arc-icon-180.png',
   './assets/arc-icon-192.png',
   './assets/arc-icon-512.png',
@@ -108,6 +109,17 @@ self.addEventListener('fetch',event=>{
     const runtime=await caches.open(RUNTIME_CACHE);
     const exact=await runtime.match(request);
     const shell=await caches.match(request,{ignoreSearch:true});
+    const isBootstrap=/\/(?:app\.js|styles\.css|manifest\.webmanifest)$/i.test(url.pathname);
+
+    if(isBootstrap){
+      try{
+        const fresh=await fetch(request,{cache:'no-store'});
+        if(fresh.ok) runtime.put(request,fresh.clone()).catch(()=>{});
+        return fresh;
+      }catch(_){
+        return exact || shell || Response.error();
+      }
+    }
 
     const network=fetch(request).then(response=>{
       if(response.ok) runtime.put(request,response.clone()).catch(()=>{});
