@@ -21,7 +21,14 @@ The goal is aggressive consistency without requiring perfection. Reaching 80% ad
 
 The prior Arc application code and application schema were removed before Phase 1 began. Supabase Auth was intentionally retained so existing login access could be reused.
 
-The current web shell is connected to the new Supabase schema with RLS enabled on every user-data table. The workout recommendation UX is functional using a deterministic **Phase 1 rules engine** (`phase1-rules-v1`) while the secure AI generation endpoint is built next. This lets us validate the product flow and stored recommendation contract before introducing model variability.
+The current web shell is connected to the new Supabase schema with RLS enabled on every user-data table. Workout generation now runs through the protected `generate-workouts` Supabase Edge Function instead of direct client-side recommendation writes.
+
+The generator has two execution paths:
+
+1. **Model path** — when `OPENAI_API_KEY` is configured in the Supabase function environment, Arc requests strict structured workout output from **GPT-5.6 Luna**.
+2. **Safe fallback** — if the secret is not configured or model generation fails validation, the Edge Function falls back automatically to the deterministic server rules engine.
+
+The browser never receives the model key, and both paths persist the same recommendation contract so the UI and analytics remain stable.
 
 ## Data model principles
 
@@ -30,7 +37,7 @@ The current web shell is connected to the new Supabase schema with RLS enabled o
 - Body measurements are stored in canonical metric units.
 - Generated workout options are separate from completed workout sessions.
 - Wearable data is normalized into daily metrics instead of recreating vendor apps.
-- OAuth secrets are never stored in public application tables.
+- OAuth secrets and model secrets are never stored in public application tables or browser code.
 - Arc status is derived from completed qualifying workouts versus the user's historical commitment.
 
 ## Arc calculation
@@ -42,6 +49,14 @@ For the active rolling window:
 - **80%+:** In Your Arc
 
 The visual Arc completion is `actual adherence / 80`, capped at 100%. Therefore **80% actual adherence renders as a fully completed Arc**. Higher adherence can still be shown as information, but does not create a better-than-complete score.
+
+## Source layout
+
+- `app.js` — lightweight module loader
+- `core-app.js` — Phase 1 application shell and non-generator workflows
+- `edge-workouts.js` — authenticated readiness/workout flow that invokes the Edge Function
+- `supabase/functions/generate-workouts/index.ts` — protected workout generator
+- `supabase/config.toml` — Edge Function auth configuration
 
 ## Deliberately out of scope
 
