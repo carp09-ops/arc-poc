@@ -114,6 +114,7 @@ function iconize(root=document){
   iconizeNav(root);iconizeMetrics(root);iconizeWorkoutTiers(root);iconizeConnections(root);iconizeFavorites(root);iconizeHistoryMeta(root);iconizeActions(root);
 }
 
+window.ArcIcons={svg,iconize};
 iconize();
 let queued=false;
 const observer=new MutationObserver(mutations=>{
@@ -128,4 +129,4 @@ const observer=new MutationObserver(mutations=>{
 observer.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('pageshow',()=>iconize());
 
-export { svg };
+export { svg, iconize };
