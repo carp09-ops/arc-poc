@@ -1,0 +1,79 @@
+/* What Arc sees — concise Today intelligence */
+.arc-sees-card{
+  position:relative;
+  overflow:hidden;
+}
+.arc-sees-card::after{
+  content:"";
+  position:absolute;
+  width:150px;
+  height:150px;
+  right:-62px;
+  top:-72px;
+  border-radius:50%;
+  border:1px solid rgba(201,169,110,.24);
+  box-shadow:0 0 0 18px rgba(201,169,110,.025),0 0 0 38px rgba(201,169,110,.018);
+  pointer-events:none;
+}
+.arc-sees-card .metric-label{
+  position:relative;
+  z-index:1;
+}
+.arc-sees-card blockquote{
+  position:relative;
+  z-index:1;
+  font-family:var(--serif);
+  font-size:clamp(1.02rem,1.4vw,1.18rem);
+  line-height:1.28;
+  margin:14px 0 16px;
+  letter-spacing:-.012em;
+  text-wrap:pretty;
+}
+.arc-sees-sources{
+  position:relative;
+  z-index:1;
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:7px 10px;
+  margin-top:auto;
+}
+.arc-sees-source{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  color:#c4d0cd;
+  font-size:.64rem;
+  font-weight:700;
+  letter-spacing:.055em;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.arc-sees-source::before{
+  content:"";
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:rgba(232,238,236,.28);
+  box-shadow:0 0 0 1px rgba(255,255,255,.08);
+}
+.arc-sees-source.is-ready{color:#f3eee4;}
+.arc-sees-source.is-ready::before{
+  background:var(--champagne);
+  box-shadow:0 0 0 3px rgba(201,169,110,.11);
+}
+.arc-sees-card .gold-rule{
+  position:relative;
+  z-index:1;
+  margin-top:13px;
+}
+.arc-sees-card.arc-sees-learning blockquote{color:#e6ece9;}
+
+@media(max-width:900px){
+  .arc-sees-card blockquote{font-size:1.08rem;line-height:1.3;}
+  .arc-sees-sources{gap:8px 12px;}
+}
+
+@media(prefers-reduced-motion:no-preference){
+  .arc-sees-source.is-ready::before{transition:background-color .25s ease,box-shadow .25s ease;}
+}
