@@ -22,26 +22,82 @@ async function currentUser() {
   return data.user;
 }
 
-function renderWorkoutOptions(options, summary) {
+function youtubeFormUrl(exerciseName) {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(`${exerciseName} proper form tutorial`)}`;
+}
+
+function whyArcOffers(tier, context, isRecommended) {
+  const energy = Number(context.energy);
+  const soreness = Number(context.soreness);
+  const minutes = Number(context.available_minutes);
+  const desired = context.desired_effort;
+  const prefix = isRecommended ? 'Arc recommends this because' : 'Arc keeps this option available because';
+
+  if (tier === 'restore') {
+    if (energy <= 2 || soreness >= 4) return `${prefix} you reported ${energy}/5 energy and ${soreness}/5 soreness. It protects the habit while lowering the cost of showing up.`;
+    return `${prefix} consistency still counts on lighter days. This gives you a ${Math.min(minutes, 20)}-minute path that keeps momentum without forcing intensity.`;
+  }
+  if (tier === 'push') {
+    if (energy >= 4 && soreness <= 2) return `${prefix} your ${energy}/5 energy and ${soreness}/5 soreness suggest you have room for a harder session today.`;
+    return `${prefix} you may still want a higher-effort choice. Use it only if your warm-up confirms that your body feels ready.`;
+  }
+  if (desired === 'build') return `${prefix} you asked for a balanced effort, with ${minutes} minutes available. It is the middle path between recovery and an all-out day.`;
+  return `${prefix} your ${energy}/5 energy, ${soreness}/5 soreness and ${minutes}-minute window support a productive middle-ground session.`;
+}
+
+async function loadExercisePreviews(options) {
+  const ids = options.map(o => o.id).filter(Boolean);
+  if (!ids.length) return new Map();
+  const { data, error } = await supabase.from('workout_option_exercises')
+    .select('workout_option_id,sort_order,exercise_name,target_sets,target_reps')
+    .in('workout_option_id', ids)
+    .order('sort_order');
+  if (error) throw error;
+  const grouped = new Map();
+  for (const row of data || []) {
+    if (!grouped.has(row.workout_option_id)) grouped.set(row.workout_option_id, []);
+    grouped.get(row.workout_option_id).push(row);
+  }
+  return grouped;
+}
+
+async function renderWorkoutOptions(options, summary, context) {
   document.getElementById('recommendationSummary')?.remove();
   const el = $('workoutOptions');
   if (!el) return;
   el.classList.remove('hidden');
   $('activeWorkout')?.classList.add('hidden');
 
+  const exerciseMap = await loadExercisePreviews(options);
   const order = { restore: 0, build: 1, push: 2 };
   const icons = { restore: '◌', build: '△', push: 'ϟ' };
   options.sort((a, b) => order[a.tier] - order[b.tier]);
-  el.innerHTML = options.map(o => `
-    <article class="workout-card ${o.tier} ${o.is_recommended ? 'recommended' : ''}">
-      ${o.is_recommended ? '<span class="recommend-badge">ARC RECOMMENDS</span>' : ''}
-      <div class="workout-tier">${icons[o.tier] || '△'}</div>
-      <h3>${escapeHTML(o.title)}</h3>
-      <span class="workout-meta">${escapeHTML(o.focus || '')}</span>
-      <div class="workout-points"><span>◷ ${o.duration_minutes} min</span><span>◇ ${escapeHTML(o.intensity)} intensity</span></div>
-      <p>${escapeHTML(o.rationale || '')}</p>
-      <button class="button ${o.is_recommended ? 'button-primary' : ''}" data-edge-start-option="${o.id}" data-edge-option-name="${escapeHTML(o.title)}">Choose ${escapeHTML(o.title)}</button>
-    </article>`).join('');
+
+  el.innerHTML = options.map(o => {
+    const moves = exerciseMap.get(o.id) || [];
+    const why = whyArcOffers(o.tier, context, o.is_recommended);
+    const preview = moves.map(move => `
+      <div class="preview-move">
+        <div>
+          <strong>${escapeHTML(move.exercise_name)}</strong>
+          <small>${move.target_sets || ''} sets · ${escapeHTML(move.target_reps || '')}</small>
+        </div>
+        <a class="form-link" href="${youtubeFormUrl(move.exercise_name)}" target="_blank" rel="noopener noreferrer">Form ↗</a>
+      </div>`).join('');
+
+    return `
+      <article class="workout-card ${o.tier} ${o.is_recommended ? 'recommended' : ''}">
+        ${o.is_recommended ? '<span class="recommend-badge">ARC RECOMMENDS</span>' : ''}
+        <div class="workout-tier">${icons[o.tier] || '△'}</div>
+        <h3>${escapeHTML(o.title)}</h3>
+        <span class="workout-meta">${escapeHTML(o.focus || '')}</span>
+        <div class="workout-points"><span>◷ ${o.duration_minutes} min</span><span>◇ ${escapeHTML(o.intensity)} intensity</span></div>
+        <div class="why-box"><strong>${o.is_recommended ? 'Why Arc recommends this' : 'Why Arc offers this'}</strong><p>${escapeHTML(why)}</p></div>
+        <p>${escapeHTML(o.rationale || '')}</p>
+        <div class="workout-preview"><span>Workout preview</span>${preview || '<small>Preview unavailable.</small>'}</div>
+        <button class="button ${o.is_recommended ? 'button-primary' : ''}" data-edge-start-option="${o.id}" data-edge-option-name="${escapeHTML(o.title)}">Choose ${escapeHTML(o.title)}</button>
+      </article>`;
+  }).join('');
 
   el.insertAdjacentHTML('beforebegin', `<p id="recommendationSummary" class="eyebrow" style="margin-top:18px">${escapeHTML(summary || '')}</p>`);
   el.querySelectorAll('[data-edge-start-option]').forEach(btn => {
@@ -93,7 +149,10 @@ function renderActiveWorkout(session) {
       <button id="edgeFavoriteActive" class="text-button">♡ Favorite</button>
     </div>
     <div class="exercise-log">${session.plan.map(x => `
-      <div class="exercise-log-row"><strong>${escapeHTML(x.exercise_name)}</strong><small>${x.target_sets || ''} sets · ${escapeHTML(x.target_reps || '')}</small></div>`).join('')}</div>
+      <div class="exercise-log-row">
+        <div><strong>${escapeHTML(x.exercise_name)}</strong><small>${x.target_sets || ''} sets · ${escapeHTML(x.target_reps || '')}</small></div>
+        <a class="form-link" href="${youtubeFormUrl(x.exercise_name)}" target="_blank" rel="noopener noreferrer">Watch form ↗</a>
+      </div>`).join('')}</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:22px">
       <button id="edgeCompleteWorkout" class="button button-primary">Complete workout</button>
       <button id="edgeAbandonWorkout" class="button">End without counting</button>
@@ -133,7 +192,6 @@ function install() {
   const original = $('readinessForm');
   if (!original || original.dataset.edgeWorkouts === 'true') return;
 
-  // Cloning intentionally removes the original anonymous submit handler from core-app.js.
   const form = original.cloneNode(true);
   form.dataset.edgeWorkouts = 'true';
   original.replaceWith(form);
@@ -158,7 +216,7 @@ function install() {
       if (error) throw error;
       if (!data?.options?.length) throw new Error(data?.error || 'Arc could not build workouts right now.');
 
-      renderWorkoutOptions(data.options, data.summary);
+      await renderWorkoutOptions(data.options, data.summary, payload);
       toast('Three paths forward. You choose.');
     } catch (error) {
       toast(error.message || 'Arc could not build workouts right now.');
