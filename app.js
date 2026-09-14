@@ -18,6 +18,7 @@ addStyle('./qa-enhancements.css');
 addStyle('./starting-point.css');
 addStyle('./arc-motion-bootstrap.css');
 addStyle('./arc-icons.css');
+addStyle('./arc-icon-details.css');
 
 import './startup-loading.js?v=ready6';
 import './arc-motion-bootstrap.js?v=ready6';
@@ -32,3 +33,4 @@ import './body-analytics.js?v=ready6';
 import './training-roundout.js?v=ready6';
 import './nutrition-plumbing.js?v=ready6';
 import './arc-icons.js?v=ready6';
+import './arc-icon-details.js?v=ready6';
