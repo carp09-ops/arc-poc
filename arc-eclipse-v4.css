@@ -15,7 +15,7 @@
 }
 
 /* Bright version of the photo, intersected by:
-   1) a radial mask that isolates the actual corona, and
+   1) a feathered radial mask that isolates the real corona, and
    2) the live conic progress value. */
 .arc-gauge::before {
   content: '' !important;
@@ -24,11 +24,11 @@
   border-radius: inherit !important;
   background: url('./assets/arc-eclipse-v4.svg?v=ready4') center/cover no-repeat !important;
   -webkit-mask-image:
-    radial-gradient(circle at 52% 51%, transparent 0 26%, #000 28% 42%, transparent 47%),
+    radial-gradient(circle at 52% 51%, transparent 0 26%, #000 28% 34%, rgba(0,0,0,.86) 38%, rgba(0,0,0,.35) 43%, transparent 50%),
     conic-gradient(from -90deg at 52% 51%, #000 0deg, #000 var(--progress), transparent var(--progress), transparent 360deg) !important;
   -webkit-mask-composite: source-in !important;
   mask-image:
-    radial-gradient(circle at 52% 51%, transparent 0 26%, #000 28% 42%, transparent 47%),
+    radial-gradient(circle at 52% 51%, transparent 0 26%, #000 28% 34%, rgba(0,0,0,.86) 38%, rgba(0,0,0,.35) 43%, transparent 50%),
     conic-gradient(from -90deg at 52% 51%, #000 0deg, #000 var(--progress), transparent var(--progress), transparent 360deg) !important;
   mask-composite: intersect !important;
   z-index: 1 !important;
