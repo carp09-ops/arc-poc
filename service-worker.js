@@ -1,4 +1,4 @@
-const CACHE_VERSION='arc-ready11';
+const CACHE_VERSION='arc-ready12';
 const SHELL_CACHE=`${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE=`${CACHE_VERSION}-runtime`;
 
@@ -26,6 +26,7 @@ const PRECACHE=[
   './pwa-polish.css',
   './what-arc-sees.css',
   './privacy-controls.css',
+  './workout-engine-badge.css',
   './startup-loading.js',
   './arc-motion-bootstrap.js',
   './readiness-sprint.js',
@@ -43,6 +44,7 @@ const PRECACHE=[
   './pwa-polish.js',
   './what-arc-sees.js',
   './privacy-controls.js',
+  './workout-engine-badge.js',
   './assets/arc-icon-180.png',
   './assets/arc-icon-192.png',
   './assets/arc-icon-512.png',
