@@ -3,7 +3,7 @@
   "name": "Arc — Progress has a shape",
   "short_name": "Arc",
   "description": "Aggressive consistency without perfection.",
-  "start_url": "./",
+  "start_url": "./?v=ready13",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
