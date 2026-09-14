@@ -1,0 +1,43 @@
+/* Launch hardening: privacy, export, and account deletion */
+.arc-privacy-controls{
+  margin-top:26px;
+  padding-top:24px;
+  border-top:1px solid rgba(116,123,119,.16);
+  display:grid;
+  gap:10px;
+}
+.arc-privacy-heading{padding:0 2px 8px;}
+.arc-privacy-heading h3{margin:4px 0 6px;font-size:1.55rem;}
+.arc-privacy-heading p{margin:0;color:var(--slate);line-height:1.55;font-size:.86rem;}
+.privacy-action{margin-top:0;}
+.arc-privacy-details{
+  border:1px solid rgba(116,123,119,.16);
+  border-radius:16px;
+  background:rgba(232,238,240,.34);
+  padding:16px 17px 4px;
+  color:var(--slate);
+}
+.arc-privacy-details p{font-size:.82rem;line-height:1.55;margin:0 0 14px;}
+.arc-privacy-details strong{color:var(--ink);}
+.delete-account-action{margin-top:6px;border-color:rgba(184,110,80,.3)!important;}
+.delete-account-action strong,.delete-account-action b{color:#9c523b;}
+.delete-arc-confirm{
+  border:1px solid rgba(184,110,80,.26);
+  background:rgba(184,110,80,.07);
+  border-radius:16px;
+  padding:17px;
+  display:grid;
+  gap:14px;
+}
+.delete-arc-confirm p{margin:0;color:var(--slate);line-height:1.5;font-size:.83rem;}
+.delete-arc-confirm p strong{color:#7e4634;}
+.delete-arc-confirm label{display:grid;gap:7px;color:var(--slate);font-size:.78rem;font-weight:700;}
+.delete-arc-confirm input{background:#fff;}
+.delete-arc-actions{display:flex;gap:10px;flex-wrap:wrap;}
+.arc-danger-button{background:#8f4b36!important;color:#fff!important;box-shadow:none!important;}
+.arc-danger-button:disabled{opacity:.42;cursor:not-allowed;transform:none!important;}
+
+@media(max-width:680px){
+  .arc-privacy-controls{margin-top:20px;padding-top:20px;}
+  .delete-arc-actions .button{width:100%;}
+}
