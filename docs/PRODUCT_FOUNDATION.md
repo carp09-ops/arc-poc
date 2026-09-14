@@ -21,7 +21,7 @@ The visual Arc can be fully achieved at 80% while still showing the user's actua
 ### Today
 - Hero Arc / current consistency state
 - Primary CTA: **How do you feel today?**
-- Lightweight progress context from recent workouts, body trend, and wearable inputs
+- Lightweight progress context from recent workouts, body trend, wearable inputs and, when available, nutrition context
 
 ### Train
 - Fast daily readiness questionnaire
@@ -37,12 +37,24 @@ The visual Arc can be fully achieved at 80% while still showing the user's actua
 
 ### Arc
 - Explain consistency and progress trends in plain language
-- Combine training, body, and wearable context without manufacturing a vague health score
+- Combine training, body, wearable and nutrition context without manufacturing a vague health score
 
 ### Connections
 - Oura
 - Apple Health / Apple Watch
+- Nutrition sources such as Lose It!, Apple Health or file import
 - Connection settings should live outside the primary daily navigation
+
+## Nutrition design rule
+Nutrition is **context, not another logging workflow**.
+
+- Users should continue logging food in the tool they already use.
+- Arc stores normalized daily totals only when a source is available.
+- Direct Lose It! access is optional, not foundational.
+- Apple Health and file import are valid alternate paths.
+- Nutrition does **not** change workout-consistency Arc completion.
+- Arc may use nutrition context for longitudinal insights once enough reliable data exists.
+- No meal database, barcode scanner, recipe builder or duplicate calorie-entry flow belongs in Arc.
 
 ## UX principles
 - Mobile-first web app
@@ -53,9 +65,10 @@ The visual Arc can be fully achieved at 80% while still showing the user's actua
 - Progress over pressure
 - Explain recommendations when useful
 - Never punish a user visually for choosing Restore
+- More connected data should reduce user effort, not create more screens
 
 ## What we are intentionally not carrying forward
-- Nutrition
+- Native meal logging / food database
 - Community
 - Broad legacy onboarding
 - Legacy signal library
