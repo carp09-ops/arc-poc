@@ -11,6 +11,7 @@ addStyle('./core-roundout.css');
 addStyle('./eclipse-arc.css');
 addStyle('./eclipse-arc-motion.css');
 addStyle('./arc-eclipse-v4.css');
+addStyle('./arc-eclipse-v5.css');
 addStyle('./training-roundout.css');
 addStyle('./nutrition-plumbing.css');
 addStyle('./readiness-sprint.css');
