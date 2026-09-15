@@ -1,0 +1,154 @@
+/* Arc Eclipse v5 — uses the real corona as the progress layer.
+   Drop-in stylesheet intended to override earlier eclipse treatments.
+   Add after existing eclipse CSS files.
+*/
+
+:root {
+  --arc-progress: 0.67; /* 0..1, where 1 means the Arc is visually complete */
+  --arc-progress-deg: calc(var(--arc-progress) * 360deg);
+  --arc-eclipse-size: min(34vw, 280px);
+  --arc-eclipse-glow: 1;
+}
+
+.arc-eclipse,
+.arc-hero-eclipse,
+.arc-visual {
+  position: relative;
+  width: var(--arc-eclipse-size);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  overflow: hidden;
+  isolation: isolate;
+  background: #020305;
+  box-shadow: 0 8px 40px rgba(0,0,0,.28);
+}
+
+/* dim base image */
+.arc-eclipse::before,
+.arc-hero-eclipse::before,
+.arc-visual::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-image: url('./assets/fiery_asymmetric_solar_eclipse.png');
+  background-size: cover;
+  background-position: center;
+  opacity: 0.34;
+  filter: saturate(0.95) brightness(0.9);
+}
+
+/* revealed corona only */
+.arc-eclipse::after,
+.arc-hero-eclipse::after,
+.arc-visual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-image: url('./assets/fiery_asymmetric_solar_eclipse.png');
+  background-size: cover;
+  background-position: center;
+  opacity: 1;
+  filter: saturate(1.15) brightness(calc(1 * var(--arc-eclipse-glow)));
+
+  /* Reveal clockwise using a conic mask, but keep only corona ring using radial mask. */
+  -webkit-mask-image:
+    radial-gradient(circle at center,
+      transparent 0 57%,
+      #000 58% 72%,
+      transparent 73% 100%),
+    conic-gradient(from -90deg,
+      #000 0deg,
+      #000 var(--arc-progress-deg),
+      transparent var(--arc-progress-deg),
+      transparent 360deg);
+  -webkit-mask-composite: source-in;
+          mask-image:
+    radial-gradient(circle at center,
+      transparent 0 57%,
+      #000 58% 72%,
+      transparent 73% 100%),
+    conic-gradient(from -90deg,
+      #000 0deg,
+      #000 var(--arc-progress-deg),
+      transparent var(--arc-progress-deg),
+      transparent 360deg);
+          mask-composite: intersect;
+
+  animation: arcCoronaBreathe 5.6s ease-in-out infinite;
+}
+
+.arc-eclipse__label,
+.arc-hero-eclipse__label,
+.arc-visual__label {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  width: 62%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: rgba(1, 2, 6, 0.88);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 1rem;
+  color: #f6efe4;
+  z-index: 2;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+}
+
+.arc-eclipse__state,
+.arc-hero-eclipse__state,
+.arc-visual__state {
+  font: 600 clamp(.62rem, 1.2vw, .8rem)/1.15 Inter, system-ui, sans-serif;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.arc-eclipse__meta,
+.arc-hero-eclipse__meta,
+.arc-visual__meta {
+  margin-top: .32rem;
+  font: 500 clamp(.54rem, 1vw, .7rem)/1.2 Inter, system-ui, sans-serif;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: rgba(246,239,228,.78);
+}
+
+.arc-eclipse.is-closing::after,
+.arc-hero-eclipse.is-closing::after,
+.arc-visual.is-closing::after {
+  animation: arcCoronaBreathe 5.6s ease-in-out infinite, arcClosingPulse .95s ease-out 1;
+}
+
+.arc-eclipse.is-complete::after,
+.arc-hero-eclipse.is-complete::after,
+.arc-visual.is-complete::after {
+  animation: arcCoronaBreathe 5.6s ease-in-out infinite, arcThresholdFlare 1.2s ease-out 1;
+}
+
+@keyframes arcCoronaBreathe {
+  0%,100% { filter: saturate(1.1) brightness(calc(.98 * var(--arc-eclipse-glow))); }
+  50%     { filter: saturate(1.22) brightness(calc(1.08 * var(--arc-eclipse-glow))); }
+}
+
+@keyframes arcClosingPulse {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.018); }
+  100% { transform: scale(1); }
+}
+
+@keyframes arcThresholdFlare {
+  0%   { opacity: 1; filter: saturate(1.2) brightness(1.08); }
+  22%  { opacity: 1; filter: saturate(1.35) brightness(1.25) drop-shadow(0 0 20px rgba(255,170,65,.35)); }
+  100% { opacity: 1; filter: saturate(1.18) brightness(1.05); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arc-eclipse::after,
+  .arc-hero-eclipse::after,
+  .arc-visual::after {
+    animation: none;
+  }
+}
