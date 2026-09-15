@@ -11,12 +11,5 @@
   "theme_color": "#0B1A2B",
   "orientation": "any",
   "categories": ["health", "fitness", "lifestyle"],
-  "icons": [
-    {
-      "src": "./assets/arc-icon-sunrise.svg?v=ready27",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
-  ]
+  "icons": [{"src":"./assets/arc-icon-sunrise.svg?v=ready27b","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
 }
