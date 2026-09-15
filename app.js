@@ -1,4 +1,4 @@
-const BUILD = 'ready22';
+const BUILD = 'ready23';
 
 const addStyle = (href) => {
   const link = document.createElement('link');
@@ -23,27 +23,26 @@ addStyle('./pwa-polish.css');
 addStyle('./what-arc-sees.css');
 addStyle('./privacy-controls.css');
 addStyle('./workout-engine-badge.css');
-addStyle('./arc-eclipse-v5.css');
-addStyle('./arc-visual-v6.css');
-/* v7 is the final visual authority: real photographed corona, no synthetic spokes. */
-addStyle('./arc-visual-v7.css');
+/* v8 is intentionally the only modern eclipse override. */
+addStyle('./arc-visual-v8.css');
 
-import './pwa-polish.js?v=ready22';
-import './arc-icons.js?v=ready22';
-import './arc-icon-details.js?v=ready22';
-import './startup-loading.js?v=ready22';
-import './arc-motion-bootstrap.js?v=ready22';
-import './readiness-sprint.js?v=ready22';
-import './auth-hardening.js?v=ready22';
-import './core-app.js?v=ready22';
-import './edge-workouts.js?v=ready22';
-import './qa-enhancements.js?v=ready22';
-import './starting-point.js?v=ready22';
-import './arc-roundout.js?v=ready22';
-import './body-analytics.js?v=ready22';
-import './training-roundout.js?v=ready22';
-import './nutrition-plumbing.js?v=ready22';
-import './what-arc-sees.js?v=ready22';
-import './privacy-controls.js?v=ready22';
-import './workout-engine-badge.js?v=ready22';
-import './view-reset.js?v=ready22';
+import './pwa-polish.js?v=ready23';
+import './arc-icons.js?v=ready23';
+import './arc-icon-details.js?v=ready23';
+import './startup-loading.js?v=ready23';
+import './arc-motion-bootstrap.js?v=ready23';
+import './readiness-sprint.js?v=ready23';
+import './auth-hardening.js?v=ready23';
+import './core-app.js?v=ready23';
+import './edge-workouts.js?v=ready23';
+import './qa-enhancements.js?v=ready23';
+import './starting-point.js?v=ready23';
+import './arc-roundout.js?v=ready23';
+import './body-analytics.js?v=ready23';
+import './training-roundout.js?v=ready23';
+import './nutrition-plumbing.js?v=ready23';
+import './what-arc-sees.js?v=ready23';
+import './privacy-controls.js?v=ready23';
+import './workout-engine-badge.js?v=ready23';
+import './view-reset.js?v=ready23';
+import './arc-visual-v8.js?v=ready23';
