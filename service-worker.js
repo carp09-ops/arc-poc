@@ -1,4 +1,4 @@
-const CACHE_VERSION='arc-ready24';
+const CACHE_VERSION='arc-ready25';
 const SHELL_CACHE=`${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE=`${CACHE_VERSION}-runtime`;
 
@@ -10,10 +10,7 @@ const PRECACHE=[
   './app.js',
   './auth-entry.js',
   './core-roundout.css',
-  './eclipse-arc.css',
-  './eclipse-arc-motion.css',
-  './arc-eclipse-v4.css',
-  './arc-corona-final.css',
+  './arc-living-v1.css',
   './training-roundout.css',
   './nutrition-plumbing.css',
   './readiness-sprint.css',
@@ -34,6 +31,7 @@ const PRECACHE=[
   './edge-workouts.js',
   './qa-enhancements.js',
   './starting-point.js',
+  './arc-living-v1.js',
   './arc-roundout.js',
   './body-analytics.js',
   './training-roundout.js',
@@ -45,15 +43,12 @@ const PRECACHE=[
   './privacy-controls.js',
   './workout-engine-badge.js',
   './view-reset.js',
-  './arc-corona-final.js',
   './assets/arc-icons.svg',
   './assets/arc-icon-180.png',
   './assets/arc-icon-192.png',
   './assets/arc-icon-512.png',
   './assets/arc-icon-maskable-512.png',
-  './assets/arc-icon-maskable.svg',
-  './assets/arc-eclipse-v4.svg',
-  './assets/fiery_solar_eclipse_corona_overlay.png'
+  './assets/arc-icon-maskable.svg'
 ];
 
 self.addEventListener('install',event=>{
@@ -106,7 +101,7 @@ self.addEventListener('fetch',event=>{
     const runtime=await caches.open(RUNTIME_CACHE);
     const exact=await runtime.match(request);
     const shell=await caches.match(request,{ignoreSearch:true});
-    const isBootstrap=/\/(?:app\.js|auth-entry\.js|styles\.css|manifest\.webmanifest|arc-icons\.svg|arc-corona-final\.css|arc-corona-final\.js|fiery_solar_eclipse_corona_overlay\.png|view-reset\.js)$/i.test(url.pathname);
+    const isBootstrap=/\/(?:app\.js|auth-entry\.js|styles\.css|manifest\.webmanifest|arc-icons\.svg|arc-living-v1\.css|arc-living-v1\.js|view-reset\.js)$/i.test(url.pathname);
 
     if(isBootstrap){
       try{
