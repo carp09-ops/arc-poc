@@ -1,9 +1,6 @@
-/* Hold Arc motion while the shell and legacy render passes settle.
-   Only the final Arc render (THIS WEEK / CONSISTENCY / ARC COMPLETE)
-   is allowed to compare against the last meaningful progress value. */
+/* Prevent startup render passes from being mistaken for real Arc progress. */
 const originalSetItem = Storage.prototype.setItem;
 let guarding = true;
-
 document.body.classList.add('arc-motion-booting');
 
 Storage.prototype.setItem = function(key, value) {
@@ -12,10 +9,11 @@ Storage.prototype.setItem = function(key, value) {
 };
 
 function finalArcIsReady() {
-  const percent = document.getElementById('arcPercent')?.textContent?.trim();
+  const gauge = document.getElementById('arcGauge');
+  if (!gauge) return false;
+  const fill = parseFloat(gauge.style.getPropertyValue('--arc-fill'));
   const label = document.getElementById('arcGaugeLabel')?.textContent?.trim();
-  if (!percent || percent === '—') return false;
-  return ['THIS WEEK', 'CONSISTENCY', 'ARC COMPLETE'].includes(label);
+  return Number.isFinite(fill) && !!label && label !== 'BUILDING';
 }
 
 function releaseGuard() {
@@ -23,25 +21,14 @@ function releaseGuard() {
   guarding = false;
   Storage.prototype.setItem = originalSetItem;
   observer.disconnect();
-
-  document.querySelectorAll('.arc-gauge').forEach(gauge => {
-    gauge.classList.remove('arc-progress-pulse','arc-progress-pulse-strong','arc-threshold-flare');
-  });
+  document.querySelectorAll('.arc-gauge').forEach(gauge => gauge.classList.remove('arc-progress-pulse','arc-progress-pulse-strong','arc-threshold-flare'));
   document.body.classList.remove('arc-motion-booting');
-
-  /* Nudge the existing Arc observer once, now that only the final state remains.
-     It will compare this value to the last meaningful value from the prior session. */
-  const hero = document.getElementById('arcGauge');
-  if (hero) {
-    hero.classList.add('arc-motion-sync');
-    requestAnimationFrame(() => hero.classList.remove('arc-motion-sync'));
-  }
+  window.ArcRadiant?.sync?.();
 }
 
 const observer = new MutationObserver(() => {
   if (finalArcIsReady()) window.setTimeout(releaseGuard, 60);
 });
 observer.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['style','class'], characterData:true });
-
 if (finalArcIsReady()) window.setTimeout(releaseGuard, 60);
-setTimeout(releaseGuard, 6500);
+setTimeout(releaseGuard, 1800);
