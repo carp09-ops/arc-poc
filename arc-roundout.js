@@ -10,8 +10,7 @@ function setGauge(el, visualPct) {
   const pct = Math.max(0, Math.min(100, Number(visualPct) || 0));
   el.style.setProperty('--progress', `${pct * 3.6}deg`);
   el.style.setProperty('--arc-fill', `${pct}%`);
-  el.style.setProperty('--living-progress', String(pct));
-  window.ArcLiving?.sync?.();
+  window.ArcRadiant?.sync?.();
 }
 
 function titleCase(value = '') {
@@ -32,6 +31,7 @@ function setGaugeState(el, label, sublabel) {
   if (strong) strong.textContent = label;
   if (small) small.textContent = sublabel;
   el.dataset.arcStage = label.toLowerCase().replaceAll(' ', '-');
+  window.ArcRadiant?.sync?.();
 }
 
 function ensureArcSummary() {
@@ -80,6 +80,7 @@ function renderArc(row) {
     if ($('arcCompletedLabel')) $('arcCompletedLabel').textContent = `${weeklyCompleted} this week`;
     if ($('arcExpectedLabel')) $('arcExpectedLabel').textContent = `${weeklyTarget} this week`;
     if ($('arcConsistencyLabel')) $('arcConsistencyLabel').textContent = 'Learning';
+    window.ArcRadiant?.sync?.();
     return;
   }
 
@@ -105,6 +106,7 @@ function renderArc(row) {
   if ($('arcCompletedLabel')) $('arcCompletedLabel').textContent = String(completed);
   if ($('arcExpectedLabel')) $('arcExpectedLabel').textContent = expected.toFixed(1).replace('.0', '');
   if ($('arcConsistencyLabel')) $('arcConsistencyLabel').textContent = `${pct}%`;
+  window.ArcRadiant?.sync?.();
 }
 
 async function refreshArc() {
