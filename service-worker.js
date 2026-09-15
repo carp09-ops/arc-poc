@@ -1,4 +1,4 @@
-const CACHE_VERSION='arc-ready19';
+const CACHE_VERSION='arc-ready20';
 const SHELL_CACHE=`${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE=`${CACHE_VERSION}-runtime`;
 
@@ -14,6 +14,7 @@ const PRECACHE=[
   './eclipse-arc-motion.css',
   './arc-eclipse-v4.css',
   './arc-eclipse-v5.css',
+  './arc-visual-v6.css',
   './training-roundout.css',
   './nutrition-plumbing.css',
   './readiness-sprint.css',
@@ -44,6 +45,7 @@ const PRECACHE=[
   './what-arc-sees.js',
   './privacy-controls.js',
   './workout-engine-badge.js',
+  './view-reset.js',
   './assets/arc-icons.svg',
   './assets/arc-icon-180.png',
   './assets/arc-icon-192.png',
@@ -105,7 +107,7 @@ self.addEventListener('fetch',event=>{
     const runtime=await caches.open(RUNTIME_CACHE);
     const exact=await runtime.match(request);
     const shell=await caches.match(request,{ignoreSearch:true});
-    const isBootstrap=/\/(?:app\.js|auth-entry\.js|styles\.css|manifest\.webmanifest|arc-icons\.svg|arc-eclipse-v5\.css|arc-corona-transparent\.svg)$/i.test(url.pathname);
+    const isBootstrap=/\/(?:app\.js|auth-entry\.js|styles\.css|manifest\.webmanifest|arc-icons\.svg|arc-eclipse-v5\.css|arc-visual-v6\.css|view-reset\.js)$/i.test(url.pathname);
 
     if(isBootstrap){
       try{
