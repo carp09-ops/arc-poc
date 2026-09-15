@@ -9,10 +9,10 @@ The active production direction is the **North Star** palette plus **Radiant Hor
 - `arc-northstar-v1.css` — app-wide midnight / alpine blue / sunrise-gold visual system.
 - `arc-radiant-v1.css` + `arc-radiant-v1.js` — the single visual authority for Arc progress/status.
 - `arc-roundout.js` — authoritative Arc state/progress renderer. 80% actual adherence maps to a visually complete Arc.
-- `assets/arc-icon-sunrise.svg` — current iOS/PWA Home Screen icon, aligned to the Radiant Horizon concept.
+- `assets/arc-icon-sunrise.svg` — current iOS/PWA Home Screen icon, using the approved alpine sunrise + glowing horizon + Arc wordmark concept.
 - `arc-motion-bootstrap.css` + `arc-motion-bootstrap.js` — startup guard for meaningful progress motion.
 
-Retired eclipse, corona, Living Arc, and v6/v7/v8 visual files were removed from the repository so they cannot re-enter the cascade or PWA cache accidentally.
+Retired eclipse, corona, Living Arc, and v6/v7/v8 visual files and eclipse assets were removed so they cannot re-enter the cascade or PWA cache accidentally. Legacy eclipse styling was also removed from `core-roundout.css`.
 
 ## Product principle
 
