@@ -1,4 +1,4 @@
-const BUILD = 'ready24';
+const BUILD = 'ready25';
 
 const addStyle = (href) => {
   const link = document.createElement('link');
@@ -8,9 +8,6 @@ const addStyle = (href) => {
 };
 
 addStyle('./core-roundout.css');
-addStyle('./eclipse-arc.css');
-addStyle('./eclipse-arc-motion.css');
-addStyle('./arc-eclipse-v4.css');
 addStyle('./training-roundout.css');
 addStyle('./nutrition-plumbing.css');
 addStyle('./readiness-sprint.css');
@@ -23,26 +20,26 @@ addStyle('./pwa-polish.css');
 addStyle('./what-arc-sees.css');
 addStyle('./privacy-controls.css');
 addStyle('./workout-engine-badge.css');
-/* Final eclipse authority: true-alpha corona asset + explicit DOM layers. */
-addStyle('./arc-corona-final.css');
+/* Living Arc is now the sole progress visual. */
+addStyle('./arc-living-v1.css');
 
-import './pwa-polish.js?v=ready24';
-import './arc-icons.js?v=ready24';
-import './arc-icon-details.js?v=ready24';
-import './startup-loading.js?v=ready24';
-import './arc-motion-bootstrap.js?v=ready24';
-import './readiness-sprint.js?v=ready24';
-import './auth-hardening.js?v=ready24';
-import './core-app.js?v=ready24';
-import './edge-workouts.js?v=ready24';
-import './qa-enhancements.js?v=ready24';
-import './starting-point.js?v=ready24';
-import './arc-roundout.js?v=ready24';
-import './body-analytics.js?v=ready24';
-import './training-roundout.js?v=ready24';
-import './nutrition-plumbing.js?v=ready24';
-import './what-arc-sees.js?v=ready24';
-import './privacy-controls.js?v=ready24';
-import './workout-engine-badge.js?v=ready24';
-import './view-reset.js?v=ready24';
-import './arc-corona-final.js?v=ready24';
+import './pwa-polish.js?v=ready25';
+import './arc-icons.js?v=ready25';
+import './arc-icon-details.js?v=ready25';
+import './startup-loading.js?v=ready25';
+import './arc-motion-bootstrap.js?v=ready25';
+import './readiness-sprint.js?v=ready25';
+import './auth-hardening.js?v=ready25';
+import './core-app.js?v=ready25';
+import './edge-workouts.js?v=ready25';
+import './qa-enhancements.js?v=ready25';
+import './starting-point.js?v=ready25';
+import './arc-living-v1.js?v=ready25';
+import './arc-roundout.js?v=ready25';
+import './body-analytics.js?v=ready25';
+import './training-roundout.js?v=ready25';
+import './nutrition-plumbing.js?v=ready25';
+import './what-arc-sees.js?v=ready25';
+import './privacy-controls.js?v=ready25';
+import './workout-engine-badge.js?v=ready25';
+import './view-reset.js?v=ready25';
