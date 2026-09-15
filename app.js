@@ -1,4 +1,4 @@
-const BUILD = 'ready23';
+const BUILD = 'ready24';
 
 const addStyle = (href) => {
   const link = document.createElement('link');
@@ -23,26 +23,26 @@ addStyle('./pwa-polish.css');
 addStyle('./what-arc-sees.css');
 addStyle('./privacy-controls.css');
 addStyle('./workout-engine-badge.css');
-/* v8 is intentionally the only modern eclipse override. */
-addStyle('./arc-visual-v8.css');
+/* Final eclipse authority: true-alpha corona asset + explicit DOM layers. */
+addStyle('./arc-corona-final.css');
 
-import './pwa-polish.js?v=ready23';
-import './arc-icons.js?v=ready23';
-import './arc-icon-details.js?v=ready23';
-import './startup-loading.js?v=ready23';
-import './arc-motion-bootstrap.js?v=ready23';
-import './readiness-sprint.js?v=ready23';
-import './auth-hardening.js?v=ready23';
-import './core-app.js?v=ready23';
-import './edge-workouts.js?v=ready23';
-import './qa-enhancements.js?v=ready23';
-import './starting-point.js?v=ready23';
-import './arc-roundout.js?v=ready23';
-import './body-analytics.js?v=ready23';
-import './training-roundout.js?v=ready23';
-import './nutrition-plumbing.js?v=ready23';
-import './what-arc-sees.js?v=ready23';
-import './privacy-controls.js?v=ready23';
-import './workout-engine-badge.js?v=ready23';
-import './view-reset.js?v=ready23';
-import './arc-visual-v8.js?v=ready23';
+import './pwa-polish.js?v=ready24';
+import './arc-icons.js?v=ready24';
+import './arc-icon-details.js?v=ready24';
+import './startup-loading.js?v=ready24';
+import './arc-motion-bootstrap.js?v=ready24';
+import './readiness-sprint.js?v=ready24';
+import './auth-hardening.js?v=ready24';
+import './core-app.js?v=ready24';
+import './edge-workouts.js?v=ready24';
+import './qa-enhancements.js?v=ready24';
+import './starting-point.js?v=ready24';
+import './arc-roundout.js?v=ready24';
+import './body-analytics.js?v=ready24';
+import './training-roundout.js?v=ready24';
+import './nutrition-plumbing.js?v=ready24';
+import './what-arc-sees.js?v=ready24';
+import './privacy-controls.js?v=ready24';
+import './workout-engine-badge.js?v=ready24';
+import './view-reset.js?v=ready24';
+import './arc-corona-final.js?v=ready24';
