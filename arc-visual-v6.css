@@ -1,0 +1,264 @@
+/* Arc visual v6 — Safari-safe cinematic eclipse system.
+   No framed photo, no SVG filter, no square source canvas. The corona is rendered
+   natively in CSS around the lunar disk, then Arc progress reveals its bright layer. */
+
+:root{--arc-eclipse-gold:#ffd27a;--arc-eclipse-orange:#ff9c35;--arc-eclipse-deep:#e86116;}
+
+/* ---------- shared eclipse ---------- */
+.arc-gauge{
+  --eclipse-center-x:50%;
+  --eclipse-center-y:50%;
+  --disk-size:55%;
+  width:clamp(285px,30vw,395px)!important;
+  max-width:none!important;
+  aspect-ratio:1/1!important;
+  position:relative!important;
+  display:block!important;
+  overflow:visible!important;
+  isolation:isolate!important;
+  border:0!important;
+  outline:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+/* Dim living corona. Always present, including at 0%, so the eclipse never looks dead. */
+.arc-gauge::before{
+  content:''!important;
+  position:absolute!important;
+  inset:-7%!important;
+  z-index:1!important;
+  pointer-events:none!important;
+  border-radius:0!important;
+  background:
+    radial-gradient(circle at 50% 50%,transparent 0 25.1%,rgba(255,245,205,.96) 25.6%,rgba(255,194,92,.90) 27%,rgba(255,137,42,.70) 29.5%,rgba(255,104,22,.26) 34%,transparent 43%),
+    repeating-conic-gradient(from -8deg at 50% 50%,rgba(255,218,135,.95) 0deg 1.2deg,rgba(255,145,44,.55) 1.2deg 2.6deg,transparent 2.6deg 6.4deg,rgba(255,116,27,.34) 6.4deg 7.2deg,transparent 7.2deg 11.5deg),
+    radial-gradient(circle at 50% 50%,rgba(255,169,67,.20) 0 31%,rgba(255,123,32,.14) 37%,rgba(255,98,20,.06) 48%,transparent 64%);
+  -webkit-mask-image:radial-gradient(circle at 50% 50%,transparent 0 24.5%,#000 25.3% 34%,rgba(0,0,0,.94) 41%,rgba(0,0,0,.62) 50%,rgba(0,0,0,.22) 60%,transparent 68%)!important;
+  mask-image:radial-gradient(circle at 50% 50%,transparent 0 24.5%,#000 25.3% 34%,rgba(0,0,0,.94) 41%,rgba(0,0,0,.62) 50%,rgba(0,0,0,.22) 60%,transparent 68%)!important;
+  mix-blend-mode:screen!important;
+  opacity:.58!important;
+  transform-origin:50% 50%!important;
+  filter:blur(.25px) brightness(.95) saturate(1.08) drop-shadow(0 0 10px rgba(255,148,48,.24))!important;
+  animation:arcCoronaBreathe 3.6s ease-in-out infinite!important;
+  will-change:transform,opacity,filter;
+}
+
+/* Bright corona. The existing --progress angle reveals this clockwise. */
+.arc-gauge::after{
+  content:''!important;
+  display:block!important;
+  position:absolute!important;
+  inset:-7%!important;
+  z-index:2!important;
+  pointer-events:none!important;
+  border-radius:0!important;
+  background:
+    radial-gradient(circle at 50% 50%,transparent 0 24.9%,#fff6ce 25.5%,#ffd36f 26.7%,#ff9d35 29%,rgba(244,91,14,.70) 33%,transparent 43%),
+    repeating-conic-gradient(from -5deg at 50% 50%,#fff1b8 0deg .8deg,#ffc45f .8deg 1.8deg,rgba(255,124,28,.65) 1.8deg 3deg,transparent 3deg 6deg,rgba(255,91,14,.42) 6deg 7deg,transparent 7deg 10.5deg),
+    radial-gradient(circle at 50% 50%,rgba(255,207,111,.30) 0 31%,rgba(255,133,39,.18) 39%,rgba(255,90,12,.08) 51%,transparent 66%);
+  -webkit-mask-image:
+    radial-gradient(circle at 50% 50%,transparent 0 24.5%,#000 25.2% 35%,rgba(0,0,0,.97) 42%,rgba(0,0,0,.72) 51%,rgba(0,0,0,.26) 60%,transparent 68%),
+    conic-gradient(from -90deg at 50% 50%,#000 0deg,#000 var(--progress),transparent var(--progress),transparent 360deg)!important;
+  -webkit-mask-composite:source-in!important;
+  mask-image:
+    radial-gradient(circle at 50% 50%,transparent 0 24.5%,#000 25.2% 35%,rgba(0,0,0,.97) 42%,rgba(0,0,0,.72) 51%,rgba(0,0,0,.26) 60%,transparent 68%),
+    conic-gradient(from -90deg at 50% 50%,#000 0deg,#000 var(--progress),transparent var(--progress),transparent 360deg)!important;
+  mask-composite:intersect!important;
+  mix-blend-mode:screen!important;
+  opacity:1!important;
+  transform-origin:50% 50%!important;
+  filter:brightness(1.18) saturate(1.20) drop-shadow(0 0 18px rgba(255,163,59,.40))!important;
+  animation:arcCoronaBright 3.6s ease-in-out infinite!important;
+  will-change:transform,opacity,filter;
+}
+
+/* Only the moon is circular. Text is geometrically centered in it. */
+.arc-gauge-inner{
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  transform:translate(-50%,-50%)!important;
+  z-index:4!important;
+  width:var(--disk-size)!important;
+  aspect-ratio:1/1!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:11% 8%!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:9px!important;
+  overflow:hidden!important;
+  border-radius:50%!important;
+  border:0!important;
+  outline:0!important;
+  background:radial-gradient(circle at 43% 37%,#09090a 0%,#020203 60%,#000 100%)!important;
+  box-shadow:inset 0 0 0 1px rgba(255,225,173,.08),0 0 19px rgba(255,152,50,.20)!important;
+  text-align:center!important;
+  color:#fff!important;
+}
+.arc-gauge-inner strong{
+  color:#fff!important;
+  font-family:var(--serif,Georgia,serif)!important;
+  font-size:clamp(1.5rem,2.25vw,2.08rem)!important;
+  font-weight:600!important;
+  line-height:1!important;
+  letter-spacing:-.03em!important;
+  text-align:center!important;
+  text-wrap:balance;
+  max-width:88%!important;
+  margin:0!important;
+  text-shadow:0 2px 14px rgba(0,0,0,.98)!important;
+}
+.arc-gauge-inner span{
+  color:#f4c979!important;
+  font-size:.61rem!important;
+  line-height:1.2!important;
+  letter-spacing:.18em!important;
+  font-weight:800!important;
+  text-transform:uppercase!important;
+  white-space:nowrap!important;
+  text-align:center!important;
+  margin:0!important;
+  text-shadow:0 2px 10px rgba(0,0,0,.98)!important;
+}
+
+/* ---------- Today: eclipse embedded in landscape ---------- */
+.hero-card .arc-gauge-wrap{
+  position:relative!important;
+  z-index:3!important;
+  justify-self:center!important;
+  align-self:center!important;
+  width:clamp(300px,32vw,420px)!important;
+  overflow:visible!important;
+  text-align:center!important;
+}
+.hero-card .arc-gauge{width:100%!important;}
+.hero-card .arc-gauge-wrap>small{
+  position:relative!important;
+  z-index:5!important;
+  display:block!important;
+  width:min(300px,86%)!important;
+  margin:-9px auto 0!important;
+  color:rgba(255,255,255,.94)!important;
+  font-size:.78rem!important;
+  line-height:1.35!important;
+  text-align:center!important;
+  text-shadow:0 2px 10px rgba(0,0,0,.92)!important;
+}
+.hero-card .arc-gauge-wrap::before{content:none!important;display:none!important;}
+
+/* ---------- Arc detail: same cinematic composition, no inset frame ---------- */
+.arc-explainer{
+  position:relative!important;
+  min-height:500px!important;
+  overflow:hidden!important;
+  color:#fff!important;
+  border:0!important;
+  outline:0!important;
+  border-radius:26px!important;
+  background:
+    linear-gradient(180deg,rgba(14,35,34,.12) 0%,rgba(14,35,34,.20) 38%,rgba(8,25,24,.82) 100%),
+    url('https://images.unsplash.com/photo-1464278533981-50106e6176b1?auto=format&fit=crop&w=1800&q=88') center 58%/cover no-repeat!important;
+  box-shadow:var(--shadow)!important;
+}
+.arc-explainer::before,.arc-explainer::after{content:none!important;display:none!important;}
+.arc-explainer .arc-gauge.large{
+  --disk-size:55%;
+  width:clamp(320px,34vw,445px)!important;
+  flex:0 0 auto!important;
+  box-shadow:none!important;
+}
+.arc-explainer>div:last-child{position:relative!important;z-index:5!important;max-width:420px;}
+.arc-explainer h2{color:#fff!important;text-shadow:0 2px 14px rgba(0,0,0,.72);}
+.arc-explainer p{color:rgba(247,249,248,.94)!important;text-shadow:0 2px 12px rgba(0,0,0,.66);}
+.arc-explainer .pill{background:rgba(251,248,241,.94)!important;color:var(--pine-deep)!important;}
+.arc-gauge.large .arc-gauge-inner strong{font-size:clamp(1.7rem,2.55vw,2.3rem)!important;}
+
+/* ---------- meaningful motion ---------- */
+@keyframes arcCoronaBreathe{
+  0%,100%{opacity:.46;transform:scale(.965);filter:brightness(.82) saturate(.98) drop-shadow(0 0 7px rgba(255,143,43,.18));}
+  50%{opacity:.72;transform:scale(1.035);filter:brightness(1.16) saturate(1.20) drop-shadow(0 0 24px rgba(255,167,68,.46));}
+}
+@keyframes arcCoronaBright{
+  0%,100%{opacity:.88;transform:scale(.98);filter:brightness(1.05) saturate(1.12) drop-shadow(0 0 14px rgba(255,153,50,.30));}
+  50%{opacity:1;transform:scale(1.045);filter:brightness(1.40) saturate(1.35) drop-shadow(0 0 32px rgba(255,181,83,.58));}
+}
+@keyframes arcCoronaKick{
+  0%{filter:brightness(1.08) saturate(1.14);}
+  38%{filter:brightness(1.68) saturate(1.46) drop-shadow(0 0 42px rgba(255,190,91,.70));}
+  100%{filter:brightness(1.16) saturate(1.20);}
+}
+@keyframes arcCoronaComplete{
+  0%{filter:brightness(1.12) saturate(1.16);}
+  24%{filter:brightness(1.90) saturate(1.58) drop-shadow(0 0 55px rgba(255,205,111,.80));}
+  100%{filter:brightness(1.18) saturate(1.22);}
+}
+.arc-gauge.arc-progress-pulse::after,.arc-gauge.arc-progress-pulse-strong::after{
+  animation:arcCoronaBright 3.6s ease-in-out infinite,arcCoronaKick 980ms cubic-bezier(.18,.78,.22,1) both!important;
+}
+.arc-gauge.arc-threshold-flare::after{
+  animation:arcCoronaBright 3.6s ease-in-out infinite,arcCoronaComplete 1750ms cubic-bezier(.16,.76,.2,1) both!important;
+}
+
+/* ---------- mobile composition ---------- */
+@media(max-width:900px){
+  .hero-card{
+    min-height:690px!important;
+    grid-template-columns:1fr!important;
+    align-items:start!important;
+    padding:30px 24px 330px!important;
+  }
+  .hero-card .hero-copy{position:relative!important;z-index:5!important;max-width:96%!important;}
+  .hero-card .arc-gauge-wrap{
+    position:absolute!important;
+    left:50%!important;
+    bottom:28px!important;
+    width:min(330px,82vw)!important;
+    transform:translateX(-50%)!important;
+  }
+  .hero-card .arc-gauge-wrap>small{width:min(300px,88%)!important;margin:-6px auto 0!important;}
+
+  .arc-explainer{
+    min-height:570px!important;
+    display:grid!important;
+    grid-template-rows:300px auto!important;
+    place-items:center!important;
+    gap:0!important;
+    padding:18px 20px 30px!important;
+    background-position:center 62%!important;
+  }
+  .arc-explainer .arc-gauge.large{width:min(300px,76vw)!important;align-self:end!important;}
+  .arc-explainer>div:last-child{
+    align-self:start!important;
+    text-align:center!important;
+    max-width:520px!important;
+    margin-top:-12px!important;
+  }
+}
+
+@media(max-width:680px){
+  .hero-card{min-height:700px!important;padding:30px 22px 335px!important;}
+  .hero-card .arc-gauge-wrap{bottom:28px!important;width:min(315px,84vw)!important;}
+  .arc-gauge{width:min(315px,84vw)!important;}
+  .arc-gauge-inner strong{font-size:clamp(1.32rem,6vw,1.76rem)!important;}
+  .arc-gauge-inner span{font-size:.56rem!important;}
+
+  .arc-explainer{min-height:550px!important;grid-template-rows:285px auto!important;padding:14px 18px 28px!important;}
+  .arc-explainer .arc-gauge.large{width:min(288px,78vw)!important;}
+  .arc-gauge.large .arc-gauge-inner strong{font-size:clamp(1.48rem,6.4vw,1.92rem)!important;}
+}
+
+/* iPhone top chrome: keep the topbar out of the status bar even if view changes mid-scroll. */
+@media(max-width:900px){
+  body.arc-ios .topbar,body.arc-standalone .topbar{
+    padding-top:calc(env(safe-area-inset-top,0px) + 24px)!important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .arc-gauge::before,.arc-gauge::after,.arc-gauge.arc-progress-pulse::after,.arc-gauge.arc-progress-pulse-strong::after,.arc-gauge.arc-threshold-flare::after{animation:none!important;}
+}
