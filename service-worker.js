@@ -1,4 +1,4 @@
-const CACHE_VERSION='arc-ready23';
+const CACHE_VERSION='arc-ready24';
 const SHELL_CACHE=`${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE=`${CACHE_VERSION}-runtime`;
 
@@ -13,7 +13,7 @@ const PRECACHE=[
   './eclipse-arc.css',
   './eclipse-arc-motion.css',
   './arc-eclipse-v4.css',
-  './arc-visual-v8.css',
+  './arc-corona-final.css',
   './training-roundout.css',
   './nutrition-plumbing.css',
   './readiness-sprint.css',
@@ -45,7 +45,7 @@ const PRECACHE=[
   './privacy-controls.js',
   './workout-engine-badge.js',
   './view-reset.js',
-  './arc-visual-v8.js',
+  './arc-corona-final.js',
   './assets/arc-icons.svg',
   './assets/arc-icon-180.png',
   './assets/arc-icon-192.png',
@@ -53,7 +53,7 @@ const PRECACHE=[
   './assets/arc-icon-maskable-512.png',
   './assets/arc-icon-maskable.svg',
   './assets/arc-eclipse-v4.svg',
-  './assets/fiery_asymmetric_solar_eclipse.png'
+  './assets/fiery_solar_eclipse_corona_overlay.png'
 ];
 
 self.addEventListener('install',event=>{
@@ -106,7 +106,7 @@ self.addEventListener('fetch',event=>{
     const runtime=await caches.open(RUNTIME_CACHE);
     const exact=await runtime.match(request);
     const shell=await caches.match(request,{ignoreSearch:true});
-    const isBootstrap=/\/(?:app\.js|auth-entry\.js|styles\.css|manifest\.webmanifest|arc-icons\.svg|arc-visual-v8\.css|arc-visual-v8\.js|view-reset\.js)$/i.test(url.pathname);
+    const isBootstrap=/\/(?:app\.js|auth-entry\.js|styles\.css|manifest\.webmanifest|arc-icons\.svg|arc-corona-final\.css|arc-corona-final\.js|fiery_solar_eclipse_corona_overlay\.png|view-reset\.js)$/i.test(url.pathname);
 
     if(isBootstrap){
       try{
