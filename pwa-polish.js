@@ -1,4 +1,4 @@
-const BUILD='ready26';
+const BUILD='ready27';
 const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 const isStandalone=()=>window.matchMedia?.('(display-mode: standalone)').matches||window.navigator.standalone===true;
 function syncDisplayMode(){const standalone=isStandalone();document.body.classList.toggle('arc-ios',isIOS);document.body.classList.toggle('arc-standalone',standalone);document.documentElement.dataset.arcDisplayMode=standalone?'standalone':'browser'}
