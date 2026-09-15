@@ -1,52 +1,89 @@
-(function(){
-  const getProgress = (stateText, metaText) => {
-    const s = (stateText || '').toLowerCase();
-    const m = (metaText || '').toLowerCase();
-    const pct = /([0-9]+(?:\.[0-9]+)?)%/.exec(m);
-    if (pct) return Math.max(0, Math.min(1, Number(pct[1]) / 80));
-    if (s.includes('in your arc')) return 1;
-    if (s.includes('closing')) return 0.78;
-    if (s.includes('build')) return 0.38;
-    if (m.includes('learning')) return 0.14;
-    return 0.12;
-  };
+/* Final Arc corona integration.
+   Uses the existing .arc-gauge DOM and injects only true-alpha corona image layers. */
 
-  function applyStage(container) {
-    if (!container) return;
-    let stage = container.querySelector('.arc-eclipse-stage');
-    if (!stage) {
-      stage = document.createElement('div');
-      stage.className = 'arc-eclipse-stage';
-      stage.innerHTML = `
-        <div class="arc-corona-base"></div>
-        <div class="arc-corona-fill"></div>
-        <div class="arc-disk"></div>
-        <div class="arc-label"><div class="arc-label-inner"><div class="arc-state"></div><div class="arc-meta"></div></div></div>
-      `;
-      container.appendChild(stage);
-    }
+const CORONA_SRC = './assets/fiery_solar_eclipse_corona_overlay.png?v=ready24';
 
-    const stateSource = container.querySelector('[data-arc-state], .arc-gauge__state, .arc-state-text, .arc-state');
-    const metaSource = container.querySelector('[data-arc-meta], .arc-gauge__meta, .arc-consistency, .arc-meta');
-    const state = stateSource ? stateSource.textContent.trim() : 'Build momentum';
-    const meta = metaSource ? metaSource.textContent.trim() : 'Learning';
+function readProgressRatio(gauge) {
+  const fill = parseFloat(gauge.style.getPropertyValue('--arc-fill'));
+  if (Number.isFinite(fill)) return Math.max(0, Math.min(1, fill / 100));
+  const degrees = parseFloat(gauge.style.getPropertyValue('--progress'));
+  if (Number.isFinite(degrees)) return Math.max(0, Math.min(1, degrees / 360));
+  return 0;
+}
 
-    stage.querySelector('.arc-state').textContent = state;
-    stage.querySelector('.arc-meta').textContent = meta;
+function syncGauge(gauge) {
+  if (!gauge) return;
+  const ratio = readProgressRatio(gauge);
+  const previous = Number(gauge.dataset.coronaProgress || 0);
+  gauge.style.setProperty('--arc-progress-ratio', String(ratio));
+  gauge.classList.remove('is-rise', 'is-complete');
+  if (ratio >= 1 && previous < 1) gauge.classList.add('is-complete');
+  else if (ratio > previous + .01) gauge.classList.add('is-rise');
+  gauge.dataset.coronaProgress = String(ratio);
+}
 
-    const next = getProgress(state, meta);
-    const prev = Number(stage.dataset.progress || 0);
-    stage.style.setProperty('--arc-progress', String(next));
-    stage.classList.remove('is-rise', 'is-complete');
-    if (next > prev + 0.02 && next < 1) stage.classList.add('is-rise');
-    if (next >= 1 && prev < 1) stage.classList.add('is-complete');
-    stage.dataset.progress = String(next);
+function ensureCorona(gauge) {
+  if (!gauge) return;
+
+  let base = gauge.querySelector(':scope > .arc-corona-base');
+  let fill = gauge.querySelector(':scope > .arc-corona-fill');
+
+  if (!base) {
+    base = document.createElement('img');
+    base.className = 'arc-corona-base';
+    base.src = CORONA_SRC;
+    base.alt = '';
+    base.setAttribute('aria-hidden', 'true');
+    base.decoding = 'async';
+    base.draggable = false;
   }
 
-  function init() {
-    document.querySelectorAll('.today-hero, .arc-hero, .arc-detail-hero, .arc-card--hero').forEach(applyStage);
+  if (!fill) {
+    fill = document.createElement('img');
+    fill.className = 'arc-corona-fill';
+    fill.src = CORONA_SRC;
+    fill.alt = '';
+    fill.setAttribute('aria-hidden', 'true');
+    fill.decoding = 'async';
+    fill.draggable = false;
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
-  new MutationObserver(init).observe(document.body, {subtree:true, childList:true, characterData:true});
-})();
+  const inner = gauge.querySelector(':scope > .arc-gauge-inner');
+  if (!base.isConnected) inner ? gauge.insertBefore(base, inner) : gauge.prepend(base);
+  if (!fill.isConnected) inner ? gauge.insertBefore(fill, inner) : gauge.appendChild(fill);
+
+  /* Remove the old black-background photographic layer if it survived a cached build. */
+  gauge.querySelectorAll(':scope > .arc-photo-corona').forEach(el => el.remove());
+  syncGauge(gauge);
+}
+
+function enhanceAll() {
+  document.querySelectorAll('.arc-gauge').forEach(ensureCorona);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', enhanceAll, { once: true });
+} else {
+  enhanceAll();
+}
+
+const treeObserver = new MutationObserver(enhanceAll);
+treeObserver.observe(document.documentElement, { childList: true, subtree: true });
+
+const styleObserver = new MutationObserver(records => {
+  records.forEach(record => {
+    if (record.target instanceof HTMLElement && record.target.matches('.arc-gauge')) syncGauge(record.target);
+  });
+});
+
+function observeGaugeStyles() {
+  document.querySelectorAll('.arc-gauge').forEach(gauge => {
+    if (gauge.dataset.coronaObserved === '1') return;
+    gauge.dataset.coronaObserved = '1';
+    styleObserver.observe(gauge, { attributes: true, attributeFilter: ['style'] });
+  });
+}
+
+enhanceAll();
+observeGaugeStyles();
+new MutationObserver(observeGaugeStyles).observe(document.documentElement, { childList: true, subtree: true });
