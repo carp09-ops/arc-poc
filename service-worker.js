@@ -1,4 +1,4 @@
-const CACHE_VERSION='arc-ready18';
+const CACHE_VERSION='arc-ready19';
 const SHELL_CACHE=`${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE=`${CACHE_VERSION}-runtime`;
 
@@ -51,7 +51,8 @@ const PRECACHE=[
   './assets/arc-icon-maskable-512.png',
   './assets/arc-icon-maskable.svg',
   './assets/arc-eclipse-v4.svg',
-  './assets/fiery_asymmetric_solar_eclipse.png'
+  './assets/fiery_asymmetric_solar_eclipse.png',
+  './assets/arc-corona-transparent.svg'
 ];
 
 self.addEventListener('install',event=>{
@@ -104,7 +105,7 @@ self.addEventListener('fetch',event=>{
     const runtime=await caches.open(RUNTIME_CACHE);
     const exact=await runtime.match(request);
     const shell=await caches.match(request,{ignoreSearch:true});
-    const isBootstrap=/\/(?:app\.js|auth-entry\.js|styles\.css|manifest\.webmanifest|arc-icons\.svg|arc-eclipse-v5\.css)$/i.test(url.pathname);
+    const isBootstrap=/\/(?:app\.js|auth-entry\.js|styles\.css|manifest\.webmanifest|arc-icons\.svg|arc-eclipse-v5\.css|arc-corona-transparent\.svg)$/i.test(url.pathname);
 
     if(isBootstrap){
       try{
