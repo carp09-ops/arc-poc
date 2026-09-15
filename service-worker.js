@@ -50,6 +50,7 @@ const PRECACHE=[
   './assets/arc-icon-180.png',
   './assets/arc-icon-192.png',
   './assets/arc-icon-512.png',
+  './assets/arc-icon-maskable-512.png',
   './assets/arc-icon-maskable.svg',
   './assets/arc-eclipse-v4.svg'
 ];
