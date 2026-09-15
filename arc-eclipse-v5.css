@@ -1,154 +1,155 @@
-/* Arc Eclipse v5 — uses the real corona as the progress layer.
-   Drop-in stylesheet intended to override earlier eclipse treatments.
-   Add after existing eclipse CSS files.
-*/
+/* Arc Eclipse v5 — the living corona is the progress indicator.
+   Loaded after v4 so it upgrades the existing .arc-gauge without adding a second widget. */
 
-:root {
-  --arc-progress: 0.67; /* 0..1, where 1 means the Arc is visually complete */
-  --arc-progress-deg: calc(var(--arc-progress) * 360deg);
-  --arc-eclipse-size: min(34vw, 280px);
-  --arc-eclipse-glow: 1;
+.arc-gauge {
+  background:
+    linear-gradient(rgba(1,3,5,.58), rgba(1,3,5,.58)),
+    url('./assets/fiery_asymmetric_solar_eclipse.png') center/cover no-repeat !important;
+  box-shadow:
+    0 0 34px rgba(255,135,38,.20),
+    0 18px 46px rgba(2,8,10,.34) !important;
 }
 
-.arc-eclipse,
-.arc-hero-eclipse,
-.arc-visual {
-  position: relative;
-  width: var(--arc-eclipse-size);
-  aspect-ratio: 1 / 1;
-  border-radius: 50%;
-  overflow: hidden;
-  isolation: isolate;
-  background: #020305;
-  box-shadow: 0 8px 40px rgba(0,0,0,.28);
-}
-
-/* dim base image */
-.arc-eclipse::before,
-.arc-hero-eclipse::before,
-.arc-visual::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background-image: url('./assets/fiery_asymmetric_solar_eclipse.png');
-  background-size: cover;
-  background-position: center;
-  opacity: 0.34;
-  filter: saturate(0.95) brightness(0.9);
-}
-
-/* revealed corona only */
-.arc-eclipse::after,
-.arc-hero-eclipse::after,
-.arc-visual::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background-image: url('./assets/fiery_asymmetric_solar_eclipse.png');
-  background-size: cover;
-  background-position: center;
-  opacity: 1;
-  filter: saturate(1.15) brightness(calc(1 * var(--arc-eclipse-glow)));
-
-  /* Reveal clockwise using a conic mask, but keep only corona ring using radial mask. */
+/* The bright copy is clipped to the physical corona and then revealed clockwise
+   by Arc's existing --progress value. 80% actual adherence already maps to
+   100% visual completion in arc-roundout.js, so the corona completes at 80%. */
+.arc-gauge::before {
+  content: '' !important;
+  --progress: inherit;
+  position: absolute !important;
+  inset: -1.5% !important;
+  border-radius: inherit !important;
+  background: url('./assets/fiery_asymmetric_solar_eclipse.png') center/cover no-repeat !important;
   -webkit-mask-image:
-    radial-gradient(circle at center,
-      transparent 0 57%,
-      #000 58% 72%,
-      transparent 73% 100%),
-    conic-gradient(from -90deg,
-      #000 0deg,
-      #000 var(--arc-progress-deg),
-      transparent var(--arc-progress-deg),
-      transparent 360deg);
-  -webkit-mask-composite: source-in;
-          mask-image:
-    radial-gradient(circle at center,
-      transparent 0 57%,
-      #000 58% 72%,
-      transparent 73% 100%),
-    conic-gradient(from -90deg,
-      #000 0deg,
-      #000 var(--arc-progress-deg),
-      transparent var(--arc-progress-deg),
-      transparent 360deg);
-          mask-composite: intersect;
-
-  animation: arcCoronaBreathe 5.6s ease-in-out infinite;
+    radial-gradient(circle at 50% 49%, transparent 0 26%, #000 28% 34%, rgba(0,0,0,.96) 36%, rgba(0,0,0,.64) 41%, rgba(0,0,0,.22) 46%, transparent 51%),
+    conic-gradient(from -90deg at 50% 49%, #000 0deg, #000 var(--progress), transparent var(--progress), transparent 360deg) !important;
+  -webkit-mask-composite: source-in !important;
+  mask-image:
+    radial-gradient(circle at 50% 49%, transparent 0 26%, #000 28% 34%, rgba(0,0,0,.96) 36%, rgba(0,0,0,.64) 41%, rgba(0,0,0,.22) 46%, transparent 51%),
+    conic-gradient(from -90deg at 50% 49%, #000 0deg, #000 var(--progress), transparent var(--progress), transparent 360deg) !important;
+  mask-composite: intersect !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  opacity: .98 !important;
+  transform: scale(1.006);
+  transform-origin: 50% 49%;
+  filter: brightness(1.08) saturate(1.13) contrast(1.03) !important;
+  animation: arcCoronaAlive 4.8s ease-in-out infinite;
 }
 
-.arc-eclipse__label,
-.arc-hero-eclipse__label,
-.arc-visual__label {
-  position: absolute;
-  inset: 50% auto auto 50%;
-  transform: translate(-50%, -50%);
-  width: 62%;
-  aspect-ratio: 1 / 1;
-  border-radius: 50%;
-  background: rgba(1, 2, 6, 0.88);
-  display: grid;
-  place-items: center;
-  text-align: center;
-  padding: 1rem;
-  color: #f6efe4;
-  z-index: 2;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+/* Keep the center copy legible on the photographic black disk. */
+.arc-gauge-inner {
+  z-index: 4 !important;
 }
 
-.arc-eclipse__state,
-.arc-hero-eclipse__state,
-.arc-visual__state {
-  font: 600 clamp(.62rem, 1.2vw, .8rem)/1.15 Inter, system-ui, sans-serif;
-  letter-spacing: .12em;
-  text-transform: uppercase;
+/* A very restrained solar 'breath': the corona itself changes intensity.
+   The disk never bobs or spins, so it still feels premium rather than gamified. */
+@keyframes arcCoronaAlive {
+  0%, 100% {
+    opacity: .94;
+    transform: scale(1.003);
+    filter: brightness(1.02) saturate(1.08) contrast(1.02);
+  }
+  48% {
+    opacity: 1;
+    transform: scale(1.013);
+    filter: brightness(1.14) saturate(1.20) contrast(1.04) drop-shadow(0 0 11px rgba(255,151,55,.18));
+  }
 }
 
-.arc-eclipse__meta,
-.arc-hero-eclipse__meta,
-.arc-visual__meta {
-  margin-top: .32rem;
-  font: 500 clamp(.54rem, 1vw, .7rem)/1.2 Inter, system-ui, sans-serif;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: rgba(246,239,228,.78);
+/* Existing progress-change classes now energize the real corona instead of
+   producing a decorative outer ring. */
+.arc-gauge.arc-progress-pulse::before {
+  animation:
+    arcCoronaAlive 4.8s ease-in-out infinite,
+    arcCoronaKick 880ms cubic-bezier(.18,.78,.22,1) both;
 }
 
-.arc-eclipse.is-closing::after,
-.arc-hero-eclipse.is-closing::after,
-.arc-visual.is-closing::after {
-  animation: arcCoronaBreathe 5.6s ease-in-out infinite, arcClosingPulse .95s ease-out 1;
+.arc-gauge.arc-progress-pulse-strong::before {
+  animation:
+    arcCoronaAlive 4.8s ease-in-out infinite,
+    arcCoronaKickStrong 1120ms cubic-bezier(.18,.78,.22,1) both;
 }
 
-.arc-eclipse.is-complete::after,
-.arc-hero-eclipse.is-complete::after,
-.arc-visual.is-complete::after {
-  animation: arcCoronaBreathe 5.6s ease-in-out infinite, arcThresholdFlare 1.2s ease-out 1;
+@keyframes arcCoronaKick {
+  0% { filter: brightness(1.04) saturate(1.10); }
+  42% { filter: brightness(1.28) saturate(1.28) drop-shadow(0 0 18px rgba(255,162,66,.34)); }
+  100% { filter: brightness(1.08) saturate(1.13); }
 }
 
-@keyframes arcCoronaBreathe {
-  0%,100% { filter: saturate(1.1) brightness(calc(.98 * var(--arc-eclipse-glow))); }
-  50%     { filter: saturate(1.22) brightness(calc(1.08 * var(--arc-eclipse-glow))); }
+@keyframes arcCoronaKickStrong {
+  0% { filter: brightness(1.06) saturate(1.12); }
+  36% { filter: brightness(1.42) saturate(1.34) drop-shadow(0 0 26px rgba(255,174,76,.42)); }
+  100% { filter: brightness(1.10) saturate(1.15); }
 }
 
-@keyframes arcClosingPulse {
-  0%   { transform: scale(1); }
-  35%  { transform: scale(1.018); }
-  100% { transform: scale(1); }
+/* Crossing into In Your Arc gets one short flare made from the SAME eclipse
+   photography. It is not an artificial ring and it does not loop. */
+.arc-gauge.arc-threshold-flare::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  inset: -3% !important;
+  border-radius: inherit !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+  background: url('./assets/fiery_asymmetric_solar_eclipse.png') center/cover no-repeat !important;
+  -webkit-mask-image:
+    radial-gradient(circle at 50% 49%, transparent 0 26%, #000 28% 37%, rgba(0,0,0,.74) 42%, transparent 52%) !important;
+  mask-image:
+    radial-gradient(circle at 50% 49%, transparent 0 26%, #000 28% 37%, rgba(0,0,0,.74) 42%, transparent 52%) !important;
+  opacity: 0;
+  transform: scale(.99);
+  transform-origin: 50% 49%;
+  mix-blend-mode: screen;
+  animation: arcRealCoronaFlare 1650ms cubic-bezier(.18,.76,.2,1) both !important;
 }
 
-@keyframes arcThresholdFlare {
-  0%   { opacity: 1; filter: saturate(1.2) brightness(1.08); }
-  22%  { opacity: 1; filter: saturate(1.35) brightness(1.25) drop-shadow(0 0 20px rgba(255,170,65,.35)); }
-  100% { opacity: 1; filter: saturate(1.18) brightness(1.05); }
+@keyframes arcRealCoronaFlare {
+  0% {
+    opacity: 0;
+    transform: scale(.99);
+    filter: brightness(1.08) saturate(1.1);
+  }
+  24% {
+    opacity: .92;
+    transform: scale(1.018);
+    filter: brightness(1.42) saturate(1.35) drop-shadow(0 0 22px rgba(255,177,80,.44));
+  }
+  58% {
+    opacity: .38;
+    transform: scale(1.03);
+    filter: brightness(1.22) saturate(1.22);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.04);
+    filter: brightness(1.06) saturate(1.1);
+  }
+}
+
+.arc-gauge.arc-closing::before {
+  filter: brightness(1.14) saturate(1.18) contrast(1.03) !important;
+}
+
+/* The larger Arc view can carry a little more atmosphere. */
+.arc-gauge.large {
+  box-shadow:
+    0 0 58px rgba(255,140,42,.24),
+    0 24px 68px rgba(3,9,11,.32) !important;
+}
+
+@media (max-width: 680px) {
+  .arc-gauge::before { inset: -1% !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .arc-eclipse::after,
-  .arc-hero-eclipse::after,
-  .arc-visual::after {
-    animation: none;
+  .arc-gauge::before,
+  .arc-gauge.arc-progress-pulse::before,
+  .arc-gauge.arc-progress-pulse-strong::before,
+  .arc-gauge.arc-threshold-flare::after {
+    animation: none !important;
+    transform: none !important;
   }
+  .arc-gauge.arc-threshold-flare::after { display: none !important; }
 }
