@@ -1,10 +1,6 @@
 /* Prevent startup render passes from looking like real progress events. */
-body.arc-motion-booting .arc-gauge.arc-progress-pulse,
-body.arc-motion-booting .arc-gauge.arc-progress-pulse-strong {
-  animation: none !important;
-}
-
-body.arc-motion-booting .arc-gauge.arc-threshold-flare::after {
-  display: none !important;
-  animation: none !important;
+body.arc-motion-booting .arc-gauge.arc-progress-pulse .arc-radiant-marker,
+body.arc-motion-booting .arc-gauge.arc-progress-pulse-strong .arc-radiant-marker,
+body.arc-motion-booting .arc-gauge.arc-threshold-flare .arc-radiant-marker {
+  animation: arcHorizonBreathe 3.4s ease-in-out infinite !important;
 }
