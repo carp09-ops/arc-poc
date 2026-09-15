@@ -13,6 +13,7 @@ const PRECACHE=[
   './eclipse-arc.css',
   './eclipse-arc-motion.css',
   './arc-eclipse-v4.css',
+  './arc-eclipse-v5.css',
   './training-roundout.css',
   './nutrition-plumbing.css',
   './readiness-sprint.css',
@@ -48,7 +49,8 @@ const PRECACHE=[
   './assets/arc-icon-192.png',
   './assets/arc-icon-512.png',
   './assets/arc-icon-maskable.svg',
-  './assets/arc-eclipse-v4.svg'
+  './assets/arc-eclipse-v4.svg',
+  './assets/fiery_asymmetric_solar_eclipse.png'
 ];
 
 self.addEventListener('install',event=>{
