@@ -2,9 +2,6 @@ const CACHE_VERSION='arc-ready16';
 const SHELL_CACHE=`${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE=`${CACHE_VERSION}-runtime`;
 
-// Keep the complete first-party Arc shell available after the PWA has installed.
-// Version query strings are intentionally omitted here; fetch matching below uses
-// ignoreSearch so versioned resources remain available when the device is offline.
 const PRECACHE=[
   './',
   './index.html',
@@ -50,7 +47,6 @@ const PRECACHE=[
   './assets/arc-icon-180.png',
   './assets/arc-icon-192.png',
   './assets/arc-icon-512.png',
-  './assets/arc-icon-maskable-512.png',
   './assets/arc-icon-maskable.svg',
   './assets/arc-eclipse-v4.svg'
 ];
@@ -65,11 +61,7 @@ self.addEventListener('install',event=>{
 self.addEventListener('activate',event=>{
   event.waitUntil((async()=>{
     const keys=await caches.keys();
-    await Promise.all(
-      keys
-        .filter(key=>key.startsWith('arc-')&&!key.startsWith(CACHE_VERSION))
-        .map(key=>caches.delete(key))
-    );
+    await Promise.all(keys.filter(key=>key.startsWith('arc-')&&!key.startsWith(CACHE_VERSION)).map(key=>caches.delete(key)));
     await self.clients.claim();
   })());
 });
@@ -95,17 +87,14 @@ self.addEventListener('fetch',event=>{
         }
         return fresh;
       }catch(_){
-        return (await caches.match('./',{ignoreSearch:true})) ||
-          (await caches.match('./index.html',{ignoreSearch:true})) ||
-          Response.error();
+        return (await caches.match('./',{ignoreSearch:true})) || (await caches.match('./index.html',{ignoreSearch:true})) || Response.error();
       }
     })());
     return;
   }
 
   const destination=request.destination;
-  const isStatic=['script','style','image','font','manifest'].includes(destination) ||
-    /\.(?:js|css|png|svg|webp|woff2?|json|webmanifest)$/i.test(url.pathname);
+  const isStatic=['script','style','image','font','manifest'].includes(destination) || /\.(?:js|css|png|svg|webp|woff2?|json|webmanifest)$/i.test(url.pathname);
   if(!isStatic) return;
 
   event.respondWith((async()=>{
