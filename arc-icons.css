@@ -1,69 +1,38 @@
-/* Arc Celestial Editorial icon system — production asset-backed SVGs. */
+/* Arc North Star icon system — semantic, restrained, sunrise-gold active state. */
 :root{
-  --arc-icon-pine:#21483f;
-  --arc-icon-pine-deep:#173732;
-  --arc-icon-slate:#73817d;
-  --arc-icon-champagne:#c9a96e;
-  --arc-icon-sand:#f2eadb;
-  --arc-icon-cream:#fbf8f1;
-  --arc-icon-danger:#8f5c58;
+  --arc-icon-midnight:#0b1a2b;
+  --arc-icon-alpine:#17364a;
+  --arc-icon-mist:#91a3ad;
+  --arc-icon-gold:#f0ad45;
+  --arc-icon-gold-soft:#ffd58c;
+  --arc-icon-sand:#efe5d2;
+  --arc-icon-danger:#b67870;
 }
 .arc-icon{width:1.15em;height:1.15em;display:inline-block;vertical-align:-.16em;color:inherit;fill:none;stroke:currentColor;flex:0 0 auto;overflow:visible}
-.arc-icon use{pointer-events:none}
-.arc-icon-sm{width:.95em;height:.95em}.arc-icon-lg{width:1.35em;height:1.35em}
-.arc-icon-badge{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;background:rgba(33,72,63,.065);color:var(--arc-icon-pine);border:1px solid rgba(33,72,63,.075)}
+.arc-icon use{pointer-events:none}.arc-icon-sm{width:.95em;height:.95em}.arc-icon-lg{width:1.35em;height:1.35em}
+.arc-icon-badge{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:10px;background:rgba(240,173,69,.08);color:var(--arc-icon-gold);border:1px solid rgba(240,173,69,.12)}
 
-.side-nav .nav-item>span:first-child,.mobile-nav .nav-item>span:first-child{display:inline-grid;place-items:center;color:currentColor;font-size:1rem;line-height:1}
-.side-nav .nav-item .arc-icon{width:20px;height:20px}
-.mobile-nav .nav-item .arc-icon{width:22px;height:22px}
-.side-nav .nav-item,.mobile-nav .nav-item{transition:color .18s ease,background-color .18s ease,transform .18s ease}
-.side-nav .nav-item .arc-icon,.mobile-nav .nav-item .arc-icon{transition:color .18s ease,opacity .18s ease,transform .18s ease}
-.side-nav .nav-item.active .arc-icon,.mobile-nav .nav-item.active .arc-icon{color:var(--arc-icon-champagne);transform:translateY(-1px)}
-.side-nav .nav-item:not(.active) .arc-icon,.mobile-nav .nav-item:not(.active) .arc-icon{opacity:.82;color:var(--arc-icon-slate)}
-.mobile-nav .nav-item.active{background:rgba(201,169,110,.07)}
+/* Primary navigation */
+.side-nav .nav-item>span:first-child,.mobile-nav .nav-item>span:first-child{display:inline-grid;place-items:center;width:34px;height:30px;color:currentColor;font-size:1rem;line-height:1;border-radius:12px;position:relative;isolation:isolate}
+.side-nav .nav-item .arc-icon{width:23px;height:23px}
+.mobile-nav .nav-item .arc-icon{width:25px;height:25px}
+.side-nav .nav-item,.mobile-nav .nav-item{transition:color .2s ease,background-color .2s ease,transform .2s ease}
+.side-nav .nav-item .arc-icon,.mobile-nav .nav-item .arc-icon{transition:color .2s ease,opacity .2s ease,transform .2s ease,filter .2s ease}
+.side-nav .nav-item:not(.active) .arc-icon,.mobile-nav .nav-item:not(.active) .arc-icon{opacity:.86;color:var(--arc-icon-mist)}
+.side-nav .nav-item.active>span:first-child::before,.mobile-nav .nav-item.active>span:first-child::before{content:"";position:absolute;inset:-4px -5px;z-index:-1;border-radius:14px;background:radial-gradient(circle at 50% 62%,rgba(240,173,69,.18),rgba(240,173,69,.055) 48%,transparent 72%)}
+.side-nav .nav-item.active .arc-icon,.mobile-nav .nav-item.active .arc-icon{color:var(--arc-icon-gold);transform:translateY(-1px);filter:drop-shadow(0 0 5px rgba(240,173,69,.22))}
+.mobile-nav .nav-item.active{background:rgba(240,173,69,.055)}
+.mobile-nav .nav-item{font-weight:600;letter-spacing:-.01em}
+.mobile-nav .nav-item.active{color:var(--arc-icon-gold-soft)}
 
-.metric-card .metric-icon{display:inline-grid!important;place-items:center!important;width:34px!important;height:34px!important;border-radius:11px!important;background:rgba(33,72,63,.065)!important;color:var(--arc-icon-pine)!important;border:1px solid rgba(33,72,63,.075)!important;font-size:1rem!important}
-.metric-card .metric-icon .arc-icon{width:18px;height:18px}
-.slate-card .metric-icon{background:rgba(255,255,255,.1)!important;color:var(--arc-icon-champagne)!important;border-color:rgba(255,255,255,.12)!important}
-
-.workout-tier{display:inline-grid!important;place-items:center!important;width:42px!important;height:42px!important;border-radius:14px!important;border:1px solid rgba(33,72,63,.08)!important;background:rgba(33,72,63,.05)!important;color:var(--arc-icon-pine)!important;font-size:1rem!important}
-.workout-tier .arc-icon{width:23px;height:23px}
-.workout-card.restore .workout-tier{color:#688077!important;background:rgba(104,128,119,.08)!important}
-.workout-card.build .workout-tier{color:var(--arc-icon-pine)!important;background:rgba(33,72,63,.07)!important}
-.workout-card.push .workout-tier{color:#9b7847!important;background:rgba(201,169,110,.11)!important}
-.workout-card.recommended .workout-tier{box-shadow:0 7px 20px rgba(33,72,63,.07)}
-
-.connection-card .device-icon,.nutrition-source-card .nutrition-source-icon{display:grid!important;place-items:center!important;width:48px!important;height:48px!important;border-radius:15px!important;background:rgba(33,72,63,.06)!important;color:var(--arc-icon-pine)!important;border:1px solid rgba(33,72,63,.075)!important;font-size:1rem!important}
-.connection-card .device-icon .arc-icon,.nutrition-source-card .nutrition-source-icon .arc-icon{width:24px;height:24px}
-.connection-card .device-icon.heart,.nutrition-source-card[data-nutrition-source="apple_health"] .nutrition-source-icon{color:#936864!important;background:rgba(147,104,100,.07)!important}
-.nutrition-source-card[data-nutrition-source="lose_it"] .nutrition-source-icon{color:#9b7847!important;background:rgba(201,169,110,.1)!important}
-.nutrition-source-card[data-nutrition-source="manual_import"] .nutrition-source-icon{color:var(--arc-icon-slate)!important;background:rgba(111,131,131,.075)!important}
-
-.favorite-history,.favorite-history.active,#edgeFavoriteActive{display:inline-flex;align-items:center;justify-content:center;gap:7px}
-.favorite-history .arc-icon,#edgeFavoriteActive .arc-icon{width:19px;height:19px}
-.favorite-history.active .arc-icon,#edgeFavoriteActive[data-arc-favorited="true"] .arc-icon{color:var(--arc-icon-champagne)}
-
-.history-meta span{display:inline-flex;align-items:center;gap:5px}
-.history-meta .arc-icon{width:14px;height:14px;color:var(--arc-icon-slate)}
-
-.arc-icon-action{display:inline-flex;align-items:center;gap:7px}
-.arc-icon-action .arc-icon{width:15px;height:15px;transition:transform .18s ease}
-.arc-icon-action:hover .arc-icon[data-arc-icon="arrow-right"]{transform:translateX(2px)}
-.arc-icon-action:hover .arc-icon[data-arc-icon="external-link"]{transform:translate(1px,-1px)}
-
-.starting-point-action b .arc-icon{width:18px;height:18px;color:var(--arc-icon-slate)}
-.starting-point-action:hover b .arc-icon{color:var(--arc-icon-pine)}
-.delete-account-action b .arc-icon{color:var(--arc-icon-danger)}
-.starting-point-close .arc-icon,.setup-edit-close .arc-icon{width:17px;height:17px}
-
-.profile-chip{box-shadow:inset 0 0 0 1px rgba(33,72,63,.05),0 6px 18px rgba(33,72,63,.05)}
-
-@media(max-width:720px){
-  .metric-card .metric-icon{width:31px!important;height:31px!important;border-radius:10px!important}
-  .workout-tier{width:39px!important;height:39px!important;border-radius:13px!important}
-  .connection-card .device-icon,.nutrition-source-card .nutrition-source-icon{width:44px!important;height:44px!important;border-radius:14px!important}
-}
-
-@media(prefers-reduced-motion:reduce){
-  .side-nav .nav-item,.mobile-nav .nav-item,.side-nav .nav-item .arc-icon,.mobile-nav .nav-item .arc-icon,.arc-icon-action .arc-icon,.starting-point-action> b{transition:none!important;transform:none!important}
-}
+.metric-card .metric-icon{display:inline-grid!important;place-items:center!important;width:34px!important;height:34px!important;border-radius:11px!important;background:rgba(145,163,173,.08)!important;color:var(--arc-icon-mist)!important;border:1px solid rgba(145,163,173,.11)!important;font-size:1rem!important}
+.metric-card .metric-icon .arc-icon{width:18px;height:18px}.slate-card .metric-icon{background:rgba(255,255,255,.08)!important;color:var(--arc-icon-gold)!important;border-color:rgba(255,255,255,.1)!important}
+.workout-tier{display:inline-grid!important;place-items:center!important;width:42px!important;height:42px!important;border-radius:14px!important;border:1px solid rgba(145,163,173,.1)!important;background:rgba(145,163,173,.06)!important;color:var(--arc-icon-mist)!important;font-size:1rem!important}.workout-tier .arc-icon{width:23px;height:23px}.workout-card.restore .workout-tier{color:#8da69f!important}.workout-card.build .workout-tier{color:#a7b8c1!important}.workout-card.push .workout-tier{color:var(--arc-icon-gold)!important;background:rgba(240,173,69,.1)!important}.workout-card.recommended .workout-tier{box-shadow:0 7px 20px rgba(4,13,23,.12)}
+.connection-card .device-icon,.nutrition-source-card .nutrition-source-icon{display:grid!important;place-items:center!important;width:48px!important;height:48px!important;border-radius:15px!important;background:rgba(145,163,173,.07)!important;color:var(--arc-icon-mist)!important;border:1px solid rgba(145,163,173,.1)!important;font-size:1rem!important}.connection-card .device-icon .arc-icon,.nutrition-source-card .nutrition-source-icon .arc-icon{width:24px;height:24px}.connection-card .device-icon.heart,.nutrition-source-card[data-nutrition-source="apple_health"] .nutrition-source-icon{color:#d89b91!important}.nutrition-source-card[data-nutrition-source="lose_it"] .nutrition-source-icon{color:var(--arc-icon-gold)!important}.nutrition-source-card[data-nutrition-source="manual_import"] .nutrition-source-icon{color:var(--arc-icon-mist)!important}
+.favorite-history,.favorite-history.active,#edgeFavoriteActive{display:inline-flex;align-items:center;justify-content:center;gap:7px}.favorite-history .arc-icon,#edgeFavoriteActive .arc-icon{width:19px;height:19px}.favorite-history.active .arc-icon,#edgeFavoriteActive[data-arc-favorited="true"] .arc-icon{color:var(--arc-icon-gold)}
+.history-meta span{display:inline-flex;align-items:center;gap:5px}.history-meta .arc-icon{width:14px;height:14px;color:var(--arc-icon-mist)}
+.arc-icon-action{display:inline-flex;align-items:center;gap:7px}.arc-icon-action .arc-icon{width:15px;height:15px;transition:transform .18s ease}.arc-icon-action:hover .arc-icon[data-arc-icon="arrow-right"]{transform:translateX(2px)}.arc-icon-action:hover .arc-icon[data-arc-icon="external-link"]{transform:translate(1px,-1px)}
+.starting-point-action b .arc-icon{width:18px;height:18px;color:var(--arc-icon-mist)}.starting-point-action:hover b .arc-icon{color:var(--arc-icon-gold)}.delete-account-action b .arc-icon{color:var(--arc-icon-danger)}.starting-point-close .arc-icon,.setup-edit-close .arc-icon{width:17px;height:17px}
+.profile-chip{box-shadow:inset 0 0 0 1px rgba(145,163,173,.08),0 6px 18px rgba(4,13,23,.12)}
+@media(max-width:720px){.mobile-nav .nav-item>span:first-child{width:36px;height:31px}.mobile-nav .nav-item .arc-icon{width:25px;height:25px}.metric-card .metric-icon{width:31px!important;height:31px!important;border-radius:10px!important}.workout-tier{width:39px!important;height:39px!important;border-radius:13px!important}.connection-card .device-icon,.nutrition-source-card .nutrition-source-icon{width:44px!important;height:44px!important;border-radius:14px!important}}
+@media(prefers-reduced-motion:reduce){.side-nav .nav-item,.mobile-nav .nav-item,.side-nav .nav-item .arc-icon,.mobile-nav .nav-item .arc-icon,.arc-icon-action .arc-icon,.starting-point-action>b{transition:none!important;transform:none!important}}
