@@ -8,8 +8,15 @@ const $ = (id) => document.getElementById(id);
 function setGauge(el, visualPct) {
   if (!el) return;
   const pct = Math.max(0, Math.min(100, Number(visualPct) || 0));
+  const energy = pct / 100;
   el.style.setProperty('--progress', `${pct * 3.6}deg`);
   el.style.setProperty('--arc-fill', `${pct}%`);
+  /* v8: progress is communicated by the photographic corona gaining energy,
+     not by masking a pie slice. This is reliable on iOS and still makes the
+     eclipse visibly evolve as the user's Arc develops. */
+  el.style.setProperty('--arc-corona-opacity', (0.42 + energy * 0.50).toFixed(3));
+  el.style.setProperty('--arc-corona-brightness', (0.92 + energy * 0.40).toFixed(3));
+  el.style.setProperty('--arc-corona-scale', (0.99 + energy * 0.018).toFixed(3));
 }
 
 function titleCase(value = '') {
