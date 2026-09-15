@@ -4,15 +4,15 @@ Arc is a health and fitness web app built around sustainable aggressive consiste
 
 ## Current visual system
 
-The active production direction is the **North Star** palette plus **Radiant Horizon** progress/status component.
+The production direction is the **North Star** palette plus **Radiant Horizon** progress/status component.
 
 - `arc-northstar-v1.css` — app-wide midnight / alpine blue / sunrise-gold visual system.
-- `arc-radiant-v1.css` + `arc-radiant-v1.js` — the single visual authority for Arc progress/status.
+- `arc-radiant-v1.css` + `arc-radiant-v1.js` — single visual authority for Arc progress/status.
 - `arc-roundout.js` — authoritative Arc state/progress renderer. 80% actual adherence maps to a visually complete Arc.
-- `assets/arc-icon-sunrise.svg` — current iOS/PWA Home Screen icon, using the approved alpine sunrise + glowing horizon + Arc wordmark concept.
-- `arc-motion-bootstrap.css` + `arc-motion-bootstrap.js` — startup guard for meaningful progress motion.
+- `assets/arc-icon-sunrise.svg` — iOS/PWA Home Screen icon using the approved alpine sunrise + glowing horizon + Arc wordmark concept.
+- `arc-motion-bootstrap.css` + `arc-motion-bootstrap.js` — startup guard for meaningful Radiant Horizon motion.
 
-Retired eclipse, corona, Living Arc, and v6/v7/v8 visual files and eclipse assets were removed so they cannot re-enter the cascade or PWA cache accidentally. Legacy eclipse styling was also removed from `core-roundout.css`.
+Retired eclipse, corona, Living Arc, and v6/v7/v8 visual files and eclipse assets were removed. Legacy eclipse styling was removed from `core-roundout.css`, and the PWA cache now contains only the current visual authority and current icon.
 
 ## Product principle
 
