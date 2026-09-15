@@ -1,4 +1,4 @@
-const CACHE_VERSION='arc-ready16';
+const CACHE_VERSION='arc-ready17';
 const SHELL_CACHE=`${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE=`${CACHE_VERSION}-runtime`;
 
@@ -48,6 +48,7 @@ const PRECACHE=[
   './assets/arc-icon-180.png',
   './assets/arc-icon-192.png',
   './assets/arc-icon-512.png',
+  './assets/arc-icon-maskable-512.png',
   './assets/arc-icon-maskable.svg',
   './assets/arc-eclipse-v4.svg',
   './assets/fiery_asymmetric_solar_eclipse.png'
