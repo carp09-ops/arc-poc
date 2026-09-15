@@ -1,12 +1,13 @@
-/* Arc Eclipse v5.2 — embedded cinematic eclipse.
-   The lunar disk is the only circle. Corona light blends into the surrounding
-   landscape and Arc progress reveals the real corona clockwise. */
+/* Arc Eclipse v6 — transparent corona + independent lunar disk.
+   The source photograph is keyed to transparency in arc-corona-transparent.svg,
+   so there is no square image canvas to reveal on iOS. The corona can extend
+   naturally into the landscape while Arc progress reveals the real solar light. */
 
 .arc-gauge {
-  --eclipse-center-x: 47.85%;
-  --eclipse-center-y: 47.85%;
-  --disk-size: 52.8%;
-  width: clamp(300px,31vw,410px) !important;
+  --eclipse-center-x: 47.344%;
+  --eclipse-center-y: 48.312%;
+  --disk-size: 53.806%;
+  width: clamp(285px,30vw,395px) !important;
   max-width: none !important;
   aspect-ratio: 1 / 1 !important;
   position: relative !important;
@@ -19,8 +20,7 @@
   box-shadow: none !important;
 }
 
-/* Low-energy corona still exists around the eclipse, but the source image's
-   black background and black moon never render into the scene. */
+/* Dim corona: always visible so the eclipse has life even at 0% progress. */
 .arc-gauge::before {
   content: '' !important;
   position: absolute !important;
@@ -28,18 +28,15 @@
   z-index: 1 !important;
   pointer-events: none !important;
   border-radius: 0 !important;
-  background: url('./assets/fiery_asymmetric_solar_eclipse.png?v=ready18') center/contain no-repeat !important;
-  mix-blend-mode: screen !important;
-  opacity: .24 !important;
+  background: url('./assets/arc-corona-transparent.svg?v=ready19') center/100% 100% no-repeat !important;
+  opacity: .30 !important;
   transform-origin: var(--eclipse-center-x) var(--eclipse-center-y) !important;
-  filter: brightness(.82) saturate(.92) contrast(1.04) !important;
-  -webkit-mask-image: radial-gradient(circle at var(--eclipse-center-x) var(--eclipse-center-y),transparent 0 25.4%,#000 26.1% 35%,rgba(0,0,0,.92) 43%,rgba(0,0,0,.58) 51%,rgba(0,0,0,.18) 60%,transparent 68%) !important;
-  mask-image: radial-gradient(circle at var(--eclipse-center-x) var(--eclipse-center-y),transparent 0 25.4%,#000 26.1% 35%,rgba(0,0,0,.92) 43%,rgba(0,0,0,.58) 51%,rgba(0,0,0,.18) 60%,transparent 68%) !important;
-  animation: arcCoronaAmbient 4.2s ease-in-out infinite !important;
+  filter: brightness(.78) saturate(.92) !important;
+  animation: arcCoronaAmbient 3.4s ease-in-out infinite !important;
   will-change: opacity,transform,filter;
 }
 
-/* Bright layer follows Arc's existing --progress angle. */
+/* Bright corona: revealed clockwise by the existing --progress angle. */
 .arc-gauge::after {
   content: '' !important;
   display: block !important;
@@ -48,25 +45,31 @@
   z-index: 2 !important;
   pointer-events: none !important;
   border-radius: 0 !important;
-  background: url('./assets/fiery_asymmetric_solar_eclipse.png?v=ready18') center/contain no-repeat !important;
-  mix-blend-mode: screen !important;
-  opacity: .92 !important;
+  background: url('./assets/arc-corona-transparent.svg?v=ready19') center/100% 100% no-repeat !important;
+  opacity: 1 !important;
   transform-origin: var(--eclipse-center-x) var(--eclipse-center-y) !important;
-  filter: brightness(1.10) saturate(1.16) contrast(1.05) !important;
-  -webkit-mask-image:
-    radial-gradient(circle at var(--eclipse-center-x) var(--eclipse-center-y),transparent 0 25.4%,#000 26.1% 35%,rgba(0,0,0,.98) 43%,rgba(0,0,0,.70) 51%,rgba(0,0,0,.26) 60%,transparent 68%),
-    conic-gradient(from -90deg at var(--eclipse-center-x) var(--eclipse-center-y),#000 0deg,#000 var(--progress),transparent var(--progress),transparent 360deg) !important;
-  -webkit-mask-composite: source-in !important;
-  mask-image:
-    radial-gradient(circle at var(--eclipse-center-x) var(--eclipse-center-y),transparent 0 25.4%,#000 26.1% 35%,rgba(0,0,0,.98) 43%,rgba(0,0,0,.70) 51%,rgba(0,0,0,.26) 60%,transparent 68%),
-    conic-gradient(from -90deg at var(--eclipse-center-x) var(--eclipse-center-y),#000 0deg,#000 var(--progress),transparent var(--progress),transparent 360deg) !important;
-  mask-composite: intersect !important;
-  animation: arcCoronaAlive 3.25s ease-in-out infinite !important;
+  filter: brightness(1.14) saturate(1.15) contrast(1.03) !important;
+  -webkit-mask-image: conic-gradient(
+    from -90deg at var(--eclipse-center-x) var(--eclipse-center-y),
+    #000 0deg,
+    #000 var(--progress),
+    transparent var(--progress),
+    transparent 360deg
+  ) !important;
+  mask-image: conic-gradient(
+    from -90deg at var(--eclipse-center-x) var(--eclipse-center-y),
+    #000 0deg,
+    #000 var(--progress),
+    transparent var(--progress),
+    transparent 360deg
+  ) !important;
+  animation: arcCoronaAlive 3.4s ease-in-out infinite !important;
   will-change: opacity,transform,filter;
 }
 
-/* Exact lunar-disk alignment to the source photography. Text is centered on
-   the real eclipse center, not on the outer square. */
+/* The black lunar disk is a separate UI layer positioned at the exact center
+   measured from the source eclipse. Text therefore stays centered on the moon,
+   regardless of how asymmetric the corona becomes. */
 .arc-gauge-inner {
   position: absolute !important;
   left: var(--eclipse-center-x) !important;
@@ -86,160 +89,192 @@
   overflow: hidden !important;
   border-radius: 50% !important;
   border: 0 !important;
-  background: radial-gradient(circle at 45% 38%,#080808 0%,#020203 61%,#000 100%) !important;
-  box-shadow: inset 0 0 0 1px rgba(255,218,155,.08),0 0 12px rgba(255,147,46,.10) !important;
+  background: radial-gradient(circle at 44% 38%,#090909 0%,#020203 62%,#000 100%) !important;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,224,173,.10),
+    0 0 16px rgba(255,159,55,.14) !important;
   text-align: center !important;
   color: #fff !important;
 }
 
 .arc-gauge-inner strong {
-  color: #fff !important;
-  font-family: var(--serif,Georgia,serif) !important;
-  font-size: clamp(1.55rem,2.3vw,2.15rem) !important;
-  font-weight: 600 !important;
-  line-height: .98 !important;
-  letter-spacing: -.03em !important;
-  text-align: center !important;
-  text-wrap: balance;
-  max-width: 86%;
-  margin: 0 !important;
-  text-shadow: 0 2px 14px rgba(0,0,0,.98) !important;
+  color:#fff !important;
+  font-family:var(--serif,Georgia,serif) !important;
+  font-size:clamp(1.5rem,2.25vw,2.08rem) !important;
+  font-weight:600 !important;
+  line-height:.98 !important;
+  letter-spacing:-.03em !important;
+  text-align:center !important;
+  text-wrap:balance;
+  max-width:86%;
+  margin:0 !important;
+  text-shadow:0 2px 14px rgba(0,0,0,.98) !important;
 }
-
 .arc-gauge-inner span {
-  color: #f2c777 !important;
-  font-size: .63rem !important;
-  line-height: 1.2 !important;
-  letter-spacing: .18em !important;
-  font-weight: 800 !important;
-  text-transform: uppercase !important;
-  white-space: nowrap !important;
-  text-align: center !important;
-  margin: 0 !important;
-  text-shadow: 0 2px 10px rgba(0,0,0,.98) !important;
+  color:#f2c777 !important;
+  font-size:.62rem !important;
+  line-height:1.2 !important;
+  letter-spacing:.18em !important;
+  font-weight:800 !important;
+  text-transform:uppercase !important;
+  white-space:nowrap !important;
+  text-align:center !important;
+  margin:0 !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.98) !important;
 }
 
-/* TODAY — eclipse is embedded into the existing mountain/lake hero. */
+/* TODAY — the eclipse belongs to the photograph, not to a separate card. */
 .hero-card .arc-gauge-wrap {
-  position: relative !important;
-  z-index: 3 !important;
-  justify-self: center !important;
-  align-self: center !important;
-  width: clamp(320px,34vw,440px) !important;
-  overflow: visible !important;
-  text-align: center !important;
+  position:relative !important;
+  z-index:3 !important;
+  justify-self:center !important;
+  align-self:center !important;
+  width:clamp(300px,32vw,420px) !important;
+  overflow:visible !important;
+  text-align:center !important;
 }
-.hero-card .arc-gauge { width: 100% !important; }
+.hero-card .arc-gauge { width:100% !important; }
 .hero-card .arc-gauge-wrap > small {
-  position: relative !important;
-  z-index: 5 !important;
-  display: block !important;
-  width: min(300px,84%) !important;
-  margin: -7px auto 0 !important;
-  color: rgba(255,255,255,.94) !important;
-  font-size: .78rem !important;
-  line-height: 1.4 !important;
-  text-align: center !important;
-  text-shadow: 0 2px 10px rgba(0,0,0,.88) !important;
-}
-.hero-card .arc-gauge-wrap::before {
-  content: '';
-  position: absolute;
-  left: 18%; right: 18%; top: 20%; bottom: 20%;
-  z-index: 0;
-  border-radius: 50%;
-  background: radial-gradient(circle,rgba(255,166,65,.28),rgba(255,127,29,.08) 45%,transparent 72%);
-  filter: blur(26px);
-  opacity: .58;
-  animation: arcSceneGlow 3.25s ease-in-out infinite;
-  pointer-events: none;
+  position:relative !important;
+  z-index:5 !important;
+  display:block !important;
+  width:min(300px,84%) !important;
+  margin:-5px auto 0 !important;
+  color:rgba(255,255,255,.94) !important;
+  font-size:.78rem !important;
+  line-height:1.4 !important;
+  text-align:center !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.88) !important;
 }
 
-/* ARC DETAIL — same composition language, not a cream eclipse card. */
+/* Light spill into the scene; this is diffuse atmosphere, not another ring. */
+.hero-card .arc-gauge-wrap::before {
+  content:'';
+  position:absolute;
+  left:14%;right:14%;top:15%;bottom:15%;
+  z-index:0;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,164,60,.23),rgba(255,127,29,.07) 46%,transparent 72%);
+  filter:blur(28px);
+  opacity:.5;
+  animation:arcSceneGlow 3.4s ease-in-out infinite;
+  pointer-events:none;
+}
+
+/* ARC DETAIL — same visual system inside a landscape, not on cream. */
 .arc-explainer {
-  position: relative !important;
-  min-height: 430px !important;
-  overflow: hidden !important;
-  color: #fff !important;
-  border: 0 !important;
+  position:relative !important;
+  min-height:430px !important;
+  overflow:hidden !important;
+  color:#fff !important;
+  border:0 !important;
   background:
-    linear-gradient(90deg,rgba(10,30,28,.58) 0%,rgba(10,30,28,.34) 50%,rgba(10,30,28,.70) 100%),
+    linear-gradient(90deg,rgba(10,30,28,.60) 0%,rgba(10,30,28,.30) 52%,rgba(10,30,28,.72) 100%),
     url('https://images.unsplash.com/photo-1464278533981-50106e6176b1?auto=format&fit=crop&w=1800&q=88') center/cover no-repeat !important;
-  box-shadow: var(--shadow) !important;
+  box-shadow:var(--shadow) !important;
 }
 .arc-explainer .arc-gauge.large {
-  --disk-size: 52.8%;
-  width: clamp(340px,36vw,470px) !important;
-  flex: 0 0 auto !important;
+  --disk-size:53.806%;
+  width:clamp(330px,35vw,455px) !important;
+  flex:0 0 auto !important;
 }
-.arc-explainer > div:last-child {
-  position: relative !important;
-  z-index: 5 !important;
-  max-width: 420px;
-}
-.arc-explainer h2 { color:#fff !important; text-shadow:0 2px 14px rgba(0,0,0,.65); }
-.arc-explainer p { color:rgba(246,248,247,.92) !important; text-shadow:0 2px 12px rgba(0,0,0,.58); }
-.arc-explainer .pill { background:rgba(251,248,241,.92) !important; color:var(--pine-deep) !important; }
-.arc-gauge.large .arc-gauge-inner strong { font-size:clamp(1.8rem,2.7vw,2.45rem) !important; }
+.arc-explainer > div:last-child { position:relative !important;z-index:5 !important;max-width:420px; }
+.arc-explainer h2 { color:#fff !important;text-shadow:0 2px 14px rgba(0,0,0,.65); }
+.arc-explainer p { color:rgba(246,248,247,.92) !important;text-shadow:0 2px 12px rgba(0,0,0,.58); }
+.arc-explainer .pill { background:rgba(251,248,241,.92) !important;color:var(--pine-deep) !important; }
+.arc-gauge.large .arc-gauge-inner strong { font-size:clamp(1.75rem,2.6vw,2.35rem) !important; }
 
-/* Solar motion — intentionally visible, but only the corona breathes. */
+/* Visible but calm solar breathing. At 0% the dim corona still breathes. */
 @keyframes arcCoronaAmbient {
-  0%,100% { opacity:.18; transform:scale(.995); filter:brightness(.78) saturate(.88) contrast(1.03); }
-  50% { opacity:.31; transform:scale(1.012); filter:brightness(.96) saturate(1.04) contrast(1.04); }
+  0%,100% {
+    opacity:.22;
+    transform:scale(.975);
+    filter:brightness(.68) saturate(.86) drop-shadow(0 0 4px rgba(255,142,45,.10));
+  }
+  50% {
+    opacity:.46;
+    transform:scale(1.035);
+    filter:brightness(1.05) saturate(1.08) drop-shadow(0 0 18px rgba(255,160,57,.32));
+  }
 }
 @keyframes arcCoronaAlive {
-  0%,100% { opacity:.82; transform:scale(.995); filter:brightness(1.02) saturate(1.10) contrast(1.04); }
-  50% { opacity:1; transform:scale(1.028); filter:brightness(1.31) saturate(1.30) contrast(1.06) drop-shadow(0 0 22px rgba(255,162,62,.38)); }
+  0%,100% {
+    opacity:.88;
+    transform:scale(.988);
+    filter:brightness(1.02) saturate(1.10) contrast(1.03);
+  }
+  50% {
+    opacity:1;
+    transform:scale(1.035);
+    filter:brightness(1.30) saturate(1.30) contrast(1.05) drop-shadow(0 0 24px rgba(255,168,67,.42));
+  }
 }
 @keyframes arcSceneGlow {
-  0%,100% { opacity:.38; transform:scale(.94); }
-  50% { opacity:.78; transform:scale(1.08); }
+  0%,100% { opacity:.30;transform:scale(.94); }
+  50% { opacity:.72;transform:scale(1.08); }
 }
 @keyframes arcCoronaKick {
-  0% { filter:brightness(1.06) saturate(1.12); }
-  38% { filter:brightness(1.48) saturate(1.40) drop-shadow(0 0 32px rgba(255,181,81,.52)); }
-  100% { filter:brightness(1.12) saturate(1.18); }
+  0% { filter:brightness(1.08) saturate(1.14); }
+  38% { filter:brightness(1.55) saturate(1.42) drop-shadow(0 0 34px rgba(255,184,84,.56)); }
+  100% { filter:brightness(1.14) saturate(1.18); }
 }
 @keyframes arcCoronaComplete {
-  0% { filter:brightness(1.08) saturate(1.14); }
-  24% { filter:brightness(1.66) saturate(1.48) drop-shadow(0 0 42px rgba(255,195,100,.62)); }
-  100% { filter:brightness(1.14) saturate(1.20); }
+  0% { filter:brightness(1.10) saturate(1.15); }
+  24% { filter:brightness(1.72) saturate(1.50) drop-shadow(0 0 46px rgba(255,198,103,.66)); }
+  100% { filter:brightness(1.16) saturate(1.20); }
 }
-.arc-gauge.arc-progress-pulse::after,.arc-gauge.arc-progress-pulse-strong::after {
-  animation:arcCoronaAlive 3.25s ease-in-out infinite,arcCoronaKick 980ms cubic-bezier(.18,.78,.22,1) both !important;
+.arc-gauge.arc-progress-pulse::after,
+.arc-gauge.arc-progress-pulse-strong::after {
+  animation:arcCoronaAlive 3.4s ease-in-out infinite,arcCoronaKick 980ms cubic-bezier(.18,.78,.22,1) both !important;
 }
 .arc-gauge.arc-threshold-flare::after {
-  animation:arcCoronaAlive 3.25s ease-in-out infinite,arcCoronaComplete 1750ms cubic-bezier(.16,.76,.2,1) both !important;
+  animation:arcCoronaAlive 3.4s ease-in-out infinite,arcCoronaComplete 1750ms cubic-bezier(.16,.76,.2,1) both !important;
 }
 
 @media (max-width:900px) {
-  .hero-card { min-height:620px !important; grid-template-columns:1fr !important; align-items:start !important; padding-bottom:315px !important; }
-  .hero-card .hero-copy { position:relative !important; z-index:5 !important; max-width:92% !important; }
+  .hero-card {
+    min-height:620px !important;
+    grid-template-columns:1fr !important;
+    align-items:start !important;
+    padding-bottom:286px !important;
+  }
+  .hero-card .hero-copy { position:relative !important;z-index:5 !important;max-width:94% !important; }
   .hero-card .arc-gauge-wrap {
     position:absolute !important;
     left:50% !important;
-    bottom:36px !important;
-    width:min(410px,88vw) !important;
+    bottom:28px !important;
+    width:min(330px,78vw) !important;
     transform:translateX(-50%) !important;
   }
-  .hero-card .arc-gauge-wrap > small { width:min(310px,84%) !important; margin:-8px auto 0 !important; text-align:center !important; }
-  .arc-explainer { min-height:620px !important; flex-direction:column !important; justify-content:center !important; align-items:center !important; gap:4px !important; padding:26px 20px 30px !important; background-position:center !important; }
-  .arc-explainer .arc-gauge.large { width:min(410px,88vw) !important; }
-  .arc-explainer > div:last-child { text-align:center !important; max-width:520px !important; }
+  .hero-card .arc-gauge-wrap > small { width:min(300px,88%) !important;margin:-2px auto 0 !important;text-align:center !important; }
+  .arc-explainer {
+    min-height:600px !important;
+    flex-direction:column !important;
+    justify-content:center !important;
+    align-items:center !important;
+    gap:0 !important;
+    padding:24px 20px 28px !important;
+    background-position:center !important;
+  }
+  .arc-explainer .arc-gauge.large { width:min(340px,82vw) !important; }
+  .arc-explainer > div:last-child { text-align:center !important;max-width:520px !important; }
 }
 
 @media (max-width:680px) {
-  .hero-card { min-height:655px !important; padding:28px 22px 325px !important; }
-  .hero-card .arc-gauge-wrap { bottom:32px !important; width:min(380px,91vw) !important; }
-  .arc-gauge { width:min(380px,91vw) !important; }
-  .arc-gauge-inner strong { font-size:clamp(1.35rem,6.5vw,1.85rem) !important; }
-  .arc-gauge-inner span { font-size:.57rem !important; }
-  .arc-explainer .arc-gauge.large { width:min(370px,90vw) !important; }
-  .arc-gauge.large .arc-gauge-inner strong { font-size:clamp(1.5rem,7vw,2rem) !important; }
+  .hero-card { min-height:640px !important;padding:28px 22px 290px !important; }
+  .hero-card .arc-gauge-wrap { bottom:24px !important;width:min(310px,82vw) !important; }
+  .arc-gauge { width:min(310px,82vw) !important; }
+  .arc-gauge-inner strong { font-size:clamp(1.32rem,6vw,1.75rem) !important; }
+  .arc-gauge-inner span { font-size:.56rem !important; }
+  .arc-explainer .arc-gauge.large { width:min(320px,84vw) !important; }
+  .arc-gauge.large .arc-gauge-inner strong { font-size:clamp(1.5rem,6.6vw,1.95rem) !important; }
 }
 
 @media (prefers-reduced-motion:reduce) {
-  .arc-gauge::before,.arc-gauge::after,.hero-card .arc-gauge-wrap::before,.arc-gauge.arc-progress-pulse::after,.arc-gauge.arc-progress-pulse-strong::after,.arc-gauge.arc-threshold-flare::after {
-    animation:none !important;
-  }
+  .arc-gauge::before,
+  .arc-gauge::after,
+  .hero-card .arc-gauge-wrap::before,
+  .arc-gauge.arc-progress-pulse::after,
+  .arc-gauge.arc-progress-pulse-strong::after,
+  .arc-gauge.arc-threshold-flare::after { animation:none !important; }
 }
