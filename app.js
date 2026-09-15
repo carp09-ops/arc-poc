@@ -1,4 +1,4 @@
-const BUILD = 'ready16';
+const BUILD = 'ready17';
 
 const addStyle = (href) => {
   const link = document.createElement('link');
@@ -11,7 +11,6 @@ addStyle('./core-roundout.css');
 addStyle('./eclipse-arc.css');
 addStyle('./eclipse-arc-motion.css');
 addStyle('./arc-eclipse-v4.css');
-addStyle('./arc-eclipse-v5.css');
 addStyle('./training-roundout.css');
 addStyle('./nutrition-plumbing.css');
 addStyle('./readiness-sprint.css');
@@ -24,22 +23,24 @@ addStyle('./pwa-polish.css');
 addStyle('./what-arc-sees.css');
 addStyle('./privacy-controls.css');
 addStyle('./workout-engine-badge.css');
+/* Eclipse v5 intentionally loads last so legacy gauge/mobile CSS cannot re-frame it. */
+addStyle('./arc-eclipse-v5.css');
 
-import './pwa-polish.js?v=ready16';
-import './arc-icons.js?v=ready16';
-import './arc-icon-details.js?v=ready16';
-import './startup-loading.js?v=ready16';
-import './arc-motion-bootstrap.js?v=ready16';
-import './readiness-sprint.js?v=ready16';
-import './auth-hardening.js?v=ready16';
-import './core-app.js?v=ready16';
-import './edge-workouts.js?v=ready16';
-import './qa-enhancements.js?v=ready16';
-import './starting-point.js?v=ready16';
-import './arc-roundout.js?v=ready16';
-import './body-analytics.js?v=ready16';
-import './training-roundout.js?v=ready16';
-import './nutrition-plumbing.js?v=ready16';
-import './what-arc-sees.js?v=ready16';
-import './privacy-controls.js?v=ready16';
-import './workout-engine-badge.js?v=ready16';
+import './pwa-polish.js?v=ready17';
+import './arc-icons.js?v=ready17';
+import './arc-icon-details.js?v=ready17';
+import './startup-loading.js?v=ready17';
+import './arc-motion-bootstrap.js?v=ready17';
+import './readiness-sprint.js?v=ready17';
+import './auth-hardening.js?v=ready17';
+import './core-app.js?v=ready17';
+import './edge-workouts.js?v=ready17';
+import './qa-enhancements.js?v=ready17';
+import './starting-point.js?v=ready17';
+import './arc-roundout.js?v=ready17';
+import './body-analytics.js?v=ready17';
+import './training-roundout.js?v=ready17';
+import './nutrition-plumbing.js?v=ready17';
+import './what-arc-sees.js?v=ready17';
+import './privacy-controls.js?v=ready17';
+import './workout-engine-badge.js?v=ready17';
