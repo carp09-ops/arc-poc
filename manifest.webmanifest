@@ -1,15 +1,6 @@
 {
-  "id": "./",
-  "name": "Arc — Progress has a shape",
-  "short_name": "Arc",
-  "description": "Aggressive consistency without perfection.",
-  "start_url": "./?v=ready27",
-  "scope": "./",
-  "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
-  "background_color": "#0B1A2B",
-  "theme_color": "#0B1A2B",
-  "orientation": "any",
-  "categories": ["health", "fitness", "lifestyle"],
-  "icons": [{"src":"./assets/arc-icon-sunrise.svg?v=ready27b","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+  "id":"./","name":"Arc — Progress has a shape","short_name":"Arc","description":"Aggressive consistency without perfection.",
+  "start_url":"./?v=ready27b","scope":"./","display":"standalone","display_override":["standalone","minimal-ui"],
+  "background_color":"#0B1A2B","theme_color":"#0B1A2B","orientation":"any","categories":["health","fitness","lifestyle"],
+  "icons":[{"src":"./assets/arc-icon-sunrise.svg?v=ready27b","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
 }
