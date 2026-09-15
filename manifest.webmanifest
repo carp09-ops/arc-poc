@@ -25,9 +25,9 @@
       "purpose": "any"
     },
     {
-      "src": "./assets/arc-icon-maskable-512.png?v=ready16",
-      "sizes": "512x512",
-      "type": "image/png",
+      "src": "./assets/arc-icon-maskable.svg?v=ready16",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "maskable"
     }
   ]
