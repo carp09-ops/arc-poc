@@ -1,4 +1,4 @@
-const CACHE_VERSION='arc-ready20';
+const CACHE_VERSION='arc-ready21';
 const SHELL_CACHE=`${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE=`${CACHE_VERSION}-runtime`;
 
