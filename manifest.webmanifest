@@ -3,15 +3,15 @@
   "name": "Arc \u2014 Progress has a shape",
   "short_name": "Arc",
   "description": "Aggressive consistency without perfection.",
-  "start_url": "./?v=ready29",
+  "start_url": "./?v=ready30",
   "scope": "./",
   "display": "standalone",
   "display_override": [
     "standalone",
     "minimal-ui"
   ],
-  "background_color": "#0B1A2B",
-  "theme_color": "#0B1A2B",
+  "background_color": "#f7f2e7",
+  "theme_color": "#f7f2e7",
   "orientation": "any",
   "categories": [
     "health",
@@ -20,25 +20,25 @@
   ],
   "icons": [
     {
-      "src": "./assets/arc-icon-192.png?v=ready29",
+      "src": "./assets/arc-icon-192.png?v=ready30",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./assets/arc-icon-512.png?v=ready29",
+      "src": "./assets/arc-icon-512.png?v=ready30",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "./assets/arc-icon-maskable-512.png?v=ready29",
+      "src": "./assets/arc-icon-maskable-512.png?v=ready30",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "./assets/arc-icon-sunrise.svg?v=ready29",
+      "src": "./assets/arc-icon-sunrise.svg?v=ready30",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
