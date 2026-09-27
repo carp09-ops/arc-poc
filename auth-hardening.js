@@ -50,13 +50,19 @@ function recoverDuplicateWorkout() {
   setTimeout(() => window.location.reload(), 900);
 }
 
-const observer = new MutationObserver(() => {
-  forceRecoveryGate();
-  mapLoginMessage();
-  polishOperationalToast();
-  recoverDuplicateWorkout();
-});
-observer.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['class'], characterData:true });
+// Scoped observers: #toast and #loginMessage are static elements in
+// index.html, so they are watched directly instead of the whole document.
+// The recovery gate only matters for ?recovery=1 and needs no observer.
+const toastEl = document.getElementById('toast');
+if (toastEl) {
+  new MutationObserver(() => { polishOperationalToast(); recoverDuplicateWorkout(); })
+    .observe(toastEl, { childList:true, characterData:true, subtree:true });
+}
+const loginMessageEl = document.getElementById('loginMessage');
+if (loginMessageEl) {
+  new MutationObserver(mapLoginMessage)
+    .observe(loginMessageEl, { childList:true, characterData:true, subtree:true });
+}
 
 forceRecoveryGate();
 mapLoginMessage();

@@ -163,9 +163,19 @@ async function refresh(){
   try{localStorage.setItem(cacheKey(uid),JSON.stringify(insight));}catch(_){/* storage may be unavailable */}
 }
 
-function scheduleRefresh(delay=700){
+const REFRESH_TTL_MS = 60000; // insight refetches at most once a minute…
+let lastRefreshAt = 0;
+
+function scheduleRefresh(delay=700, { force=false }={}){
   clearTimeout(refreshTimer);
-  refreshTimer=setTimeout(()=>refresh().catch(()=>{}),delay);
+  refreshTimer=setTimeout(()=>{
+    // …unless new data just landed (force), in which case the cached insight
+    // is stale by definition. Otherwise the cached insight stands
+    // (stale-while-revalidate) and the refetch is skipped.
+    if (!force && Date.now() - lastRefreshAt < REFRESH_TTL_MS) return;
+    lastRefreshAt = Date.now();
+    refresh().catch(()=>{ lastRefreshAt = 0; });
+  },delay);
 }
 
 ensureCard();
@@ -177,7 +187,7 @@ document.addEventListener('visibilitychange',()=>{
 });
 document.addEventListener('submit',event=>{
   const id=event.target?.id;
-  if(id==='readinessForm'||id==='measurementForm'||id==='startingPointForm') scheduleRefresh(id==='readinessForm'?2600:1300);
+  if(id==='readinessForm'||id==='measurementForm'||id==='startingPointForm') scheduleRefresh(id==='readinessForm'?2600:1300,{force:true});
 });
 document.addEventListener('click',event=>{
   if(event.target?.closest?.('#completeWorkout')) scheduleRefresh(1600);

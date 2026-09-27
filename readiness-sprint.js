@@ -9,16 +9,6 @@ const bootDate = localDate();
 let arcUserId = null;
 let arcObserverInstalled = false;
 
-function ensureReadyStyles() {
-  if (document.querySelector('link[data-arc-ready-style]')) return;
-  const link = document.createElement('link');
-  link.rel = 'stylesheet';
-  link.href = `./readiness-sprint.css?v=${BUILD}`;
-  link.dataset.arcReadyStyle = '1';
-  document.head.appendChild(link);
-}
-ensureReadyStyles();
-
 function setButtonBusy(button, busy, busyText = 'Working…') {
   if (!button) return;
   if (busy) {
@@ -336,7 +326,10 @@ function installWorkoutDraftResilience() {
       });
     }
   });
-  observer.observe(document.body, { childList:true, subtree:true, characterData:true });
+  // Scoped to the active-workout panel: set rows only ever render there, so
+  // the whole document does not need watching.
+  const activeWorkout = document.getElementById('activeWorkout');
+  observer.observe(activeWorkout || document.body, { childList:true, subtree:true, characterData:true });
 }
 
 function installDuplicateGuards() {
@@ -391,9 +384,9 @@ function installDayBoundaryGuard() {
 }
 
 function installInviteAction() {
-  const observer = new MutationObserver(() => {
+  const install = () => {
     const panel = document.querySelector('.starting-point-panel');
-    if (!panel || $('arcInviteSomeone')) return;
+    if (!panel || $('arcInviteSomeone')) return false;
     const button = document.createElement('button');
     button.id = 'arcInviteSomeone';
     button.className = 'starting-point-action arc-invite-action';
@@ -411,8 +404,14 @@ function installInviteAction() {
         if (error?.name !== 'AbortError') toast('Could not share the invite right now.');
       }
     });
-  });
+    return true;
+  };
+  // The panel is created at startup; try once now and only observe until the
+  // button exists, then disconnect instead of watching the document forever.
+  if (install()) return;
+  const observer = new MutationObserver(() => { if (install()) observer.disconnect(); });
   observer.observe(document.body, { childList:true, subtree:true });
+  setTimeout(() => observer.disconnect(), 10000);
 }
 
 function installAppStatus() {

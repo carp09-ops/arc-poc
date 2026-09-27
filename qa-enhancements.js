@@ -1,8 +1,3 @@
-const styleLink = document.createElement('link');
-styleLink.rel = 'stylesheet';
-styleLink.href = './qa-enhancements.css';
-document.head.appendChild(styleLink);
-
 const $ = (id) => document.getElementById(id);
 
 function installEquipmentPicker() {

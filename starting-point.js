@@ -3,11 +3,6 @@ import { toast } from './toast.js';
 
 const $ = (id) => document.getElementById(id);
 
-const styleLink = document.createElement('link');
-styleLink.rel = 'stylesheet';
-styleLink.href = './starting-point.css';
-document.head.appendChild(styleLink);
-
 function localISODate(date = new Date()) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
