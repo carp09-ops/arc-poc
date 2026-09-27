@@ -94,35 +94,10 @@ function createLoadingScene() {
 }
 
 function installSetupLoading() {
-  const form = $('setupForm');
-  const gate = $('setupGate');
-  if (!form || !gate || form.dataset.loadingInstalled === 'true') return;
-  form.dataset.loadingInstalled = 'true';
-  const overlay = createLoadingScene();
-
-  form.addEventListener('submit', () => {
-    const started = Date.now();
-    overlay.classList.add('visible');
-
-    const hide = () => {
-      const elapsed = Date.now() - started;
-      const delay = Math.max(0, 1100 - elapsed);
-      window.setTimeout(() => overlay.classList.remove('visible'), delay);
-    };
-
-    const observer = new MutationObserver(() => {
-      if (gate.classList.contains('hidden')) {
-        observer.disconnect();
-        hide();
-      }
-    });
-    observer.observe(gate, { attributes: true, attributeFilter: ['class'] });
-
-    window.setTimeout(() => {
-      if (!gate.classList.contains('hidden')) overlay.classList.remove('visible');
-      observer.disconnect();
-    }, 6500);
-  }, true);
+  // The overlay scene just needs to exist; the single setupForm submit
+  // handler (saveSetup in starting-point.js) shows and hides it. A second
+  // capture listener here used to depend on fragile listener ordering.
+  createLoadingScene();
 }
 
 function enhanceWeightTrend() {

@@ -123,30 +123,6 @@ async function loadData() {
   else setupGate.classList.add('hidden');
 }
 
-$('setupForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const uid = state.user.id;
-  const equipment = $('setupEquipment').value.split(',').map(x => x.trim()).filter(Boolean);
-  const { error: profileError } = await supabase.from('profiles').upsert({
-    user_id: uid,
-    display_name: $('setupName').value.trim() || null,
-    primary_goal: $('setupGoal').value.trim() || null,
-    equipment,
-    preferred_units: 'imperial',
-    updated_at: new Date().toISOString()
-  });
-  if (profileError) { showToast(profileError.message); return; }
-  const { error: targetError } = await supabase.from('weekly_targets').insert({
-    user_id: uid,
-    starts_on: localISODate(),
-    workouts_per_week: Number($('setupTarget').value)
-  });
-  if (targetError) { showToast(targetError.message); return; }
-  setupGate.classList.add('hidden');
-  showToast('Your Arc is set.');
-  await loadData();
-});
-
 function renderAll() {
   renderToday();
   renderArc();

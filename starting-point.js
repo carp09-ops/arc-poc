@@ -69,9 +69,32 @@ function ensurePanel() {
   return shell;
 }
 
+let panelOpener = null;
+
+function panelFocusables(panel) {
+  return [...panel.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+    .filter(el => !el.disabled && el.offsetParent !== null);
+}
+
+function trapPanelTab(event) {
+  const panel = $('startingPointPanel');
+  if (!panel || panel.classList.contains('hidden')) return;
+  if (event.key === 'Escape') { closePanel(); return; }
+  if (event.key !== 'Tab') return;
+  const focusables = panelFocusables(panel);
+  if (!focusables.length) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+}
+
 function closePanel() {
   $('startingPointPanel')?.classList.add('hidden');
   $('resetConfirm')?.classList.add('hidden');
+  document.removeEventListener('keydown', trapPanelTab, true);
+  if (panelOpener?.isConnected) panelOpener.focus();
+  panelOpener = null;
 }
 
 async function openPanel() {
@@ -92,16 +115,40 @@ async function openPanel() {
       ? new Date(profile.baseline_started_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
       : 'Original start';
     panel.classList.remove('hidden');
+    panelOpener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    document.addEventListener('keydown', trapPanelTab, true);
+    const focusables = panelFocusables(panel);
+    (focusables[0] || panel).focus?.();
   } catch (error) {
     toast(error.message || 'Could not load your starting point.');
   }
 }
 
+// Legacy equipment values (e.g. "bench", "bands") predate the current chip
+// labels. Normalize on load so editing a starting point never silently wipes
+// equipment the user previously saved.
+const EQUIPMENT_ALIASES = {
+  'bench': 'Adjustable bench', 'adjustable bench': 'Adjustable bench',
+  'bands': 'Resistance bands', 'band': 'Resistance bands', 'resistance bands': 'Resistance bands',
+  'dumbbell': 'Dumbbells', 'dumbbells': 'Dumbbells',
+  'kettlebell': 'Kettlebells', 'kettlebells': 'Kettlebells',
+  'barbell': 'Barbell + rack', 'rack': 'Barbell + rack', 'barbell + rack': 'Barbell + rack',
+  'pullup bar': 'Pull-up bar', 'pull-up bar': 'Pull-up bar', 'pull up bar': 'Pull-up bar',
+  'cable': 'Cable machine', 'cable machine': 'Cable machine',
+  'cardio': 'Cardio equipment', 'cardio equipment': 'Cardio equipment',
+  'bodyweight': 'Bodyweight only', 'bodyweight only': 'Bodyweight only',
+  'gym': 'Full gym', 'full gym': 'Full gym'
+};
+function normalizeEquipment(value) {
+  const key = String(value || '').trim().toLowerCase();
+  return EQUIPMENT_ALIASES[key] || String(value || '').trim();
+}
+
 function selectEquipment(values = []) {
-  const wanted = new Set(values);
+  const wanted = new Set(values.map(normalizeEquipment));
   const chips = [...document.querySelectorAll('.equipment-chip')];
   if (!chips.length) return;
-  const special = values.find(v => v === 'Bodyweight only' || v === 'Full gym');
+  const special = [...wanted].find(v => v === 'Bodyweight only' || v === 'Full gym');
   if (special) {
     const chip = chips.find(x => x.dataset.value === special);
     if (chip && !chip.classList.contains('selected')) chip.click();
@@ -162,9 +209,31 @@ async function editStartingPoint() {
   }
 }
 
+function ensureLoadingScene() {
+  if ($('arcLoading')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'arcLoading';
+  overlay.className = 'arc-loading';
+  overlay.setAttribute('aria-live', 'polite');
+  overlay.innerHTML = `
+    <div class="arc-loading-image" aria-hidden="true"></div>
+    <div class="arc-loading-content">
+      <div class="loading-arc" aria-hidden="true"></div>
+      <span class="eyebrow light">Building your starting point</span>
+      <h2>Your Arc is taking shape.</h2>
+      <p>80 is the new 100. We’re setting your commitment so progress can stay aggressive without demanding perfection.</p>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
 async function saveSetup(event) {
   event.preventDefault();
   event.stopImmediatePropagation();
+  // The "Building your starting point…" overlay is shown here, by the single
+  // submit handler — not by a second capture listener whose ordering could
+  // silently prevent it.
+  ensureLoadingScene();
+  $('arcLoading')?.classList.add('visible');
   try {
     const currentUser = await user();
     const equipment = $('setupEquipment').value.split(',').map(x => x.trim()).filter(Boolean);

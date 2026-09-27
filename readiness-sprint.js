@@ -259,11 +259,11 @@ function installNetworkBanner() {
       banner.textContent = '';
       syncVisibleWorkoutDrafts();
     } else {
-      banner.textContent = 'Offline · workout entries stay on this device and will sync when you reconnect.';
+      banner.textContent = 'Offline · your workout set drafts are saved on this device. Everything else needs a connection.';
       banner.classList.remove('hidden');
     }
   };
-  window.addEventListener('online', () => { render(); toast('Back online. Arc is syncing your workout.'); });
+  window.addEventListener('online', () => { render(); toast('Back online.'); });
   window.addEventListener('offline', render);
   render();
 }

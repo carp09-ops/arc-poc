@@ -17,7 +17,11 @@ function ensureHistoryView(){
   }
   const mobile=document.querySelector('.mobile-nav');
   const connectMobile=mobile?.querySelector('[data-view="connections"]');
-  if(connectMobile){connectMobile.dataset.view='history';connectMobile.innerHTML='<span>↺</span><small>History</small>';}
+  // Connections stays directly reachable on mobile: History is inserted as its
+  // own tab instead of rewriting the Connections button.
+  if(mobile&&!mobile.querySelector('[data-view="history"]')){
+    const b=document.createElement('button');b.className='nav-item';b.dataset.view='history';b.innerHTML='<span>↺</span><small>History</small>';mobile.insertBefore(b,connectMobile||null);
+  }
   const connections=$('view-connections');
   const section=document.createElement('section');
   section.id='view-history';section.className='view';
