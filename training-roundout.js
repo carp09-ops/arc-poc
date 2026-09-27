@@ -5,13 +5,33 @@ const escapeHTML=(value='')=>String(value).replace(/[&<>'"]/g,ch=>({'&':'&amp;',
 let historyFilter='all';
 let historyCache=null;
 function trLocalISODate(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+// Missing-column fallback: the local_date migration may not be applied in
+// production. PostgREST rejects unknown columns with its own PGRST204 before
+// Postgres ever sees the query (so the old 42703 check never fired). Drop any
+// patch column the server reports missing and retry — the verification re-read
+// below still guards against false completions.
+function trMissingPatchColumn(error, patch){
+  if (!error) return null;
+  const m = /Could not find the '([^']+)' column/i.exec(error.message || '');
+  if (error.code === 'PGRST204' && m && m[1] in patch) return m[1];
+  if (error.code === '42703' && 'local_date' in patch) return 'local_date';
+  return null;
+}
 async function trApplySessionPatch(sessionId,userId,patch,diag){
   const run = async () => await supabase.from('workout_sessions').update(patch).eq('id',sessionId).eq('user_id',userId).select('id,status');
   let { data, error } = await run();
-  if (diag) { diag.updateAttemptRows = Array.isArray(data) ? data.length : null; diag.updateAttemptStatuses = Array.isArray(data) ? data.map(r=>r.status).join(',') : null; }
-  if(error&&error.code==='42703'&&'local_date'in patch){delete patch.local_date;({data,error}=await run());
-    if (diag) { diag.retryWithoutLocalDate = true; diag.retryRows = Array.isArray(data) ? data.length : null; }}
-  if (diag && error) diag.updateError = `${error.code||'?'}: ${error.message||'unknown'}`;
+  let attempts = 0, col;
+  while ((col = trMissingPatchColumn(error, patch)) && attempts < 4) {
+    attempts++;
+    delete patch[col];
+    if (diag) diag['droppedColumn' + attempts] = col;
+    ({ data, error } = await run());
+  }
+  if (diag) {
+    diag.updateAttemptRows = Array.isArray(data) ? data.length : null;
+    diag.updateAttemptStatuses = Array.isArray(data) ? data.map(r=>r.status).join(',') : null;
+    if (error) diag.updateError = `${error.code||'?'}: ${error.message||'unknown'}`;
+  }
   return error;
 }
 function kgToLb(v){return Number(v||0)/0.45359237}

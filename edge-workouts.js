@@ -279,12 +279,21 @@ async function finishWorkout(sessionId, countsTowardArc, perceivedEffort=null, n
       : { status:'abandoned', completed_at:null, counts_toward_arc:false };
     diag.patchKeys=Object.keys(patch).join(',');
     const runPatch = () => supabase.from('workout_sessions').update(patch).eq('id',sessionId).eq('user_id',user.id).select('id,status');
+    const missingCol = (e) => {
+      if (!e) return null;
+      const m = /Could not find the '([^']+)' column/i.exec(e.message || '');
+      if (e.code === 'PGRST204' && m && m[1] in patch) return m[1];
+      if (e.code === '42703' && 'local_date' in patch) return 'local_date';
+      return null;
+    };
     let updRes = await runPatch();
-    diag.updateAttemptRows=Array.isArray(updRes.data)?updRes.data.length:null;
-    if (updRes.error && updRes.error.code==='42703' && 'local_date' in patch) {
-      delete patch.local_date; diag.retryWithoutLocalDate=true; updRes = await runPatch();
-      diag.retryRows=Array.isArray(updRes.data)?updRes.data.length:null;
+    let attempts = 0, col;
+    while ((col = missingCol(updRes.error)) && attempts < 4) {
+      attempts++;
+      delete patch[col]; diag['droppedColumn' + attempts] = col;
+      updRes = await runPatch();
     }
+    diag.updateAttemptRows=Array.isArray(updRes.data)?updRes.data.length:null;
     if (updRes.error) { diag.updateError=`${updRes.error.code||'?'}: ${updRes.error.message||'unknown'}`; throw updRes.error; }
     // PostgREST reports zero matched rows as success: re-read to prove the
     // write landed instead of claiming a finish that never persisted.
