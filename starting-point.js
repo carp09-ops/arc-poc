@@ -1,4 +1,5 @@
 import { supabase } from './supabase-client.js';
+import { toast } from './toast.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -17,15 +18,6 @@ function localISODate(date = new Date()) {
 function fmt(v, digits = 1) { return Number(v).toFixed(digits); }
 function kgToPounds(v) { return v == null ? null : Number(v) / 0.45359237; }
 function cmToInches(v) { return v == null ? null : Number(v) / 2.54; }
-
-function toast(message) {
-  const el = $('toast');
-  if (!el) return;
-  el.textContent = message;
-  el.classList.add('show');
-  clearTimeout(toast._timer);
-  toast._timer = setTimeout(() => el.classList.remove('show'), 3200);
-}
 
 async function user() {
   const { data, error } = await supabase.auth.getUser();
@@ -193,7 +185,7 @@ async function saveSetup(event) {
     if (existingError) throw existingError;
     const targetValue = Number($('setupTarget').value);
     const targetResult = todayTarget
-      ? await supabase.from('weekly_targets').update({ workouts_per_week: targetValue }).eq('id', todayTarget.id)
+      ? await supabase.from('weekly_targets').update({ workouts_per_week: targetValue }).eq('id', todayTarget.id).eq('user_id', currentUser.id)
       : await supabase.from('weekly_targets').insert({ user_id: currentUser.id, starts_on: today, workouts_per_week: targetValue });
     if (targetResult.error) throw targetResult.error;
 

@@ -1,4 +1,5 @@
 import { supabase } from './supabase-client.js';
+import { toast, friendlyError } from './toast.js';
 import { BUILD } from './build-tag.js';
 
 const $ = (id) => document.getElementById(id);
@@ -17,27 +18,6 @@ function ensureReadyStyles() {
   document.head.appendChild(link);
 }
 ensureReadyStyles();
-
-function toast(message, timeout = 3200) {
-  const el = $('toast');
-  if (!el) return;
-  el.textContent = message;
-  el.classList.add('show');
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => el.classList.remove('show'), timeout);
-}
-
-function friendlyError(error, fallback = 'Arc hit a snag. Try that again.') {
-  const raw = String(error?.message || error || '').toLowerCase();
-  if (raw.includes('invalid login credentials')) return 'That email or password is not right.';
-  if (raw.includes('email not confirmed')) return 'Check your email and confirm your Arc account first.';
-  if (raw.includes('user already registered')) return 'That email already has an Arc account. Sign in instead.';
-  if (raw.includes('password') && raw.includes('least')) return 'Use a stronger password with at least 8 characters.';
-  if (raw.includes('failed to fetch') || raw.includes('network') || raw.includes('load failed')) return 'Arc cannot reach the server right now. Your in-progress workout entries stay safe on this device.';
-  if (raw.includes('duplicate key') && raw.includes('workout_sessions_one_in_progress')) return 'You already have a workout in progress. Arc will resume that session instead of starting a duplicate.';
-  if (raw.includes('duplicate key')) return 'That action is already saved.';
-  return error?.message || fallback;
-}
 
 function setButtonBusy(button, busy, busyText = 'Working…') {
   if (!button) return;
@@ -399,21 +379,6 @@ function installDuplicateGuards() {
   }, true);
 }
 
-function installFriendlyToastMapper() {
-  const el = $('toast'); if (!el) return;
-  let rewriting = false;
-  new MutationObserver(() => {
-    if (rewriting) return;
-    const current = el.textContent || '';
-    const friendly = friendlyError(current, current);
-    if (friendly && friendly !== current) {
-      rewriting = true;
-      el.textContent = friendly;
-      rewriting = false;
-    }
-  }).observe(el, { childList:true, characterData:true, subtree:true });
-}
-
 function installDayBoundaryGuard() {
   const check = () => {
     if (localDate() !== bootDate) window.location.replace(`${baseUrl}?v=${BUILD}&day=${localDate()}`);
@@ -462,7 +427,6 @@ installAuthUI();
 installNetworkBanner();
 installWorkoutDraftResilience();
 installDuplicateGuards();
-installFriendlyToastMapper();
 installDayBoundaryGuard();
 installInviteAction();
 installAppStatus();

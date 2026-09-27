@@ -1,18 +1,14 @@
 import { supabase } from './supabase-client.js';
+import { generateDeterministicWorkouts, GENERATOR_TIMEOUT_MS } from './deterministic-workouts.js';
+import { toast } from './toast.js';
 
 
 const $ = (id) => document.getElementById(id);
-const escapeHTML = (value = '') => String(value).replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+const escapeHTML = (value = '') => String(value).replace(/[&<>'\"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
 let activeUserId = null;
-
-function toast(message) {
-  const el = $('toast');
-  if (!el) return;
-  el.textContent = message;
-  el.classList.add('show');
-  clearTimeout(toast._timer);
-  toast._timer = setTimeout(() => el.classList.remove('show'), 2800);
-}
+// Payload of the last generation attempt, kept so the user can retry the AI
+// engine after a deterministic fallback without re-filling the form.
+let lastGeneratorPayload = null;
 
 async function currentUser() {
   const { data, error } = await supabase.auth.getUser();
@@ -61,8 +57,9 @@ async function loadExercisePreviews(options) {
   return grouped;
 }
 
-async function renderWorkoutOptions(options, summary, context) {
+async function renderWorkoutOptions(options, summary, context, source = 'ai') {
   document.getElementById('recommendationSummary')?.remove();
+  document.getElementById('retryAiRow')?.remove();
   const el = $('workoutOptions');
   if (!el) return;
   el.classList.remove('hidden');
@@ -87,12 +84,33 @@ async function renderWorkoutOptions(options, summary, context) {
       </article>`;
   }).join('');
   el.insertAdjacentHTML('beforebegin', `<p id="recommendationSummary" class="eyebrow" style="margin-top:18px">${escapeHTML(summary || '')}</p>`);
+  if (source === 'deterministic') {
+    el.insertAdjacentHTML('afterend', `<div id="retryAiRow" class="retry-ai-row"><button class="text-button" id="retryAiGeneration" type="button">Try Arc AI again</button><small>Built on-device because Arc AI was unreachable.</small></div>`);
+    $('retryAiGeneration')?.addEventListener('click', event => retryAiGeneration(event.currentTarget));
+  }
   el.querySelectorAll('[data-edge-start-option]').forEach(btn => btn.addEventListener('click', () => startWorkout(btn.dataset.edgeStartOption, btn.dataset.edgeOptionName)));
 }
 
 async function startWorkout(optionId, name) {
   try {
     const user = await currentUser();
+    // One active workout: resume the existing in-progress session instead of
+    // inserting a second one (the old code hit the DB's duplicate-key guard
+    // and showed a raw database error).
+    const { data: existing, error: existingError } = await supabase
+      .from('workout_sessions')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('status', 'in_progress')
+      .order('started_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (existingError) throw existingError;
+    if (existing) {
+      await loadAndRenderSession(user.id, existing);
+      toast('Resumed your in-progress workout.');
+      return;
+    }
     const { data: session, error } = await supabase.from('workout_sessions').insert({user_id:user.id,source_option_id:optionId,name,status:'in_progress',started_at:new Date().toISOString()}).select().single();
     if (error) throw error;
     const { data: plan, error: planError } = await supabase.from('workout_option_exercises').select('*').eq('workout_option_id', optionId).order('sort_order');
@@ -192,7 +210,7 @@ async function saveSetRow(row) {
     };
     const state = row.querySelector('.set-save-state'); if (state) state.textContent='Saving…';
     let result;
-    if (row.dataset.setId) result = await supabase.from('workout_sets').update(payload).eq('id',row.dataset.setId).select().single();
+    if (row.dataset.setId) result = await supabase.from('workout_sets').update(payload).eq('id',row.dataset.setId).eq('user_id',user.id).select().single();
     else result = await supabase.from('workout_sets').insert(payload).select().single();
     if (result.error) throw result.error;
     row.dataset.setId = result.data.id;
@@ -203,7 +221,7 @@ async function saveSetRow(row) {
 
 function showCompletionPanel(sessionId) {
   const area = $('workoutFinishArea'); if (!area) return;
-  area.innerHTML = `<div class="finish-card"><span class="eyebrow">Finish strong</span><h3>How did that feel?</h3><p>This is optional context, not another score to chase.</p><div class="effort-picker">${[1,2,3,4,5,6,7,8,9,10].map(n=>`<label><input type="radio" name="sessionEffort" value="${n}"><span>${n}</span></label>`).join('')}</div><small class="effort-scale">Easy ← perceived effort → Max</small><label class="finish-note">Note <span>(optional)</span><input id="sessionNote" type="text" placeholder="Anything worth remembering?"></label><div class="finish-actions"><button id="confirmFinishWorkout" class="button button-primary">Finish & count it</button><button id="cancelFinishWorkout" class="text-button">Back to workout</button></div></div>`;
+  area.innerHTML = `<div class="finish-card"><span class="eyebrow">Finish strong</span><h3>How did that feel?</h3><p>This is optional context, not another score to chase.</p><fieldset class="effort-picker"><legend>Perceived effort</legend>${[1,2,3,4,5,6,7,8,9,10].map(n=>`<label><input type="radio" name="sessionEffort" value="${n}"><span>${n}</span></label>`).join('')}</fieldset><small class="effort-scale">Easy ← perceived effort → Max</small><label class="finish-note">Note <span>(optional)</span><input id="sessionNote" type="text" placeholder="Anything worth remembering?"></label><div class="finish-actions"><button id="confirmFinishWorkout" class="button button-primary">Finish & count it</button><button id="cancelFinishWorkout" class="text-button">Back to workout</button></div></div>`;
   $('confirmFinishWorkout')?.addEventListener('click', async ()=>{
     const effort = document.querySelector('input[name="sessionEffort"]:checked')?.value;
     await finishWorkout(sessionId,true,effort?Number(effort):null,$('sessionNote')?.value.trim()||null);
@@ -214,9 +232,13 @@ function showCompletionPanel(sessionId) {
 
 async function finishWorkout(sessionId, countsTowardArc, perceivedEffort=null, notes=null) {
   try {
+    const user = await currentUser();
     const patch = countsTowardArc ? {status:'completed',completed_at:new Date().toISOString(),counts_toward_arc:true,perceived_effort:perceivedEffort,notes} : {status:'abandoned',completed_at:null,counts_toward_arc:false};
-    const { error } = await supabase.from('workout_sessions').update(patch).eq('id',sessionId);
+    const { error } = await supabase.from('workout_sessions').update(patch).eq('id',sessionId).eq('user_id',user.id);
     if (error) throw error;
+    // Day attribution stays timezone-safe: completed_at is stored as a UTC
+    // ISO timestamp; any local-day bucketing happens server-side in
+    // arc_progress_28d (see supabase/migrations).
     toast(countsTowardArc ? 'Workout complete. The pattern moved forward.' : 'Workout ended without affecting your Arc.');
     setTimeout(()=>window.location.reload(),650);
   } catch (error) { toast(error.message || 'Could not update workout.'); }
@@ -227,43 +249,133 @@ async function resumeActiveWorkout() {
     const user = await currentUser();
     const { data: session, error } = await supabase.from('workout_sessions').select('*').eq('user_id',user.id).eq('status','in_progress').order('started_at',{ascending:false}).limit(1).maybeSingle();
     if (error || !session) return;
-    const { data: exercises, error:exError } = await supabase.from('workout_session_exercises').select('*').eq('workout_session_id',session.id).order('sort_order');
-    if (exError) return;
-    let targets = [];
-    if (session.source_option_id) {
-      const { data } = await supabase.from('workout_option_exercises').select('*').eq('workout_option_id',session.source_option_id).order('sort_order');
-      targets = data || [];
-    }
-    const plan = (exercises || []).map((row,i)=>{
-      const parsed = parseTarget(row.notes);
-      const target = targets[i] || {};
-      return {session_exercise_id:row.id,exercise_name:row.exercise_name,target_sets:target.target_sets || parsed.target_sets,target_reps:target.target_reps || parsed.target_reps};
-    });
     document.querySelector('[data-view="train"]')?.click();
-    await renderActiveWorkout({...session,plan});
+    await loadAndRenderSession(user.id, session);
     toast('Resumed your in-progress workout.');
   } catch (_) {}
 }
 
+// Shared loader for an existing in-progress session: user-scoped on every
+// query, so a resumed session can never leak another user's rows.
+async function loadAndRenderSession(userId, session) {
+  const { data: exercises, error:exError } = await supabase.from('workout_session_exercises').select('*').eq('user_id',userId).eq('workout_session_id',session.id).order('sort_order');
+  if (exError) throw exError;
+  let targets = [];
+  if (session.source_option_id) {
+    const { data } = await supabase.from('workout_option_exercises').select('*').eq('workout_option_id',session.source_option_id).order('sort_order');
+    targets = data || [];
+  }
+  const plan = (exercises || []).map((row,i)=>{
+    const parsed = parseTarget(row.notes);
+    const target = targets[i] || {};
+    return {session_exercise_id:row.id,exercise_name:row.exercise_name,target_sets:target.target_sets || parsed.target_sets,target_reps:target.target_reps || parsed.target_reps};
+  });
+  await renderActiveWorkout({...session,plan});
+}
+
 function install() {
-  const original = $('readinessForm');
-  if (!original || original.dataset.edgeWorkouts === 'true') return;
-  const form = original.cloneNode(true);
-  form.dataset.edgeWorkouts='true'; original.replaceWith(form);
+  const form = $('readinessForm');
+  if (!form || form.dataset.edgeWorkouts === 'true') return;
+  // No form cloning: core-app's legacy submit listener is gone, so this is the
+  // single submit handler. Cloning used to strip that listener — and with it,
+  // any future listeners attached by other modules.
+  form.dataset.edgeWorkouts = 'true';
   form.addEventListener('submit', async event => {
     event.preventDefault();
-    const fd=new FormData(form); const submit=event.submitter; const originalText=submit?.textContent;
-    if (submit) { submit.disabled=true; submit.textContent='Building your options…'; }
+    if (form.dataset.submitting === '1') return; // duplicate-submission guard
+    form.dataset.submitting = '1';
+    const fd = new FormData(form);
+    const submit = event.submitter;
+    const originalText = submit?.textContent;
+    if (submit) { submit.disabled = true; submit.textContent = 'Building your options…'; }
+    const idempotencyKey = window.crypto?.randomUUID ? window.crypto.randomUUID() : `web-${Date.now()}`;
     try {
-      const payload={energy:Number(fd.get('energy')),soreness:Number(fd.get('soreness')),available_minutes:Number(fd.get('minutes')),desired_effort:fd.get('effort'),limitations:$('limitations')?.value.trim()||null};
-      const { data,error }=await supabase.functions.invoke('generate-workouts',{body:payload});
-      if (error) throw error;
+      const payload = {
+        energy: Number(fd.get('energy')),
+        soreness: Number(fd.get('soreness')),
+        available_minutes: Number(fd.get('minutes')),
+        desired_effort: fd.get('effort'),
+        limitations: $('limitations')?.value.trim() || null,
+        idempotency_key: idempotencyKey
+      };
+      const data = await invokeGenerator(payload);
       if (!data?.options?.length) throw new Error(data?.error || 'Arc could not build workouts right now.');
-      await renderWorkoutOptions(data.options,data.summary,payload); toast('Three paths forward. You choose.');
-    } catch (error) { toast(error.message || 'Arc could not build workouts right now.'); }
-    finally { if(submit){submit.disabled=false;submit.textContent=originalText;} }
+      lastGeneratorPayload = payload;
+      await renderWorkoutOptions(data.options, data.summary, payload, 'ai');
+      toast('Three paths forward. You choose.');
+    } catch (error) {
+      // Deterministic client-side fallback: the user always gets workouts,
+      // even when the AI engine is unreachable, slow, or erroring.
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const userId = auth?.user?.id;
+        if (!userId) throw error;
+        const { data: profile } = await supabase.from('profiles').select('equipment').eq('user_id', userId).maybeSingle();
+        const fallbackPayload = {
+          energy: Number(fd.get('energy')),
+          soreness: Number(fd.get('soreness')),
+          available_minutes: Number(fd.get('minutes')),
+          desired_effort: fd.get('effort'),
+          limitations: $('limitations')?.value.trim() || null,
+          idempotency_key: idempotencyKey
+        };
+        lastGeneratorPayload = fallbackPayload;
+        const result = await generateDeterministicWorkouts({
+          supabase,
+          userId,
+          equipment: profile?.equipment,
+          payload: {
+            energy: fallbackPayload.energy,
+            soreness: fallbackPayload.soreness,
+            minutes: fallbackPayload.available_minutes,
+            desired: fallbackPayload.desired_effort,
+            limitations: fallbackPayload.limitations
+          }
+        });
+        await renderWorkoutOptions(result.options, result.summary, fallbackPayload, 'deterministic');
+        toast('Arc AI was unreachable, so Arc built these on-device. You can retry AI below.');
+      } catch (fallbackError) {
+        toast(fallbackError?.message || error?.message || 'Arc could not build workouts right now.');
+      }
+    } finally {
+      form.dataset.submitting = '';
+      if (submit) { submit.disabled = false; submit.textContent = originalText; }
+    }
   });
-  window.setTimeout(resumeActiveWorkout,500);
+  window.setTimeout(resumeActiveWorkout, 500);
+}
+
+// AI generation with a hard timeout: if the edge function hangs, we fall back
+// to the deterministic generator instead of leaving the user on a spinner.
+function invokeGenerator(payload) {
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Arc AI timed out.')), GENERATOR_TIMEOUT_MS));
+  return Promise.race([
+    supabase.functions.invoke('generate-workouts', { body: payload }).then(({ data, error }) => {
+      if (error) throw error;
+      return data;
+    }),
+    timeout
+  ]);
+}
+
+// AI-regeneration affordance: after a deterministic fallback, one tap retries
+// the AI engine for the same readiness answers — no re-filling the form.
+async function retryAiGeneration(button) {
+  if (!lastGeneratorPayload || button?.disabled) return;
+  button.disabled = true;
+  const original = button.textContent;
+  button.textContent = 'Retrying Arc AI…';
+  try {
+    const data = await invokeGenerator({ ...lastGeneratorPayload, idempotency_key: window.crypto?.randomUUID ? window.crypto.randomUUID() : `web-${Date.now()}` });
+    if (!data?.options?.length) throw new Error(data?.error || 'Arc AI is still unavailable.');
+    await renderWorkoutOptions(data.options, data.summary, lastGeneratorPayload, 'ai');
+    toast('Arc AI is back. Three paths forward.');
+  } catch (error) {
+    toast(error?.message || 'Arc AI is still unavailable.');
+    button.disabled = false;
+    button.textContent = original;
+  }
 }
 
 setTimeout(install,0);

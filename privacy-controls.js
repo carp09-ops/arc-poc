@@ -1,4 +1,5 @@
 import { supabase } from './supabase-client.js';
+import { toast } from './toast.js';
 
 
 const TABLES = [
@@ -20,15 +21,6 @@ const TABLES = [
 ];
 
 const $ = id => document.getElementById(id);
-
-function toast(message, timeout = 3400) {
-  const el = $('toast');
-  if (!el) return;
-  el.textContent = message;
-  el.classList.add('show');
-  clearTimeout(toast._timer);
-  toast._timer = setTimeout(() => el.classList.remove('show'), timeout);
-}
 
 function ensurePrivacyControls() {
   const panel = document.querySelector('#startingPointPanel .starting-point-panel');
@@ -106,6 +98,26 @@ async function currentUser() {
   return data.user;
 }
 
+// Export key per table: profiles is keyed by user_id like every other user table.
+const TABLE_KEYS = {};
+const EXPORT_PAGE_SIZE = 1000; // PostgREST caps a single response at 1,000 rows
+
+async function fetchAllRows(table, userId) {
+  const key = TABLE_KEYS[table] || 'user_id';
+  const rows = [];
+  for (let from = 0; ; from += EXPORT_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from(table)
+      .select('*')
+      .eq(key, userId)
+      .range(from, from + EXPORT_PAGE_SIZE - 1);
+    if (error) throw new Error(`Could not export ${table}.`);
+    rows.push(...(data || []));
+    if (!data || data.length < EXPORT_PAGE_SIZE) break;
+  }
+  return [table, rows];
+}
+
 async function exportArcData() {
   const button = $('exportArcData');
   const original = button?.innerHTML;
@@ -116,11 +128,7 @@ async function exportArcData() {
     }
 
     const user = await currentUser();
-    const results = await Promise.all(TABLES.map(async table => {
-      const { data, error } = await supabase.from(table).select('*').eq('user_id', user.id);
-      if (error) throw new Error(`Could not export ${table}.`);
-      return [table, data || []];
-    }));
+    const results = await Promise.all(TABLES.map(table => fetchAllRows(table, user.id)));
 
     const exportPayload = {
       product: 'Arc',

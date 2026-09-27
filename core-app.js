@@ -1,4 +1,5 @@
 import { supabase } from './supabase-client.js';
+import { toast as showToast } from './toast.js';
 
 
 const state = {
@@ -17,14 +18,6 @@ const $ = (id) => document.getElementById(id);
 const authGate = $('authGate');
 const setupGate = $('setupGate');
 const app = $('app');
-const toast = $('toast');
-
-function showToast(message) {
-  toast.textContent = message;
-  toast.classList.add('show');
-  window.clearTimeout(showToast._t);
-  showToast._t = window.setTimeout(() => toast.classList.remove('show'), 2600);
-}
 
 function localISODate(date = new Date()) {
   const y = date.getFullYear();
@@ -290,97 +283,5 @@ $('measurementForm').addEventListener('submit', async (e) => {
   $('measurementForm').reset(); $('measurementFormPanel').classList.add('hidden'); showToast('Measurement logged.'); await loadData();
 });
 
-function chooseRecommendedTier(energy,soreness,desired) {
-  if (energy <= 2 || soreness >= 4) return 'restore';
-  if (desired === 'push' && energy >= 4 && soreness <= 2) return 'push';
-  return 'build';
-}
-
-function exerciseLibrary(hasEquipment) {
-  if (hasEquipment) return {
-    restore:[['Mobility Flow',2,'6 min'],['Goblet Squat',2,'10'],['Incline Dumbbell Press',2,'10'],['Dead Bug',2,'8 / side']],
-    build:[['Goblet Squat',3,'8–10'],['Dumbbell Bench Press',3,'8–10'],['One-Arm Row',3,'10 / side'],['Romanian Deadlift',3,'10'],['Plank',3,'30 sec']],
-    push:[['Dumbbell Front Squat',4,'8'],['Dumbbell Bench Press',4,'8'],['Romanian Deadlift',4,'8'],['One-Arm Row',4,'10 / side'],['DB Thruster Finisher',3,'10']]
-  };
-  return {
-    restore:[['Mobility Flow',2,'6 min'],['Bodyweight Squat',2,'10'],['Incline Push-Up',2,'8'],['Dead Bug',2,'8 / side']],
-    build:[['Tempo Squat',3,'12'],['Push-Up',3,'8–12'],['Reverse Lunge',3,'10 / side'],['Glute Bridge',3,'15'],['Plank',3,'30 sec']],
-    push:[['Jump Squat',4,'10'],['Push-Up',4,'10–15'],['Walking Lunge',4,'12 / side'],['Single-Leg Glute Bridge',3,'12 / side'],['Mountain Climber',4,'30 sec']]
-  };
-}
-
-$('readinessForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const fd=new FormData(e.currentTarget);
-  const energy=Number(fd.get('energy')), soreness=Number(fd.get('soreness')), minutes=Number(fd.get('minutes')), desired=fd.get('effort');
-  const limitations=$('limitations').value.trim()||null;
-  const recommended=chooseRecommendedTier(energy,soreness,desired);
-  const { data:checkin,error:checkinError }=await supabase.from('readiness_checkins').insert({user_id:state.user.id,energy,soreness,available_minutes:minutes,desired_effort:desired,limitations}).select().single();
-  if(checkinError){showToast(checkinError.message);return;}
-  const summary=recommended==='restore'?'Recovery wins today. Keep the habit without forcing intensity.':recommended==='push'?'You have the runway to press.':'Balanced work is the best fit for today.';
-  const { data:set,error:setError }=await supabase.from('workout_recommendation_sets').insert({user_id:state.user.id,checkin_id:checkin.id,recommendation_summary:summary,context_snapshot:{energy,soreness,minutes,desired,limitations},generator_version:'phase1-rules-v1'}).select().single();
-  if(setError){showToast(setError.message);return;}
-  const hasEquipment=(state.profile?.equipment||[]).length>0;
-  const durations={restore:Math.min(minutes,20),build:Math.min(minutes,35),push:Math.min(minutes,50)};
-  const configs={
-    restore:{title:'Restore',focus:'Mobility + Recovery',intensity:'low',rationale:'Move well, reduce friction and protect the training habit.'},
-    build:{title:'Build',focus:'Strength + Full Body',intensity:'moderate',rationale:'A balanced session that moves strength forward without emptying the tank.'},
-    push:{title:'Push',focus:'Strength + Conditioning',intensity:'high',rationale:'Use the energy you have today for a demanding, focused session.'}
-  };
-  const optionRows=Object.entries(configs).map(([tier,c])=>({user_id:state.user.id,recommendation_set_id:set.id,tier,title:c.title,focus:c.focus,duration_minutes:Math.max(15,durations[tier]),intensity:c.intensity,rationale:c.rationale,equipment:state.profile?.equipment||[],is_recommended:tier===recommended}));
-  const { data:options,error:optionError }=await supabase.from('workout_options').insert(optionRows).select();
-  if(optionError){showToast(optionError.message);return;}
-  const lib=exerciseLibrary(hasEquipment);
-  const exerciseRows=[];
-  options.forEach(o=>lib[o.tier].forEach((x,i)=>exerciseRows.push({user_id:state.user.id,workout_option_id:o.id,sort_order:i+1,exercise_name:x[0],target_sets:x[1],target_reps:x[2]})));
-  const { error:exerciseError }=await supabase.from('workout_option_exercises').insert(exerciseRows);
-  if(exerciseError){showToast(exerciseError.message);return;}
-  renderWorkoutOptions(options,summary);
-  showToast('Three paths forward. You choose.');
-});
-
-async function renderWorkoutOptions(options, summary) {
-  const el=$('workoutOptions'); el.classList.remove('hidden'); $('activeWorkout').classList.add('hidden');
-  const order={restore:0,build:1,push:2}; options.sort((a,b)=>order[a.tier]-order[b.tier]);
-  const icons={restore:'◌',build:'△',push:'ϟ'};
-  el.innerHTML=options.map(o=>`<article class="workout-card ${o.tier} ${o.is_recommended?'recommended':''}">${o.is_recommended?'<span class="recommend-badge">ARC RECOMMENDS</span>':''}<div class="workout-tier">${icons[o.tier]}</div><h3>${o.title}</h3><span class="workout-meta">${o.focus}</span><div class="workout-points"><span>◷ ${o.duration_minutes} min</span><span>◇ ${o.intensity} intensity</span></div><p>${o.rationale}</p><button class="button ${o.is_recommended?'button-primary':''}" data-start-option="${o.id}" data-option-name="${o.title}">Choose ${o.title}</button></article>`).join('');
-  el.insertAdjacentHTML('beforebegin',`<p id="recommendationSummary" class="eyebrow" style="margin-top:18px">${escapeHTML(summary)}</p>`);
-  el.querySelectorAll('[data-start-option]').forEach(btn=>btn.addEventListener('click',()=>startWorkout(btn.dataset.startOption,btn.dataset.optionName)));
-}
-
-async function startWorkout(optionId,name) {
-  const { data:session,error }=await supabase.from('workout_sessions').insert({user_id:state.user.id,source_option_id:optionId,name,status:'in_progress',started_at:new Date().toISOString()}).select().single();
-  if(error){showToast(error.message);return;}
-  const { data:plan,error:planError }=await supabase.from('workout_option_exercises').select('*').eq('workout_option_id',optionId).order('sort_order');
-  if(planError){showToast(planError.message);return;}
-  const rows=plan.map(x=>({user_id:state.user.id,workout_session_id:session.id,sort_order:x.sort_order,exercise_name:x.exercise_name,notes:`Target: ${x.target_sets||''} x ${x.target_reps||''}`}));
-  const { error:copyError }=await supabase.from('workout_session_exercises').insert(rows);
-  if(copyError){showToast(copyError.message);return;}
-  state.activeSession={...session,plan};
-  renderActiveWorkout();
-}
-
-function renderActiveWorkout() {
-  const s=state.activeSession, el=$('activeWorkout');
-  if(!s){el.classList.add('hidden');return;}
-  $('workoutOptions').classList.add('hidden');
-  document.getElementById('recommendationSummary')?.remove();
-  el.classList.remove('hidden');
-  el.innerHTML=`<div class="active-workout-header"><div><span class="eyebrow">Live workout</span><h2>${escapeHTML(s.name)}</h2></div><button id="favoriteActive" class="text-button">♡ Favorite</button></div><div class="exercise-log">${s.plan.map(x=>`<div class="exercise-log-row"><strong>${escapeHTML(x.exercise_name)}</strong><small>${x.target_sets||''} sets · ${escapeHTML(x.target_reps||'')}</small></div>`).join('')}</div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:22px"><button id="completeWorkout" class="button button-primary">Complete workout</button><button id="abandonWorkout" class="button">End without counting</button></div>`;
-  $('favoriteActive').addEventListener('click',async()=>{
-    const {error}=await supabase.from('saved_workouts').insert({user_id:state.user.id,workout_session_id:s.id});
-    if(error && error.code!=='23505'){showToast(error.message);return;} showToast('Workout saved to favorites.'); $('favoriteActive').textContent='♥ Favorited';
-  });
-  $('completeWorkout').addEventListener('click',()=>finishWorkout(true));
-  $('abandonWorkout').addEventListener('click',()=>finishWorkout(false));
-}
-
-async function finishWorkout(counts) {
-  const s=state.activeSession; if(!s)return;
-  const patch=counts?{status:'completed',completed_at:new Date().toISOString(),counts_toward_arc:true}:{status:'abandoned',completed_at:null,counts_toward_arc:false};
-  const {error}=await supabase.from('workout_sessions').update(patch).eq('id',s.id);
-  if(error){showToast(error.message);return;}
-  state.activeSession=null; $('activeWorkout').classList.add('hidden'); $('readinessForm').reset(); showToast(counts?'Workout complete. The pattern moved forward.':'Workout ended without affecting your Arc.'); await loadData(); setView('today');
-}
 
 initialize();

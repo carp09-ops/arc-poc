@@ -1,11 +1,9 @@
 import { supabase } from './supabase-client.js';
-const $=id=>document.getElementById(id);
+import { toast } from './toast.js';
 const $=id=>document.getElementById(id);
 const escapeHTML=(value='')=>String(value).replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
 let historyFilter='all';
 let historyCache=null;
-
-function toast(message){const el=$('toast');if(!el)return;el.textContent=message;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),2800)}
 function kgToLb(v){return Number(v||0)/0.45359237}
 function fmtDuration(start,end){if(!start||!end)return '—';const mins=Math.max(1,Math.round((new Date(end)-new Date(start))/60000));return mins<60?`${mins} min`:`${Math.floor(mins/60)}h ${mins%60}m`}
 function sessionMinutes(s){return s.started_at&&s.completed_at?Math.max(0,(new Date(s.completed_at)-new Date(s.started_at))/60000):0}
@@ -90,7 +88,7 @@ function renderHistory(){
 }
 
 async function toggleFavorite(sessionId){
-  try{const user=await authUser();const saved=historyCache?.saved.find(x=>x.workout_session_id===sessionId);if(saved){const{error}=await supabase.from('saved_workouts').delete().eq('id',saved.id);if(error)throw error;toast('Removed from favorites.');}else{const{error}=await supabase.from('saved_workouts').insert({user_id:user.id,workout_session_id:sessionId});if(error)throw error;toast('Saved to favorites.');}await loadHistory();}catch(error){toast(error.message||'Could not update favorite.');}
+  try{const user=await authUser();const saved=historyCache?.saved.find(x=>x.workout_session_id===sessionId);if(saved){const{error}=await supabase.from('saved_workouts').delete().eq('id',saved.id).eq('user_id',user.id);if(error)throw error;toast('Removed from favorites.');}else{const{error}=await supabase.from('saved_workouts').insert({user_id:user.id,workout_session_id:sessionId});if(error)throw error;toast('Saved to favorites.');}await loadHistory();}catch(error){toast(error.message||'Could not update favorite.');}
 }
 
 async function repeatWorkout(sessionId,button){
@@ -113,10 +111,10 @@ async function completeWithReceipt(button){
     const{data:session,error:sessionError}=await supabase.from('workout_sessions').select('*').eq('user_id',user.id).eq('status','in_progress').order('started_at',{ascending:false}).limit(1).maybeSingle();
     if(sessionError||!session)throw sessionError||new Error('No active workout found.');
     const effortValue=document.querySelector('input[name="sessionEffort"]:checked')?.value;const note=$('sessionNote')?.value.trim()||null;const completedAt=new Date().toISOString();
-    const{data:exercises,error:exError}=await supabase.from('workout_session_exercises').select('id').eq('workout_session_id',session.id);if(exError)throw exError;
+    const{data:exercises,error:exError}=await supabase.from('workout_session_exercises').select('id').eq('user_id',user.id).eq('workout_session_id',session.id);if(exError)throw exError;
     const exIds=(exercises||[]).map(x=>x.id);let sets=[];
-    if(exIds.length){const{data,error}=await supabase.from('workout_sets').select('*').in('workout_exercise_id',exIds);if(error)throw error;sets=data||[];}
-    const{error:updateError}=await supabase.from('workout_sessions').update({status:'completed',completed_at:completedAt,counts_toward_arc:true,perceived_effort:effortValue?Number(effortValue):null,notes:note}).eq('id',session.id);if(updateError)throw updateError;
+    if(exIds.length){const{data,error}=await supabase.from('workout_sets').select('*').eq('user_id',user.id).in('workout_exercise_id',exIds);if(error)throw error;sets=data||[];}
+    const{error:updateError}=await supabase.from('workout_sessions').update({status:'completed',completed_at:completedAt,counts_toward_arc:true,perceived_effort:effortValue?Number(effortValue):null,notes:note}).eq('id',session.id).eq('user_id',user.id);if(updateError)throw updateError;
     const completedSets=sets.filter(s=>s.completed);const volumeLb=kgToLb(completedSets.reduce((sum,s)=>sum+(Number(s.reps)||0)*(Number(s.weight_kg)||0),0));
     const duration=fmtDuration(session.started_at,completedAt);
     const{data:arc}=await supabase.from('arc_progress_28d').select('*').eq('user_id',user.id).maybeSingle();

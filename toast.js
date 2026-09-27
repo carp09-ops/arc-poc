@@ -16,7 +16,9 @@ export function friendlyError(error, fallback = 'Arc hit a snag. Try that again.
   if (raw.includes('password') && raw.includes('least')) return 'Use a stronger password with at least 8 characters.';
   if (raw.includes('rate limit') || raw.includes('too many')) return 'Too many requests. Give Arc a minute, then try again.';
   if (raw.includes('failed to fetch') || raw.includes('networkerror') || raw.includes('network') || raw.includes('load failed'))
-    return 'Arc cannot reach the server right now. Check your connection and try again.';
+    return 'Arc cannot reach the server right now. Your entries stay safe on this device — try again in a moment.';
+  if (raw.includes('duplicate key') && raw.includes('workout_sessions_one_in_progress'))
+    return 'You already have a workout in progress. Arc will resume that session instead of starting a duplicate.';
   if (raw.includes('jwt') && (raw.includes('expired') || raw.includes('invalid')))
     return 'Your Arc session expired. Sign in again to keep going.';
   if (raw.includes('row-level security') || raw.includes('permission denied'))
