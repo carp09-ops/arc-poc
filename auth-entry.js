@@ -1,13 +1,5 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/+esm';
-
-const SUPABASE_URL='https://svxbzkjxihcwsbyheyxd.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY='sb_publishable_zm65KCzkWFvVmlnv9dpWFg_15L0nUfc';
-const BUILD='ready15';
-const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{
-  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}
-});
-
-const $=id=>document.getElementById(id);
+import { supabase } from './supabase-client.js';
+import { BUILD } from './build-tag.js';
 const baseUrl=`${window.location.origin}${window.location.pathname}`;
 
 function friendlyAuthError(error,fallback='Arc could not complete that request.'){

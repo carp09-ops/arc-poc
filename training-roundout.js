@@ -1,8 +1,5 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/+esm';
-
-const SUPABASE_URL='https://svxbzkjxihcwsbyheyxd.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY='sb_publishable_zm65KCzkWFvVmlnv9dpWFg_15L0nUfc';
-const supabase=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+import { supabase } from './supabase-client.js';
+const $=id=>document.getElementById(id);
 const $=id=>document.getElementById(id);
 const escapeHTML=(value='')=>String(value).replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
 let historyFilter='all';

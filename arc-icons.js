@@ -1,4 +1,5 @@
-const SPRITE='./assets/arc-icons.svg?v=ready28';
+import { BUILD } from './build-tag.js';
+const SPRITE=`./assets/arc-icons.svg?v=${BUILD}`;
 const NAV_ICON={today:'today',train:'train',body:'body',arc:'arc',history:'history',connections:'connections'};
 function svg(name,extra=''){if(!name)return '';return `<svg class="arc-icon ${extra}" data-arc-icon="${name}" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="${SPRITE}#${name}"></use></svg>`;}
 function iconizeNav(root=document){root.querySelectorAll?.('.nav-item[data-view]').forEach(btn=>{const first=btn.querySelector(':scope > span:first-child');if(!first)return;const expected=NAV_ICON[btn.dataset.view];if(!expected)return;if(first.querySelector(`.arc-icon[data-arc-icon="${expected}"]`))return;first.innerHTML=svg(expected);first.dataset.arcIconized='1';});}
