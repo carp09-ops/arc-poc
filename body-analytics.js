@@ -66,10 +66,17 @@ function regression(points) {
   if (!denom) return null;
   const slope = (n*sxy - sx*sy) / denom;
   const intercept = (sy - slope*sx) / n;
+  // R²: how much of the movement the straight line actually explains. A low
+  // R² means the points bounce around too much to project honestly.
+  const meanY = sy / n;
+  const ssTot = ys.reduce((a,y) => a + (y-meanY)*(y-meanY), 0);
+  const ssRes = ys.reduce((a,y,i) => { const p = intercept + slope*xs[i]; return a + (y-p)*(y-p); }, 0);
+  const rSquared = ssTot > 0 ? Math.max(0, 1 - ssRes/ssTot) : 0;
   return {
     slopePerDay: slope,
     predict: time => intercept + slope * ((time - t0) / 86400000),
-    spanDays: (points.at(-1).t - points[0].t) / 86400000
+    spanDays: (points.at(-1).t - points[0].t) / 86400000,
+    rSquared
   };
 }
 
@@ -153,7 +160,15 @@ function renderSummary(allPoints, visiblePoints) {
   const delta = current.value - baseline.value;
   const reg = regression(visiblePoints);
   const paceReady = reg && visiblePoints.length >= 2 && reg.spanDays >= 7;
-  const projectionReady = reg && visiblePoints.length >= 3 && reg.spanDays >= 14;
+  // Projection is the most speculative number on the page, so it gets the
+  // strictest gate: 4+ check-ins, 3+ weeks of span, and the trend must explain
+  // at least a third of the movement (R² ≥ 0.33) — otherwise it stays honest.
+  const projectionReady = reg && visiblePoints.length >= 4 && reg.spanDays >= 21 && reg.rSquared >= 0.33;
+  const projectionBlockedReason = !reg ? 'Log a measurement'
+    : visiblePoints.length < 4 ? `${4 - visiblePoints.length} more check-in${visiblePoints.length === 3 ? '' : 's'} needed`
+    : reg.spanDays < 21 ? 'Need 3 weeks of history'
+    : reg.rSquared < 0.33 ? 'Trend unclear'
+    : null;
   const weekly = paceReady ? reg.slopePerDay * 7 : null;
   const projection = projectionReady ? Math.max(0, current.value + reg.slopePerDay * 30) : null;
 
@@ -161,7 +176,7 @@ function renderSummary(allPoints, visiblePoints) {
     summaryCard(`Current ${metric.label.toLowerCase()}`, `${fmt(current.value, metric.decimals)} ${metric.unit}`, `Latest · ${shortDate(current.measured_at)}`),
     summaryCard('From baseline', `${signed(delta, metric.decimals)} ${metric.unit}`, `Since ${shortDate(baseline.measured_at)}`, delta <= 0 ? 'good' : 'attention'),
     summaryCard('Recent pace', weekly == null ? 'Learning' : `${signed(weekly, metric.decimals)} ${metric.unit}/wk`, weekly == null ? 'Need at least 7 days' : `${activeRange.toUpperCase()} trajectory`, weekly != null && weekly <= 0 ? 'good' : ''),
-    summaryCard('30-day projection', projection == null ? 'Learning' : `≈ ${fmt(projection, metric.decimals)} ${metric.unit}`, projection == null ? '3 check-ins across ~2 weeks' : 'If your recent trend continued')
+    summaryCard('30-day projection', projection == null ? 'Learning' : `≈ ${fmt(projection, metric.decimals)} ${metric.unit}`, projection == null ? (projectionBlockedReason || 'Building your trend') : 'If your recent trend continued')
   ].join('');
 }
 
