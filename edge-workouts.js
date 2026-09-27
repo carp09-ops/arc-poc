@@ -221,11 +221,13 @@ async function saveSetRow(row) {
 
 function showCompletionPanel(sessionId) {
   const area = $('workoutFinishArea'); if (!area) return;
+  // The session id is stashed on the panel: the single finish owner is the
+  // capture-phase handler in training-roundout.js (completeWithReceipt), which
+  // reads it from here. Do NOT attach a second click listener to
+  // #confirmFinishWorkout — it can never fire (the capture handler stops
+  // propagation) and a duplicate owner is exactly how finishes got lost.
+  area.dataset.sessionId = sessionId;
   area.innerHTML = `<div class="finish-card"><span class="eyebrow">Finish strong</span><h3>How did that feel?</h3><p>This is optional context, not another score to chase.</p><fieldset class="effort-picker"><legend>Perceived effort</legend>${[1,2,3,4,5,6,7,8,9,10].map(n=>`<label><input type="radio" name="sessionEffort" value="${n}"><span>${n}</span></label>`).join('')}</fieldset><small class="effort-scale">Easy ← perceived effort → Max</small><label class="finish-note">Note <span>(optional)</span><input id="sessionNote" type="text" placeholder="Anything worth remembering?"></label><div class="finish-actions"><button id="confirmFinishWorkout" class="button button-primary">Finish & count it</button><button id="cancelFinishWorkout" class="text-button">Back to workout</button></div></div>`;
-  $('confirmFinishWorkout')?.addEventListener('click', async ()=>{
-    const effort = document.querySelector('input[name="sessionEffort"]:checked')?.value;
-    await finishWorkout(sessionId,true,effort?Number(effort):null,$('sessionNote')?.value.trim()||null);
-  });
   $('cancelFinishWorkout')?.addEventListener('click',()=>window.location.reload());
   area.scrollIntoView({behavior:'smooth',block:'center'});
 }
@@ -255,6 +257,10 @@ async function finishWorkout(sessionId, countsTowardArc, perceivedEffort=null, n
       : { status:'abandoned', completed_at:null, counts_toward_arc:false };
     const error = await applySessionPatch(sessionId, user.id, patch);
     if (error) throw error;
+    // PostgREST reports zero matched rows as success: re-read to prove the
+    // write landed instead of claiming a finish that never persisted.
+    const { data: check } = await supabase.from('workout_sessions').select('status').eq('id', sessionId).eq('user_id', user.id).maybeSingle();
+    if (!check || check.status !== patch.status) throw new Error('Workout was not saved. Your logged sets are intact — please try finishing again.');
     toast(countsTowardArc ? 'Workout complete. The pattern moved forward.' : 'Workout ended without affecting your Arc.');
     setTimeout(()=>window.location.reload(),650);
   } catch (error) { toast(error.message || 'Could not update workout.'); }

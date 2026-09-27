@@ -122,13 +122,29 @@ async function completeWithReceipt(button){
   const original=button.textContent;button.disabled=true;button.textContent='Saving workout…';
   try{
     const user=await authUser();
-    const{data:session,error:sessionError}=await supabase.from('workout_sessions').select('*').eq('user_id',user.id).eq('status','in_progress').order('started_at',{ascending:false}).limit(1).maybeSingle();
-    if(sessionError||!session)throw sessionError||new Error('No active workout found.');
+    // Prefer the session the finish panel was opened for; fall back to the
+    // latest in-progress session only if the panel did not stash one.
+    let sessionId=$('workoutFinishArea')?.dataset.sessionId||null;
+    let session=null;
+    if(sessionId){
+      const res=await supabase.from('workout_sessions').select('*').eq('id',sessionId).eq('user_id',user.id).maybeSingle();
+      if(res.error||!res.data)throw res.error||new Error('No active workout found.');
+      session=res.data;
+    }else{
+      const{data,error:sessionError}=await supabase.from('workout_sessions').select('*').eq('user_id',user.id).eq('status','in_progress').order('started_at',{ascending:false}).limit(1).maybeSingle();
+      if(sessionError||!data)throw sessionError||new Error('No active workout found.');
+      session=data;sessionId=data.id;
+    }
     const effortValue=document.querySelector('input[name="sessionEffort"]:checked')?.value;const note=$('sessionNote')?.value.trim()||null;const completedAt=new Date().toISOString();
     const{data:exercises,error:exError}=await supabase.from('workout_session_exercises').select('id').eq('user_id',user.id).eq('workout_session_id',session.id);if(exError)throw exError;
     const exIds=(exercises||[]).map(x=>x.id);let sets=[];
     if(exIds.length){const{data,error}=await supabase.from('workout_sets').select('*').eq('user_id',user.id).in('workout_exercise_id',exIds);if(error)throw error;sets=data||[];}
     const{error:updateError}=await trApplySessionPatch(session.id,user.id,{status:'completed',completed_at:completedAt,local_date:trLocalISODate(),counts_toward_arc:true,perceived_effort:effortValue?Number(effortValue):null,notes:note});if(updateError)throw updateError;
+    // PostgREST reports zero matched rows as success: re-read to prove the
+    // completion landed instead of showing a receipt for a workout that is
+    // still in progress (the live UPDATE policy may silently match nothing).
+    const{data:verify}=await supabase.from('workout_sessions').select('status').eq('id',session.id).eq('user_id',user.id).maybeSingle();
+    if(!verify||verify.status!=='completed')throw new Error('Workout was not saved. Your logged sets are intact — please try finishing again.');
     const completedSets=sets.filter(s=>s.completed);const volumeLb=kgToLb(completedSets.reduce((sum,s)=>sum+(Number(s.reps)||0)*(Number(s.weight_kg)||0),0));
     const duration=fmtDuration(session.started_at,completedAt);
     const{data:arc}=await supabase.from('arc_progress_28d').select('*').eq('user_id',user.id).maybeSingle();
@@ -144,6 +160,10 @@ async function completeWithReceipt(button){
 function install(){
   ensureHistoryView();
   document.addEventListener('click',e=>{if(e.target.closest('[data-view="history"],[data-view-target="history"]'))setTimeout(loadHistory,100);});
+  // Single owner for workout completion: this capture-phase handler is the
+  // only finish path (edge-workouts.js must not attach its own listener to
+  // #confirmFinishWorkout). The session id comes from the finish panel's
+  // dataset, set by showCompletionPanel.
   document.addEventListener('click',e=>{const button=e.target.closest('#confirmFinishWorkout');if(!button)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();completeWithReceipt(button);},true);
   const history=$('view-history');if(history){new MutationObserver(()=>{if(history.classList.contains('active-view'))loadHistory();}).observe(history,{attributes:true,attributeFilter:['class']});}
   supabase.auth.onAuthStateChange((_event,session)=>{if(session?.user)setTimeout(loadHistory,250)});
