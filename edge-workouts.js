@@ -336,10 +336,14 @@ function install() {
           idempotency_key: idempotencyKey
         };
         lastGeneratorPayload = fallbackPayload;
+        // The fallback gets its own key suffix: AI attempts (original + retry)
+        // share the base key so a late-persisting AI call can never duplicate,
+        // while the on-device fallback can never be mistaken for an AI result.
         const result = await generateDeterministicWorkouts({
           supabase,
           userId,
           equipment: profile?.equipment,
+          idempotencyKey: `${idempotencyKey}-fallback`,
           payload: {
             energy: fallbackPayload.energy,
             soreness: fallbackPayload.soreness,
@@ -377,13 +381,15 @@ function invokeGenerator(payload) {
 
 // AI-regeneration affordance: after a deterministic fallback, one tap retries
 // the AI engine for the same readiness answers — no re-filling the form.
+// The ORIGINAL idempotency key is reused so a late-persisting first attempt
+// can never produce a duplicate recommendation set.
 async function retryAiGeneration(button) {
   if (!lastGeneratorPayload || button?.disabled) return;
   button.disabled = true;
   const original = button.textContent;
   button.textContent = 'Retrying Arc AI…';
   try {
-    const data = await invokeGenerator({ ...lastGeneratorPayload, idempotency_key: window.crypto?.randomUUID ? window.crypto.randomUUID() : `web-${Date.now()}` });
+    const data = await invokeGenerator(lastGeneratorPayload);
     if (!data?.options?.length) throw new Error(data?.error || 'Arc AI is still unavailable.');
     await renderWorkoutOptions(data.options, data.summary, lastGeneratorPayload, 'ai');
     toast('Arc AI is back. Three paths forward.');

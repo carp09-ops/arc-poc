@@ -3,6 +3,11 @@ import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
 const MODEL = "gpt-5.6-luna";
 const AI_TIMEOUT_MS = 12000;
+// Abuse/cost guardrails. Generous for real use, tight enough that a stuck
+// client or a scripted loop can't spin up an unbounded OpenAI bill.
+const RATE_LIMIT_PER_HOUR = 10;
+const AI_DAILY_CAP_PER_USER = 25;
+const IDEMPOTENCY_WINDOW_HOURS = 24;
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -272,7 +277,49 @@ Safety rules: do not diagnose, treat injuries, or prescribe rehabilitation. If l
   }
 }
 
-async function recentTrainingContext(supabase:any, userId:string) {
+function cleanIdempotencyKey(value: unknown) {
+  const s = String(value ?? "").trim();
+  return /^[A-Za-z0-9_-]{8,72}$/.test(s) ? s : null;
+}
+
+// Idempotent replay: a retried submission (client timeout, double-tap,
+// "try again") returns the original recommendation set instead of
+// generating — and billing — a second one.
+async function findExistingSet(supabase: any, userId: string, key: string) {
+  try {
+    const since = new Date(Date.now() - IDEMPOTENCY_WINDOW_HOURS * 3600000).toISOString();
+    const { data, error } = await supabase.from("workout_recommendation_sets")
+      .select("id,recommendation_summary,generator_version")
+      .eq("user_id", userId).eq("idempotency_key", key).gte("created_at", since)
+      .order("created_at", { ascending: false }).limit(1).maybeSingle();
+    if (error || !data) return null;
+    const { data: options, error: optionsError } = await supabase.from("workout_options")
+      .select("*").eq("recommendation_set_id", data.id).eq("user_id", userId);
+    if (optionsError || !options?.length) return null;
+    const order = ["restore", "build", "push"];
+    options.sort((a: any, b: any) => order.indexOf(a.tier) - order.indexOf(b.tier));
+    return {
+      summary: data.recommendation_summary,
+      recommended_tier: options.find((o: any) => o.is_recommended)?.tier ?? "build",
+      generator_version: data.generator_version,
+      engine_mode: String(data.generator_version || "").startsWith("openai-") ? "ai" : "rules",
+      idempotent_replay: true,
+      options,
+    };
+  } catch (_) {
+    return null; // e.g. idempotency_key column not migrated yet: just generate
+  }
+}
+
+async function recentGenerationCount(supabase: any, userId: string, hours: number, aiOnly: boolean) {
+  const since = new Date(Date.now() - hours * 3600000).toISOString();
+  let query = supabase.from("workout_recommendation_sets")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId).gte("created_at", since);
+  if (aiOnly) query = query.like("generator_version", "openai-%");
+  const { count } = await query;
+  return count ?? 0;
+}
   const { data:sessions, error:sessionError } = await supabase.from("workout_sessions")
     .select("id,name,completed_at,perceived_effort")
     .eq("user_id",userId).eq("status","completed")
@@ -339,8 +386,30 @@ Deno.serve(async (req:Request) => {
   const availableMinutes = Number(input.available_minutes);
   const desiredEffort = String(input.desired_effort || "");
   const limitations = typeof input.limitations === "string" && input.limitations.trim() ? cleanText(input.limitations,300) : null;
+  const idempotencyKey = cleanIdempotencyKey((input as any).idempotency_key);
   if (!Number.isInteger(energy) || energy < 1 || energy > 5 || !Number.isInteger(soreness) || soreness < 1 || soreness > 5 || !Number.isInteger(availableMinutes) || availableMinutes < 10 || availableMinutes > 180 || !["restore","build","push"].includes(desiredEffort)) {
     return response({error:"Invalid readiness answers",request_id:requestId},400);
+  }
+
+  // Rate limiting: sustained bursts get a 429, not an OpenAI bill.
+  const hourlyCount = await recentGenerationCount(supabase, user.id, 1, false);
+  if (hourlyCount >= RATE_LIMIT_PER_HOUR) {
+    return response({error:"Too many workout requests. Please wait a bit and try again.",request_id:requestId},429);
+  }
+
+  // Idempotent replay: return the original set before writing anything, so a
+  // retried submission never creates a second readiness check-in either.
+  if (idempotencyKey) {
+    const existing = await findExistingSet(supabase, user.id, idempotencyKey);
+    if (existing) return response({ ...existing, request_id: requestId });
+  }
+
+  // Cost control: cap AI generations per user per day; overflow gets the
+  // deterministic rules engine instead of an error.
+  let aiAllowed = true;
+  if (Deno.env.get("OPENAI_API_KEY")) {
+    const dailyAiCount = await recentGenerationCount(supabase, user.id, 24, true);
+    aiAllowed = dailyAiCount < AI_DAILY_CAP_PER_USER;
   }
 
   const [profileRes, wearableRes, recentTraining] = await Promise.all([
@@ -363,7 +432,8 @@ Deno.serve(async (req:Request) => {
   let generatorVersion = "edge-rules-v3";
   let engineMode = "rules";
   let fallbackReason:string|null = Deno.env.get("OPENAI_API_KEY") ? null : "missing_api_key";
-  if (Deno.env.get("OPENAI_API_KEY")) {
+  if (!aiAllowed && fallbackReason === null) fallbackReason = "ai_daily_cap";
+  if (Deno.env.get("OPENAI_API_KEY") && aiAllowed) {
     try {
       const ai = await aiGeneration(contextSnapshot);
       if (ai) {
@@ -383,10 +453,23 @@ Deno.serve(async (req:Request) => {
 
   const { data:checkin, error:checkinError } = await supabase.from("readiness_checkins").insert({user_id:user.id,energy,soreness,available_minutes:availableMinutes,desired_effort:desiredEffort,limitations}).select().single();
   if (checkinError) return response({error:checkinError.message,request_id:requestId},400);
-  const { data:recommendationSet, error:setError } = await supabase.from("workout_recommendation_sets").insert({
+  const setRow: Record<string, unknown> = {
     user_id:user.id,checkin_id:checkin.id,recommendation_summary:generation.summary,context_snapshot:persistedContext,generator_version:generatorVersion,
-  }).select().single();
-  if (setError) return response({error:setError.message,request_id:requestId},400);
+  };
+  if (idempotencyKey) setRow.idempotency_key = idempotencyKey;
+  let setResult = await supabase.from("workout_recommendation_sets").insert(setRow).select().single();
+  if (setResult.error && (setResult.error as any).code === "42703" && "idempotency_key" in setRow) {
+    // Column not migrated yet: persist without the key rather than failing.
+    delete setRow.idempotency_key;
+    setResult = await supabase.from("workout_recommendation_sets").insert(setRow).select().single();
+  }
+  if (setResult.error && (setResult.error as any).code === "23505" && idempotencyKey) {
+    // Lost a race with a duplicate submission: return the winner's set.
+    const existing = await findExistingSet(supabase, user.id, idempotencyKey);
+    if (existing) return response({ ...existing, request_id: requestId });
+  }
+  const { data:recommendationSet, error:setError } = setResult;
+  if (setError) return response({error:(setError as any).message,request_id:requestId},400);
 
   const optionRows = generation.options.map((option:any) => ({
     user_id:user.id,recommendation_set_id:recommendationSet.id,tier:option.tier,title:option.title,focus:option.focus,duration_minutes:option.duration_minutes,intensity:option.intensity,rationale:option.rationale,equipment,is_recommended:option.tier === generation.recommended_tier,

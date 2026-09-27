@@ -44,12 +44,49 @@ export function recommendationSummary(tier) {
       : 'Balanced work is the best fit for today.';
 }
 
+// Idempotent read: returns { setId, options, summary } for a previously
+// persisted recommendation set, or null. Never throws — a missing
+// idempotency_key column (migration not applied) just means "no match".
+async function fetchSetByIdempotencyKey(supabase, userId, key) {
+  try {
+    const { data: set, error } = await supabase
+      .from('workout_recommendation_sets')
+      .select('id,recommendation_summary')
+      .eq('user_id', userId)
+      .eq('idempotency_key', key)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error || !set) return null;
+    const { data: options, error: optError } = await supabase
+      .from('workout_options')
+      .select('*')
+      .eq('recommendation_set_id', set.id)
+      .eq('user_id', userId);
+    if (optError || !options?.length) return null;
+    const order = { restore: 0, build: 1, push: 2 };
+    options.sort((a, b) => (order[a.tier] ?? 3) - (order[b.tier] ?? 3));
+    return { setId: set.id, options, summary: set.recommendation_summary };
+  } catch {
+    return null;
+  }
+}
+
 // payload: { energy, soreness, minutes, desired, limitations }
+// idempotencyKey: per-submission UUID. If a set with this key already exists
+// (e.g. a timed-out AI call actually persisted server-side), it is returned
+// instead of writing a duplicate.
 // Writes: readiness_checkins → workout_recommendation_sets →
 // workout_options → workout_option_exercises. Returns { setId, options, summary }.
-export async function generateDeterministicWorkouts({ supabase, userId, equipment, payload }) {
+export async function generateDeterministicWorkouts({ supabase, userId, equipment, payload, idempotencyKey }) {
   const { energy, soreness, minutes, desired, limitations } = payload;
   const recommended = chooseRecommendedTier(energy, soreness, desired);
+
+  // Fast path: the key already won a race (timed-out AI call persisted).
+  if (idempotencyKey) {
+    const existing = await fetchSetByIdempotencyKey(supabase, userId, idempotencyKey);
+    if (existing) return existing;
+  }
 
   const { data: checkin, error: checkinError } = await supabase
     .from('readiness_checkins')
@@ -59,23 +96,34 @@ export async function generateDeterministicWorkouts({ supabase, userId, equipmen
   if (checkinError) throw checkinError;
 
   const summary = recommendationSummary(recommended);
-  const { data: set, error: setError } = await supabase
-    .from('workout_recommendation_sets')
-    .insert({
-      user_id: userId,
-      checkin_id: checkin.id,
-      recommendation_summary: summary,
-      // Structured fields only: free-text limitations are not stored.
-      context_snapshot: {
-        generation_mode: 'deterministic',
-        energy, soreness, minutes, desired,
-        has_limitations: Boolean(limitations && String(limitations).trim())
-      },
-      generator_version: GENERATOR_VERSION
-    })
-    .select()
-    .single();
-  if (setError) throw setError;
+  const setRow = {
+    user_id: userId,
+    checkin_id: checkin.id,
+    recommendation_summary: summary,
+    // Structured fields only: free-text limitations are not stored.
+    context_snapshot: {
+      generation_mode: 'deterministic',
+      energy, soreness, minutes, desired,
+      has_limitations: Boolean(limitations && String(limitations).trim())
+    },
+    generator_version: GENERATOR_VERSION
+  };
+  if (idempotencyKey) setRow.idempotency_key = idempotencyKey;
+  let setRes = await supabase.from('workout_recommendation_sets').insert(setRow).select().single();
+  if (setRes.error && setRes.error.code === '42703' && 'idempotency_key' in setRow) {
+    // Migration not applied yet: persist without the key rather than failing.
+    delete setRow.idempotency_key;
+    setRes = await supabase.from('workout_recommendation_sets').insert(setRow).select().single();
+  }
+  const { data: set, error: setError } = setRes;
+  if (setError) {
+    // Lost the race: whoever persisted first wins; render their set.
+    if (setError.code === '23505' && idempotencyKey) {
+      const existing = await fetchSetByIdempotencyKey(supabase, userId, idempotencyKey);
+      if (existing) return existing;
+    }
+    throw setError;
+  }
 
   const equipmentList = Array.isArray(equipment) ? equipment : [];
   const durations = { restore: Math.min(minutes, 20), build: Math.min(minutes, 35), push: Math.min(minutes, 50) };
