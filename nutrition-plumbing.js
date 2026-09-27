@@ -106,7 +106,10 @@ async function loadNutritionContext() {
   const sourcesRes = await supabase.from('nutrition_sources').select('*').eq('user_id', user.id);
   if (!sourcesRes.error) updateConnectionStatuses(sourcesRes.data || []);
 
-  const cutoff = new Date(Date.now() - 14 * 86400000).toISOString().slice(0,10);
+  // Local-day cutoff: nutrition_date is attributed in the user's local days,
+  // so a UTC slice(0,10) would misattribute near midnight for non-UTC users.
+  const cutoffDate = new Date(); cutoffDate.setDate(cutoffDate.getDate() - 14);
+  const cutoff = `${cutoffDate.getFullYear()}-${String(cutoffDate.getMonth() + 1).padStart(2, '0')}-${String(cutoffDate.getDate()).padStart(2, '0')}`;
   const summaryRes = await supabase.from('nutrition_daily_summaries')
     .select('*')
     .eq('user_id', user.id)

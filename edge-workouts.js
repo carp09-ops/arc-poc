@@ -230,15 +230,31 @@ function showCompletionPanel(sessionId) {
   area.scrollIntoView({behavior:'smooth',block:'center'});
 }
 
+function localISODate(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+// Timezone-safe day attribution: the session's local calendar day is stored
+// explicitly so adherence bucketing never depends on the view guessing the
+// user's timezone from a UTC timestamp. If the migration adding local_date
+// has not been applied yet, completion still succeeds without it.
+async function applySessionPatch(sessionId, userId, patch) {
+  let { error } = await supabase.from('workout_sessions').update(patch).eq('id', sessionId).eq('user_id', userId);
+  if (error && error.code === '42703' && 'local_date' in patch) {
+    delete patch.local_date;
+    ({ error } = await supabase.from('workout_sessions').update(patch).eq('id', sessionId).eq('user_id', userId));
+  }
+  return error;
+}
+
 async function finishWorkout(sessionId, countsTowardArc, perceivedEffort=null, notes=null) {
   try {
     const user = await currentUser();
-    const patch = countsTowardArc ? {status:'completed',completed_at:new Date().toISOString(),counts_toward_arc:true,perceived_effort:perceivedEffort,notes} : {status:'abandoned',completed_at:null,counts_toward_arc:false};
-    const { error } = await supabase.from('workout_sessions').update(patch).eq('id',sessionId).eq('user_id',user.id);
+    const patch = countsTowardArc
+      ? { status:'completed', completed_at:new Date().toISOString(), local_date:localISODate(), counts_toward_arc:true, perceived_effort:perceivedEffort, notes }
+      : { status:'abandoned', completed_at:null, counts_toward_arc:false };
+    const error = await applySessionPatch(sessionId, user.id, patch);
     if (error) throw error;
-    // Day attribution stays timezone-safe: completed_at is stored as a UTC
-    // ISO timestamp; any local-day bucketing happens server-side in
-    // arc_progress_28d (see supabase/migrations).
     toast(countsTowardArc ? 'Workout complete. The pattern moved forward.' : 'Workout ended without affecting your Arc.');
     setTimeout(()=>window.location.reload(),650);
   } catch (error) { toast(error.message || 'Could not update workout.'); }

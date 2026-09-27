@@ -4,6 +4,12 @@ const $=id=>document.getElementById(id);
 const escapeHTML=(value='')=>String(value).replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
 let historyFilter='all';
 let historyCache=null;
+function trLocalISODate(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+async function trApplySessionPatch(sessionId,userId,patch){
+  let{error}=await supabase.from('workout_sessions').update(patch).eq('id',sessionId).eq('user_id',userId);
+  if(error&&error.code==='42703'&&'local_date'in patch){delete patch.local_date;({error}=await supabase.from('workout_sessions').update(patch).eq('id',sessionId).eq('user_id',userId));}
+  return error;
+}
 function kgToLb(v){return Number(v||0)/0.45359237}
 function fmtDuration(start,end){if(!start||!end)return '—';const mins=Math.max(1,Math.round((new Date(end)-new Date(start))/60000));return mins<60?`${mins} min`:`${Math.floor(mins/60)}h ${mins%60}m`}
 function sessionMinutes(s){return s.started_at&&s.completed_at?Math.max(0,(new Date(s.completed_at)-new Date(s.started_at))/60000):0}
@@ -99,6 +105,10 @@ async function repeatWorkout(sessionId,button){
   const original=button.textContent;button.disabled=true;button.textContent='Preparing…';
   try{
     const user=await authUser();const source=groupedHistory().find(s=>s.id===sessionId);if(!source)throw new Error('Workout not found.');
+    // Never stack a second in-progress session: resume the existing one so
+    // history never shows two ambiguous "in progress" workouts.
+    const{data:existing}=await supabase.from('workout_sessions').select('id').eq('user_id',user.id).eq('status','in_progress').order('started_at',{ascending:false}).limit(1).maybeSingle();
+    if(existing){toast('You already have a workout in progress — resuming it.');setTimeout(()=>window.location.reload(),500);return;}
     const{data:newSession,error}=await supabase.from('workout_sessions').insert({user_id:user.id,source_option_id:source.source_option_id||null,name:source.name,status:'in_progress',started_at:new Date().toISOString()}).select().single();if(error)throw error;
     let rows=[];
     if(source.source_option_id){const{data:plan,error:planError}=await supabase.from('workout_option_exercises').select('*').eq('workout_option_id',source.source_option_id).order('sort_order');if(planError)throw planError;rows=(plan||[]).map(x=>({user_id:user.id,workout_session_id:newSession.id,sort_order:x.sort_order,exercise_name:x.exercise_name,notes:`Target: ${x.target_sets||''} x ${x.target_reps||''}`}));}
@@ -118,7 +128,7 @@ async function completeWithReceipt(button){
     const{data:exercises,error:exError}=await supabase.from('workout_session_exercises').select('id').eq('user_id',user.id).eq('workout_session_id',session.id);if(exError)throw exError;
     const exIds=(exercises||[]).map(x=>x.id);let sets=[];
     if(exIds.length){const{data,error}=await supabase.from('workout_sets').select('*').eq('user_id',user.id).in('workout_exercise_id',exIds);if(error)throw error;sets=data||[];}
-    const{error:updateError}=await supabase.from('workout_sessions').update({status:'completed',completed_at:completedAt,counts_toward_arc:true,perceived_effort:effortValue?Number(effortValue):null,notes:note}).eq('id',session.id).eq('user_id',user.id);if(updateError)throw updateError;
+    const{error:updateError}=await trApplySessionPatch(session.id,user.id,{status:'completed',completed_at:completedAt,local_date:trLocalISODate(),counts_toward_arc:true,perceived_effort:effortValue?Number(effortValue):null,notes:note});if(updateError)throw updateError;
     const completedSets=sets.filter(s=>s.completed);const volumeLb=kgToLb(completedSets.reduce((sum,s)=>sum+(Number(s.reps)||0)*(Number(s.weight_kg)||0),0));
     const duration=fmtDuration(session.started_at,completedAt);
     const{data:arc}=await supabase.from('arc_progress_28d').select('*').eq('user_id',user.id).maybeSingle();
