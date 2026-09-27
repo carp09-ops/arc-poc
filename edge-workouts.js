@@ -249,21 +249,51 @@ async function applySessionPatch(sessionId, userId, patch) {
   return error;
 }
 
+// DIAGNOSTIC BUILD (ready34): see training-roundout.js. Remove after the save bug is fixed.
+function renderEdgeWorkoutDiag(diag){
+  try{
+    const rows = Object.entries(diag).map(([k,v]) => {
+      let val = (v && typeof v === 'object') ? JSON.stringify(v) : v;
+      return `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid rgba(139,163,183,.14);font-size:.74rem">`
+        + `<span style="color:#8BA3B7;font-weight:700">${k}</span>`
+        + `<span style="color:#F7F2E8;text-align:right;word-break:break-all">${val ?? '—'}</span></div>`;
+    }).join('');
+    const host = document.getElementById('workoutFinishArea') || document.getElementById('activeWorkout') || document.body;
+    const html = `<div style="background:#0E2133;border:1px solid rgba(246,166,35,.4);border-radius:16px;padding:18px;margin:16px 0">`
+      + `<div style="font-size:.68rem;font-weight:800;letter-spacing:.08em;color:#F6A623;margin-bottom:4px">DIAGNOSTIC — WORKOUT SAVE</div>`
+      + `<p style="font-size:.76rem;color:#9FB0BE;margin:0 0 8px">The save failed. Screenshot this panel and send it to me.</p>`
+      + rows + `</div>`;
+    if (host === document.body) { const d = document.createElement('div'); d.innerHTML = html; host.prepend(d); }
+    else host.innerHTML = html;
+  }catch(_){}
+}
+
 async function finishWorkout(sessionId, countsTowardArc, perceivedEffort=null, notes=null) {
+  const diag={path:'finishWorkout(edge)',build:'ready34',at:new Date().toISOString(),sessionId};
   try {
     const user = await currentUser();
+    diag.authUid=user.id;
+    try{diag.hasSession=!!(await supabase.auth.getSession()).data.session;}catch(_){diag.hasSession='?';}
     const patch = countsTowardArc
       ? { status:'completed', completed_at:new Date().toISOString(), local_date:localISODate(), counts_toward_arc:true, perceived_effort:perceivedEffort, notes }
       : { status:'abandoned', completed_at:null, counts_toward_arc:false };
-    const error = await applySessionPatch(sessionId, user.id, patch);
-    if (error) throw error;
+    diag.patchKeys=Object.keys(patch).join(',');
+    const runPatch = () => supabase.from('workout_sessions').update(patch).eq('id',sessionId).eq('user_id',user.id).select('id,status');
+    let updRes = await runPatch();
+    diag.updateAttemptRows=Array.isArray(updRes.data)?updRes.data.length:null;
+    if (updRes.error && updRes.error.code==='42703' && 'local_date' in patch) {
+      delete patch.local_date; diag.retryWithoutLocalDate=true; updRes = await runPatch();
+      diag.retryRows=Array.isArray(updRes.data)?updRes.data.length:null;
+    }
+    if (updRes.error) { diag.updateError=`${updRes.error.code||'?'}: ${updRes.error.message||'unknown'}`; throw updRes.error; }
     // PostgREST reports zero matched rows as success: re-read to prove the
     // write landed instead of claiming a finish that never persisted.
     const { data: check } = await supabase.from('workout_sessions').select('status').eq('id', sessionId).eq('user_id', user.id).maybeSingle();
+    diag.verifyFound=!!check;diag.verifyStatus=check?.status??null;
     if (!check || check.status !== patch.status) throw new Error('Workout was not saved. Your logged sets are intact — please try finishing again.');
     toast(countsTowardArc ? 'Workout complete. The pattern moved forward.' : 'Workout ended without affecting your Arc.');
     setTimeout(()=>window.location.reload(),650);
-  } catch (error) { toast(error.message || 'Could not update workout.'); }
+  } catch (error) { diag.failure=error.message||'unknown'; try{console.log('[arc-diag]',JSON.stringify(diag));}catch(_){} renderEdgeWorkoutDiag(diag); toast(error.message || 'Could not update workout.'); }
 }
 
 async function resumeActiveWorkout() {

@@ -5,9 +5,13 @@ const escapeHTML=(value='')=>String(value).replace(/[&<>'"]/g,ch=>({'&':'&amp;',
 let historyFilter='all';
 let historyCache=null;
 function trLocalISODate(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
-async function trApplySessionPatch(sessionId,userId,patch){
-  let{error}=await supabase.from('workout_sessions').update(patch).eq('id',sessionId).eq('user_id',userId);
-  if(error&&error.code==='42703'&&'local_date'in patch){delete patch.local_date;({error}=await supabase.from('workout_sessions').update(patch).eq('id',sessionId).eq('user_id',userId));}
+async function trApplySessionPatch(sessionId,userId,patch,diag){
+  const run = async () => await supabase.from('workout_sessions').update(patch).eq('id',sessionId).eq('user_id',userId).select('id,status');
+  let { data, error } = await run();
+  if (diag) { diag.updateAttemptRows = Array.isArray(data) ? data.length : null; diag.updateAttemptStatuses = Array.isArray(data) ? data.map(r=>r.status).join(',') : null; }
+  if(error&&error.code==='42703'&&'local_date'in patch){delete patch.local_date;({data,error}=await run());
+    if (diag) { diag.retryWithoutLocalDate = true; diag.retryRows = Array.isArray(data) ? data.length : null; }}
+  if (diag && error) diag.updateError = `${error.code||'?'}: ${error.message||'unknown'}`;
   return error;
 }
 function kgToLb(v){return Number(v||0)/0.45359237}
@@ -118,10 +122,35 @@ async function repeatWorkout(sessionId,button){
   }catch(error){toast(error.message||'Could not repeat workout.');button.disabled=false;button.textContent=original;}
 }
 
+// DIAGNOSTIC BUILD (ready34): workout-completion instrumentation. Collects
+// non-secret facts about the finish flow and renders them on failure so the
+// root cause can be read off a screenshot. Remove after the save bug is fixed.
+function renderWorkoutDiag(diag){
+  try{
+    const rows = Object.entries(diag).map(([k,v]) => {
+      let val = v;
+      if (v && typeof v === 'object') val = JSON.stringify(v);
+      return `<div style="display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid rgba(139,163,183,.14);font-size:.74rem">`
+        + `<span style="color:#8BA3B7;font-weight:700">${k}</span>`
+        + `<span style="color:#F7F2E8;text-align:right;word-break:break-all">${val ?? '—'}</span></div>`;
+    }).join('');
+    const html = `<div style="background:#0E2133;border:1px solid rgba(246,166,35,.4);border-radius:16px;padding:18px;margin:16px 0">`
+      + `<div style="font-size:.68rem;font-weight:800;letter-spacing:.08em;color:#F6A623;margin-bottom:4px">DIAGNOSTIC — WORKOUT SAVE</div>`
+      + `<p style="font-size:.76rem;color:#9FB0BE;margin:0 0 8px">The save failed. Screenshot this panel and send it to me.</p>`
+      + rows + `</div>`;
+    const host = document.getElementById('workoutFinishArea') || document.getElementById('activeWorkout') || document.body;
+    if (host === document.body) { const d = document.createElement('div'); d.innerHTML = html; host.prepend(d); }
+    else host.innerHTML = html;
+  }catch(_){}
+}
+
 async function completeWithReceipt(button){
   const original=button.textContent;button.disabled=true;button.textContent='Saving workout…';
+  const diag={path:'completeWithReceipt',build:'ready34',at:new Date().toISOString()};
   try{
     const user=await authUser();
+    diag.authUid=user.id;
+    try{diag.hasSession=!!(await supabase.auth.getSession()).data.session;}catch(_){diag.hasSession='?';}
     // Prefer the session the finish panel was opened for; fall back to the
     // latest in-progress session only if the panel did not stash one.
     let sessionId=$('workoutFinishArea')?.dataset.sessionId||null;
@@ -135,15 +164,19 @@ async function completeWithReceipt(button){
       if(sessionError||!data)throw sessionError||new Error('No active workout found.');
       session=data;sessionId=data.id;
     }
+    diag.sessionId=session.id;diag.sessionUserId=session.user_id;diag.uidMatch=user.id===session.user_id;diag.statusBefore=session.status;
     const effortValue=document.querySelector('input[name="sessionEffort"]:checked')?.value;const note=$('sessionNote')?.value.trim()||null;const completedAt=new Date().toISOString();
     const{data:exercises,error:exError}=await supabase.from('workout_session_exercises').select('id').eq('user_id',user.id).eq('workout_session_id',session.id);if(exError)throw exError;
     const exIds=(exercises||[]).map(x=>x.id);let sets=[];
     if(exIds.length){const{data,error}=await supabase.from('workout_sets').select('*').eq('user_id',user.id).in('workout_exercise_id',exIds);if(error)throw error;sets=data||[];}
-    const{error:updateError}=await trApplySessionPatch(session.id,user.id,{status:'completed',completed_at:completedAt,local_date:trLocalISODate(),counts_toward_arc:true,perceived_effort:effortValue?Number(effortValue):null,notes:note});if(updateError)throw updateError;
+    const patchUsed={status:'completed',completed_at:completedAt,local_date:trLocalISODate(),counts_toward_arc:true,perceived_effort:effortValue?Number(effortValue):null,notes:note};
+    diag.patchKeys=Object.keys(patchUsed).join(',');
+    const{error:updateError}=await trApplySessionPatch(session.id,user.id,patchUsed,diag);if(updateError)throw updateError;
     // PostgREST reports zero matched rows as success: re-read to prove the
     // completion landed instead of showing a receipt for a workout that is
     // still in progress (the live UPDATE policy may silently match nothing).
     const{data:verify}=await supabase.from('workout_sessions').select('status').eq('id',session.id).eq('user_id',user.id).maybeSingle();
+    diag.verifyFound=!!verify;diag.verifyStatus=verify?.status??null;
     if(!verify||verify.status!=='completed')throw new Error('Workout was not saved. Your logged sets are intact — please try finishing again.');
     const completedSets=sets.filter(s=>s.completed);const volumeLb=kgToLb(completedSets.reduce((sum,s)=>sum+(Number(s.reps)||0)*(Number(s.weight_kg)||0),0));
     const duration=fmtDuration(session.started_at,completedAt);
@@ -154,7 +187,7 @@ async function completeWithReceipt(button){
     if(active){active.innerHTML=`<div class="completion-receipt"><span class="eyebrow">Workout complete</span><h2>That counts.</h2><p>You showed up. Arc records the pattern—not perfection.</p><div class="receipt-stats"><div><span>Time</span><strong>${duration}</strong></div><div><span>Sets</span><strong>${completedSets.length||'—'}</strong></div>${volumeLb>0?`<div><span>Logged volume</span><strong>${Math.round(volumeLb).toLocaleString()} lb</strong></div>`:''}${effortValue?`<div><span>Effort</span><strong>${effortValue}/10</strong></div>`:''}</div><div class="receipt-arc"><strong>${escapeHTML(arcLine)}</strong><span>80% is still the finish line.</span></div><div class="receipt-actions"><button id="receiptDone" class="button button-primary">Back to Today</button><button id="receiptHistory" class="button">View history</button></div></div>`;active.scrollIntoView({behavior:'smooth',block:'start'});}
     $('receiptDone')?.addEventListener('click',()=>window.location.reload());
     $('receiptHistory')?.addEventListener('click',async()=>{await loadHistory();document.querySelector('[data-view="history"]')?.click();});
-  }catch(error){toast(error.message||'Could not complete workout.');button.disabled=false;button.textContent=original;}
+  }catch(error){diag.failure=error.message||'unknown';try{console.log('[arc-diag]',JSON.stringify(diag));}catch(_){}renderWorkoutDiag(diag);toast(error.message||'Could not complete workout.');button.disabled=false;button.textContent=original;}
 }
 
 function install(){
