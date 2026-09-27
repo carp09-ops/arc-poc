@@ -285,13 +285,44 @@ function cleanIdempotencyKey(value: unknown) {
 // Idempotent replay: a retried submission (client timeout, double-tap,
 // "try again") returns the original recommendation set instead of
 // generating — and billing — a second one.
+// PostgREST rejects an unmigrated column with PGRST204 ("in the schema cache")
+// before Postgres ever sees the query, so a 42703-only check never fires in
+// production. Treat either code as "column not migrated yet".
+function isUnmigratedColumnError(error: any, column: string): boolean {
+  if (!error) return false;
+  if (error.code === "42703") return true;
+  if (error.code !== "PGRST204") return false;
+  const m = /Could not find the '([^']+)' column/i.exec(String(error.message || ""));
+  return m ? m[1] === column : true;
+}
+
+// Recent completed training, for variety/continuity context in the AI prompt.
+// Never throws: generation works fine without it.
+async function recentTrainingContext(supabase: any, userId: string) {
+  try {
+    const { data: sessions, error } = await supabase.from("workout_sessions")
+      .select("id,completed_at").eq("user_id", userId).eq("status", "completed")
+      .order("completed_at", { ascending: false }).limit(3);
+    if (error || !sessions?.length) return [];
+    const ids = sessions.map((s: any) => s.id);
+    const { data: exercises } = await supabase.from("workout_session_exercises")
+      .select("workout_session_id,exercise_name").in("workout_session_id", ids);
+    return sessions.map((s: any) => ({
+      completed_at: s.completed_at,
+      exercises: (exercises || []).filter((e: any) => e.workout_session_id === s.id).map((e: any) => e.exercise_name),
+    }));
+  } catch (_) {
+    return [];
+  }
+}
+
 async function findExistingSet(supabase: any, userId: string, key: string) {
   try {
     const since = new Date(Date.now() - IDEMPOTENCY_WINDOW_HOURS * 3600000).toISOString();
     const { data, error } = await supabase.from("workout_recommendation_sets")
       .select("id,recommendation_summary,generator_version")
-      .eq("user_id", userId).eq("idempotency_key", key).gte("created_at", since)
-      .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      .eq("user_id", userId).eq("idempotency_key", key).gte("generated_at", since)
+      .order("generated_at", { ascending: false }).limit(1).maybeSingle();
     if (error || !data) return null;
     const { data: options, error: optionsError } = await supabase.from("workout_options")
       .select("*").eq("recommendation_set_id", data.id).eq("user_id", userId);
@@ -391,17 +422,17 @@ Deno.serve(async (req:Request) => {
     return response({error:"Invalid readiness answers",request_id:requestId},400);
   }
 
+  // Idempotent replay first: a retried submission gets its original set
+  // instead of a 429, and never creates a second readiness check-in either.
+  if (idempotencyKey) {
+    const existing = await findExistingSet(supabase, user.id, idempotencyKey);
+    if (existing) return response({ ...existing, request_id: requestId });
+  }
+
   // Rate limiting: sustained bursts get a 429, not an OpenAI bill.
   const hourlyCount = await recentGenerationCount(supabase, user.id, 1, false);
   if (hourlyCount >= RATE_LIMIT_PER_HOUR) {
     return response({error:"Too many workout requests. Please wait a bit and try again.",request_id:requestId},429);
-  }
-
-  // Idempotent replay: return the original set before writing anything, so a
-  // retried submission never creates a second readiness check-in either.
-  if (idempotencyKey) {
-    const existing = await findExistingSet(supabase, user.id, idempotencyKey);
-    if (existing) return response({ ...existing, request_id: requestId });
   }
 
   // Cost control: cap AI generations per user per day; overflow gets the
@@ -458,7 +489,7 @@ Deno.serve(async (req:Request) => {
   };
   if (idempotencyKey) setRow.idempotency_key = idempotencyKey;
   let setResult = await supabase.from("workout_recommendation_sets").insert(setRow).select().single();
-  if (setResult.error && (setResult.error as any).code === "42703" && "idempotency_key" in setRow) {
+  if (isUnmigratedColumnError(setResult.error, "idempotency_key") && "idempotency_key" in setRow) {
     // Column not migrated yet: persist without the key rather than failing.
     delete setRow.idempotency_key;
     setResult = await supabase.from("workout_recommendation_sets").insert(setRow).select().single();

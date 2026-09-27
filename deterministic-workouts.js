@@ -44,6 +44,17 @@ export function recommendationSummary(tier) {
       : 'Balanced work is the best fit for today.';
 }
 
+// PostgREST rejects an unmigrated column with PGRST204 ("in the schema cache")
+// before Postgres ever sees the query, so a 42703-only check never fires in
+// production. Treat either code as "column not migrated yet".
+function isUnmigratedColumnError(error, column) {
+  if (!error) return false;
+  if (error.code === '42703') return true;
+  if (error.code !== 'PGRST204') return false;
+  const m = /Could not find the '([^']+)' column/i.exec(error.message || '');
+  return m ? m[1] === column : true;
+}
+
 // Idempotent read: returns { setId, options, summary } for a previously
 // persisted recommendation set, or null. Never throws — a missing
 // idempotency_key column (migration not applied) just means "no match".
@@ -54,7 +65,7 @@ async function fetchSetByIdempotencyKey(supabase, userId, key) {
       .select('id,recommendation_summary')
       .eq('user_id', userId)
       .eq('idempotency_key', key)
-      .order('created_at', { ascending: false })
+      .order('generated_at', { ascending: false })
       .limit(1)
       .maybeSingle();
     if (error || !set) return null;
@@ -110,7 +121,7 @@ export async function generateDeterministicWorkouts({ supabase, userId, equipmen
   };
   if (idempotencyKey) setRow.idempotency_key = idempotencyKey;
   let setRes = await supabase.from('workout_recommendation_sets').insert(setRow).select().single();
-  if (setRes.error && setRes.error.code === '42703' && 'idempotency_key' in setRow) {
+  if (isUnmigratedColumnError(setRes.error, 'idempotency_key') && 'idempotency_key' in setRow) {
     // Migration not applied yet: persist without the key rather than failing.
     delete setRow.idempotency_key;
     setRes = await supabase.from('workout_recommendation_sets').insert(setRow).select().single();

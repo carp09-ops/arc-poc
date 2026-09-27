@@ -4,4 +4,4 @@
 // arc-icons.js (ready28) each carried their own stale tag, so email links,
 // the day-boundary reload and icon URLs pointed at old ?v= values.
 // Import { BUILD } from here instead of defining a local tag.
-export const BUILD = 'ready35';
+export const BUILD = 'ready36';

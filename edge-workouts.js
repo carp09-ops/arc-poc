@@ -236,19 +236,6 @@ function localISODate(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// Timezone-safe day attribution: the session's local calendar day is stored
-// explicitly so adherence bucketing never depends on the view guessing the
-// user's timezone from a UTC timestamp. If the migration adding local_date
-// has not been applied yet, completion still succeeds without it.
-async function applySessionPatch(sessionId, userId, patch) {
-  let { error } = await supabase.from('workout_sessions').update(patch).eq('id', sessionId).eq('user_id', userId);
-  if (error && error.code === '42703' && 'local_date' in patch) {
-    delete patch.local_date;
-    ({ error } = await supabase.from('workout_sessions').update(patch).eq('id', sessionId).eq('user_id', userId));
-  }
-  return error;
-}
-
 // DIAGNOSTIC BUILD (ready34): see training-roundout.js. Remove after the save bug is fixed.
 function renderEdgeWorkoutDiag(diag){
   try{
