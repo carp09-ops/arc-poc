@@ -368,15 +368,24 @@ function install() {
 // AI generation with a hard timeout: if the edge function hangs, we fall back
 // to the deterministic generator instead of leaving the user on a spinner.
 function invokeGenerator(payload) {
-  const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('Arc AI timed out.')), GENERATOR_TIMEOUT_MS));
+  // The timer is always cleared on settle: without this, every successful
+  // generation left a live timer that later rejected an unobserved promise
+  // (console noise) and the edge request had no cancellation story.
+  // supabase-js functions.invoke does not expose an AbortSignal, so the
+  // underlying request is left to complete; that is safe now because the
+  // payload's idempotency key means a late response can only replay the
+  // already-persisted recommendation set, never duplicate it.
+  let timer = null;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Arc AI timed out.')), GENERATOR_TIMEOUT_MS);
+  });
   return Promise.race([
     supabase.functions.invoke('generate-workouts', { body: payload }).then(({ data, error }) => {
       if (error) throw error;
       return data;
     }),
     timeout
-  ]);
+  ]).finally(() => { if (timer) clearTimeout(timer); });
 }
 
 // AI-regeneration affordance: after a deterministic fallback, one tap retries
