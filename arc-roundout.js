@@ -5,7 +5,7 @@ const $ = (id) => document.getElementById(id);
 function setGauge(el, visualPct) {
   if (!el) return;
   const pct = Math.max(0, Math.min(100, Number(visualPct) || 0));
-  el.style.setProperty('--progress', `${pct * 3.6}deg`);
+  el.style.setProperty('--progress', `${pct * 3}deg`);
   el.style.setProperty('--arc-fill', `${pct}%`);
   window.ArcRadiant?.sync?.();
 }
@@ -62,8 +62,8 @@ function renderArc(row) {
   if (learning) {
     const weeklyRate = weeklyTarget > 0 ? (weeklyCompleted / weeklyTarget) * 100 : 0;
     const stage = stageFromPercent(weeklyRate);
-    setGaugeState($('arcGauge'), stage.label, 'LEARNING');
-    setGaugeState($('arcLargeGauge'), stage.label, 'LEARNING');
+    setGaugeState($('arcGauge'), `${Math.round(weeklyRate)}%`, 'LEARNING');
+    setGaugeState($('arcLargeGauge'), `${Math.round(weeklyRate)}%`, 'LEARNING');
 
     if ($('consistencyMetric')) $('consistencyMetric').textContent = 'Learning';
     if ($('workoutsMetric')) $('workoutsMetric').textContent = weeklyCompleted;
@@ -91,8 +91,11 @@ function renderArc(row) {
   };
   const [headline, copy] = stateCopy[row.arc_state] || stateCopy.build_momentum;
 
-  setGaugeState($('arcGauge'), stage.label, `${pct}% CONSISTENCY`);
-  setGaugeState($('arcLargeGauge'), stage.label, `${pct}% CONSISTENCY`);
+  // Gauge centers are owned here: big number = completion %, caption = stage.
+  // core-app no longer writes these nodes (it only paints the ring), so the
+  // two writers can no longer fight over the center text.
+  setGaugeState($('arcGauge'), `${pct}%`, stage.label.toUpperCase());
+  setGaugeState($('arcLargeGauge'), `${pct}%`, stage.label.toUpperCase());
   if ($('consistencyMetric')) $('consistencyMetric').textContent = `${pct}%`;
   if ($('heroHeadline')) $('heroHeadline').textContent = headline;
   if ($('heroSubhead')) $('heroSubhead').textContent = copy;

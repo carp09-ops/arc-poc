@@ -184,13 +184,12 @@ function setGauge(el, visualPct) {
 function renderToday() {
   const arc = arcPresentation();
   setGauge($('arcGauge'), arc.visual);
-  $('arcPercent').textContent = arc.actual == null ? '—' : `${Math.round(arc.actual)}%`;
-  $('arcGaugeLabel').textContent = arc.state === 'in_your_arc' ? 'SUCCESS' : arc.state === 'learning' ? 'BUILDING' : 'PROGRESS';
+  // Gauge center text is owned by arc-roundout (no second writer here).
   $('heroHeadline').textContent = arc.headline;
   $('heroSubhead').textContent = arc.copy;
   $('consistencyMetric').textContent = arc.actual == null ? '—' : `${Math.round(arc.actual)}%`;
   $('workoutsMetric').textContent = state.arc?.completed_workouts ?? state.workouts.length;
-  $('workoutsMetricSub').textContent = state.target ? `${state.target.workouts_per_week} planned per week` : 'Set your weekly target';
+  $('workoutsMetricSub').textContent = state.target ? `${state.target.workouts_per_week} planned per week · last 28 days` : 'Set your weekly target';
 
   if (state.measurements.length) {
     const latest = state.measurements[0];
@@ -217,7 +216,7 @@ function renderRecentWorkouts() {
 function renderArc() {
   const arc = arcPresentation();
   setGauge($('arcLargeGauge'), arc.visual);
-  $('arcLargePercent').textContent = arc.actual == null ? '—' : `${Math.round(arc.actual)}%`;
+  // Gauge center text is owned by arc-roundout (no second writer here).
   $('arcStatePill').textContent = arc.state.split('_').map(x => x[0].toUpperCase()+x.slice(1)).join(' ');
   $('arcStateHeadline').textContent = arc.headline;
   $('arcStateCopy').textContent = arc.copy;

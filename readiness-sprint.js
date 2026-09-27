@@ -232,14 +232,14 @@ function flareArc() {
 }
 
 function updateClosingState(deg) {
-  document.querySelectorAll('.arc-gauge').forEach(gauge => gauge.classList.toggle('arc-closing', deg >= 270 && deg < 359.5));
+  document.querySelectorAll('.arc-gauge').forEach(gauge => gauge.classList.toggle('arc-closing', deg >= 240 && deg < 299.5));
 }
 
 async function handleArcChange() {
   const hero = $('arcGauge');
   if (!hero) return;
   await hydrateUserId();
-  const deg = Math.max(0, Math.min(360, parseDegrees(hero)));
+  const deg = Math.max(0, Math.min(300, parseDegrees(hero)));
   updateClosingState(deg);
   const key = `arc:last-progress:${arcUserId || 'anon'}`;
   const stored = localStorage.getItem(key);
@@ -248,7 +248,7 @@ async function handleArcChange() {
   if (previous == null || !Number.isFinite(previous)) return;
   if (deg > previous + 0.25) {
     pulseArc(deg - previous >= 45);
-    if (previous < 359.5 && deg >= 359.5) flareArc();
+    if (previous < 299.5 && deg >= 299.5) flareArc();
   }
 }
 
