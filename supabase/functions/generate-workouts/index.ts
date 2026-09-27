@@ -296,26 +296,6 @@ function isUnmigratedColumnError(error: any, column: string): boolean {
   return m ? m[1] === column : true;
 }
 
-// Recent completed training, for variety/continuity context in the AI prompt.
-// Never throws: generation works fine without it.
-async function recentTrainingContext(supabase: any, userId: string) {
-  try {
-    const { data: sessions, error } = await supabase.from("workout_sessions")
-      .select("id,completed_at").eq("user_id", userId).eq("status", "completed")
-      .order("completed_at", { ascending: false }).limit(3);
-    if (error || !sessions?.length) return [];
-    const ids = sessions.map((s: any) => s.id);
-    const { data: exercises } = await supabase.from("workout_session_exercises")
-      .select("workout_session_id,exercise_name").in("workout_session_id", ids);
-    return sessions.map((s: any) => ({
-      completed_at: s.completed_at,
-      exercises: (exercises || []).filter((e: any) => e.workout_session_id === s.id).map((e: any) => e.exercise_name),
-    }));
-  } catch (_) {
-    return [];
-  }
-}
-
 async function findExistingSet(supabase: any, userId: string, key: string) {
   try {
     const since = new Date(Date.now() - IDEMPOTENCY_WINDOW_HOURS * 3600000).toISOString();
@@ -346,11 +326,14 @@ async function recentGenerationCount(supabase: any, userId: string, hours: numbe
   const since = new Date(Date.now() - hours * 3600000).toISOString();
   let query = supabase.from("workout_recommendation_sets")
     .select("id", { count: "exact", head: true })
-    .eq("user_id", userId).gte("created_at", since);
+    .eq("user_id", userId).gte("generated_at", since);
   if (aiOnly) query = query.like("generator_version", "openai-%");
   const { count } = await query;
   return count ?? 0;
 }
+
+async function recentTrainingContext(supabase: any, userId: string) {
+  try {
   const { data:sessions, error:sessionError } = await supabase.from("workout_sessions")
     .select("id,name,completed_at,perceived_effort")
     .eq("user_id",userId).eq("status","completed")
@@ -393,6 +376,9 @@ async function recentGenerationCount(supabase: any, userId: string, hours: numbe
     perceived_effort: session.perceived_effort || null,
     exercises: exercisesBySession.get(session.id) || [],
   }));
+  } catch (_) {
+    return []; // never let context-building break generation
+  }
 }
 
 Deno.serve(async (req:Request) => {
