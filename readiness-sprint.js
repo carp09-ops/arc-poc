@@ -40,49 +40,60 @@ function authMode(mode) {
 function installAuthUI() {
   const card = document.querySelector('#authGate .auth-card');
   const login = $('loginForm');
-  if (!card || !login || $('arcSignupForm')) return;
+  if (!card || !login) return;
 
-  const actions = document.createElement('div');
-  actions.id = 'arcAuthActions';
-  actions.className = 'arc-auth-actions';
-  actions.innerHTML = `<button type="button" id="arcShowSignup" class="text-button">Create account</button><span>·</span><button type="button" id="arcShowForgot" class="text-button">Forgot password?</button>`;
-  login.insertAdjacentElement('afterend', actions);
+  // The auth markup may already exist in index.html (static). Bindings must
+  // install whether the markup was just created or was already present.
+  if (!$('arcSignupForm')) {
+    const actions = document.createElement('div');
+    actions.id = 'arcAuthActions';
+    actions.className = 'arc-auth-actions';
+    actions.innerHTML = `<button type="button" id="arcShowSignup" class="text-button">Create account</button><span>·</span><button type="button" id="arcShowForgot" class="text-button">Forgot password?</button>`;
+    login.insertAdjacentElement('afterend', actions);
 
-  const signup = document.createElement('form');
-  signup.id = 'arcSignupForm';
-  signup.className = 'stack-form hidden arc-auth-secondary';
-  signup.innerHTML = `
-    <div class="arc-auth-heading"><span class="eyebrow">New to Arc</span><h3>Create your account.</h3><p>Your starting point comes next.</p></div>
-    <label>Email<input id="arcSignupEmail" type="email" autocomplete="email" required /></label>
-    <label>Password<input id="arcSignupPassword" type="password" autocomplete="new-password" minlength="8" required /></label>
-    <label>Confirm password<input id="arcSignupConfirm" type="password" autocomplete="new-password" minlength="8" required /></label>
-    <button class="button button-primary" type="submit">Create my Arc <span>→</span></button>
-    <p id="arcSignupMessage" class="form-message" role="status"></p>
-    <button type="button" class="text-button" data-auth-back>← Back to sign in</button>`;
-  actions.insertAdjacentElement('afterend', signup);
+    const signup = document.createElement('form');
+    signup.id = 'arcSignupForm';
+    signup.className = 'stack-form hidden arc-auth-secondary';
+    signup.innerHTML = `
+      <div class="arc-auth-heading"><span class="eyebrow">New to Arc</span><h3>Create your account.</h3><p>Your starting point comes next.</p></div>
+      <label>Email<input id="arcSignupEmail" type="email" autocomplete="email" required /></label>
+      <label>Password<input id="arcSignupPassword" type="password" autocomplete="new-password" minlength="8" required /></label>
+      <label>Confirm password<input id="arcSignupConfirm" type="password" autocomplete="new-password" minlength="8" required /></label>
+      <button class="button button-primary" type="submit">Create my Arc <span>→</span></button>
+      <p id="arcSignupMessage" class="form-message" role="status"></p>
+      <button type="button" class="text-button" data-auth-back>← Back to sign in</button>`;
+    actions.insertAdjacentElement('afterend', signup);
 
-  const forgot = document.createElement('form');
-  forgot.id = 'arcForgotForm';
-  forgot.className = 'stack-form hidden arc-auth-secondary';
-  forgot.innerHTML = `
-    <div class="arc-auth-heading"><span class="eyebrow">Account recovery</span><h3>Reset your password.</h3><p>We’ll send a secure recovery link.</p></div>
-    <label>Email<input id="arcForgotEmail" type="email" autocomplete="email" required /></label>
-    <button class="button button-primary" type="submit">Send reset link <span>→</span></button>
-    <p id="arcForgotMessage" class="form-message" role="status"></p>
-    <button type="button" class="text-button" data-auth-back>← Back to sign in</button>`;
-  signup.insertAdjacentElement('afterend', forgot);
+    const forgot = document.createElement('form');
+    forgot.id = 'arcForgotForm';
+    forgot.className = 'stack-form hidden arc-auth-secondary';
+    forgot.innerHTML = `
+      <div class="arc-auth-heading"><span class="eyebrow">Account recovery</span><h3>Reset your password.</h3><p>We’ll send a secure recovery link.</p></div>
+      <label>Email<input id="arcForgotEmail" type="email" autocomplete="email" required /></label>
+      <button class="button button-primary" type="submit">Send reset link <span>→</span></button>
+      <p id="arcForgotMessage" class="form-message" role="status"></p>
+      <button type="button" class="text-button" data-auth-back>← Back to sign in</button>`;
+    signup.insertAdjacentElement('afterend', forgot);
 
-  const reset = document.createElement('form');
-  reset.id = 'arcResetForm';
-  reset.className = 'stack-form hidden arc-auth-secondary';
-  reset.innerHTML = `
-    <div class="arc-auth-heading"><span class="eyebrow">Secure recovery</span><h3>Choose a new password.</h3><p>Use at least 8 characters.</p></div>
-    <label>New password<input id="arcResetPassword" type="password" autocomplete="new-password" minlength="8" required /></label>
-    <label>Confirm password<input id="arcResetConfirm" type="password" autocomplete="new-password" minlength="8" required /></label>
-    <button class="button button-primary" type="submit">Update password <span>→</span></button>
-    <p id="arcResetMessage" class="form-message" role="status"></p>`;
-  forgot.insertAdjacentElement('afterend', reset);
+    const reset = document.createElement('form');
+    reset.id = 'arcResetForm';
+    reset.className = 'stack-form hidden arc-auth-secondary';
+    reset.innerHTML = `
+      <div class="arc-auth-heading"><span class="eyebrow">Secure recovery</span><h3>Choose a new password.</h3><p>Use at least 8 characters.</p></div>
+      <label>New password<input id="arcResetPassword" type="password" autocomplete="new-password" minlength="8" required /></label>
+      <label>Confirm password<input id="arcResetConfirm" type="password" autocomplete="new-password" minlength="8" required /></label>
+      <button class="button button-primary" type="submit">Update password <span>→</span></button>
+      <p id="arcResetMessage" class="form-message" role="status"></p>`;
+    forgot.insertAdjacentElement('afterend', reset);
+  }
 
+  const signup = $('arcSignupForm');
+  const forgot = $('arcForgotForm');
+  const reset = $('arcResetForm');
+  if (!signup || !forgot || !reset) return;
+  const wantReset = new URLSearchParams(location.search).get('recovery') === '1';
+  if (card.dataset.arcAuthBound === '1') { if (wantReset) authMode('reset'); return; }
+  card.dataset.arcAuthBound = '1';
   $('arcShowSignup')?.addEventListener('click', () => authMode('signup'));
   $('arcShowForgot')?.addEventListener('click', () => {
     if ($('loginEmail')?.value) $('arcForgotEmail').value = $('loginEmail').value;
@@ -156,7 +167,7 @@ function installAuthUI() {
     }
   });
 
-  if (new URLSearchParams(location.search).get('recovery') === '1') authMode('reset');
+  if (wantReset) authMode('reset');
 }
 
 supabase.auth.onAuthStateChange((event, session) => {
