@@ -224,6 +224,14 @@ function ensureLoadingScene() {
 async function saveSetup(event) {
   event.preventDefault();
   event.stopImmediatePropagation();
+  const form = event.target?.closest('form');
+  // In-flight duplicate-submit protection: double-clicks and keyboard
+  // resubmits during the async save must not run the upserts twice.
+  if (form?.dataset.submitting === '1') return;
+  if (form) form.dataset.submitting = '1';
+  const submitButton = form?.querySelector('[type="submit"]');
+  const originalButtonText = submitButton?.textContent;
+  if (submitButton) { submitButton.disabled = true; submitButton.textContent = 'Building your starting point…'; }
   // The "Building your starting point…" overlay is shown here, by the single
   // submit handler — not by a second capture listener whose ordering could
   // silently prevent it.
@@ -258,6 +266,9 @@ async function saveSetup(event) {
   } catch (error) {
     $('arcLoading')?.classList.remove('visible');
     toast(error.message || 'Could not save your Arc.');
+  } finally {
+    if (form) form.dataset.submitting = '';
+    if (submitButton) { submitButton.disabled = false; submitButton.textContent = originalButtonText; }
   }
 }
 
